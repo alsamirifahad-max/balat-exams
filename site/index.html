@@ -29,6 +29,8 @@
 *{box-sizing:border-box}
 html,body{margin:0}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.vh{position:absolute!important;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
+label.btn{cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.55}
 [hidden]{display:none!important}
 .top{background:var(--navy);color:#fff;position:relative}
@@ -57,9 +59,10 @@ main#main{max-width:1500px;margin:0 auto;padding-block:18px 60px;padding-left:ma
 td .in{min-width:6rem}
 .in.n2{width:3.6rem;min-width:0}.in.n4{width:5.2rem;min-width:0}
 .ta{width:100%;font-family:var(--ui);line-height:1.7;resize:vertical}
-.acts{display:flex;gap:10px;align-items:center;margin-top:10px}.acts.wrap{flex-wrap:wrap}
-.inl{display:inline-flex;gap:6px;align-items:center;font-size:.86rem;color:var(--muted);white-space:nowrap}
-.inl .in{width:auto}
+.acts{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.inl{display:inline-flex;gap:6px;align-items:center;font-size:.86rem;color:var(--muted);white-space:nowrap;max-width:100%}
+.inl .in{width:auto;max-width:100%;min-width:0}
+select.in{text-overflow:ellipsis}
 .ck{display:inline-flex;gap:6px;align-items:center;font-size:.86rem}
 .btn{font:inherit;font-weight:600;font-size:.9rem;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--accent)}
@@ -1571,8 +1574,8 @@ function dropZone(slot, ttl, desc, accept) {
     <div class="dic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></div>
     <div class="dtx"><b>${ttl}</b><small>${desc}</small>
     <span class="dst">${u ? `✓ ${esc(u.name)} — ${esc(u.info)} <i>${esc(u.at)}</i>` : 'لم يُرفع بعد — اسحب الملف هنا أو اضغط اختيار'}</span></div>
-    <button class="btn ${u ? '' : 'pri'} sm" data-act="pick" data-slot="${slot}" type="button">${u ? 'استبدال الملف' : 'اختيار الملف'}</button>
-    <input type="file" class="slotfile" data-slot="${slot}" id="file_${slot}" accept="${accept}" hidden>
+    <label class="btn ${u ? '' : 'pri'} sm" for="file_${slot}" role="button" tabindex="0">${u ? 'استبدال الملف' : 'اختيار الملف'}</label>
+    <input type="file" class="slotfile vh" data-slot="${slot}" id="file_${slot}" accept="${accept}" tabindex="-1">
   </div>`;
 }
 function stamp() { const d = new Date(); return `${d.getDate()}/${d.getMonth() + 1} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
@@ -1617,7 +1620,7 @@ async function processSlot(slot, file) {
 }
 async function pickSlot(slot, files) {
   if (!files || !files.length) return;
-  if (!(await askCode('رفع ' + ({ noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' }[slot])))) return;
+  if (!(await unlock('رفع ' + SLOT_NAMES[slot]))) return;
   processSlot(slot, files[0]);
 }
 document.addEventListener('dragover', e => { const d = e.target.closest && e.target.closest('.drop'); if (d) { e.preventDefault(); d.classList.add('over'); } });
@@ -1803,7 +1806,7 @@ function vBackup() {
     <h2>النسخ الاحتياطي</h2>
     <p class="hint">كل البيانات محفوظة في متصفح هذا الجهاز. صدّر نسخة احتياطية لنقل العمل لجهاز آخر أو للاحتفاظ به، ثم استوردها هناك (يتطلب الرمز الخاص).</p>
     <div class="acts wrap"><button class="btn pri" data-act="exportJson" type="button">تصدير نسخة احتياطية</button>
-    <button class="btn" data-act="importJson" type="button">استيراد نسخة احتياطية…</button><input type="file" id="jsonIn" accept=".json" hidden></div>
+    <label class="btn" for="jsonIn" role="button" tabindex="0">استيراد نسخة احتياطية…</label><input type="file" class="vh" id="jsonIn" accept=".json" tabindex="-1"></div>
   </section>
   <section class="card"><h2>إعادة الضبط</h2><p class="hint">يعيد الإعدادات والجدول واللجان إلى البيانات الأصلية من نماذج المدرسة، ويحذف الطلاب. يتطلب الرمز الخاص.</p>
   <button class="btn danger" data-act="resetAll" type="button">إعادة ضبط كل البيانات</button></section>`;
@@ -2626,6 +2629,15 @@ function stuExcel() {
 
 /* ===================== الرمز الخاص ===================== */
 async function sha(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
+const SLOT_NAMES = { noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
+/* يُطلب الرمز مرة واحدة في الجلسة؛ اختيار الملف يتم أولاً بلمسة مباشرة (متطلب سفاري في الآيفون) ثم التحقق */
+let UNLOCKED = (() => { try { return sessionStorage.getItem('balat-unlock') === '1'; } catch (e) { return false; } })();
+async function unlock(reason) {
+  if (UNLOCKED) return true;
+  const ok = await askCode(reason);
+  if (ok) { UNLOCKED = true; try { sessionStorage.setItem('balat-unlock', '1'); } catch (e) { } }
+  return ok;
+}
 function askCode(reason) {
   return new Promise(res => {
     const m = $('#codeModal'); $('#codeReason').textContent = reason; $('#codeIn').value = ''; $('#codeErr').textContent = ''; m.hidden = false; setTimeout(() => $('#codeIn').focus(), 30);
@@ -2666,8 +2678,9 @@ document.addEventListener('change', async e => {
     const iso = hijriToIso(h[0], h[1], h[2]);
     if (iso) { S.days[i].g = iso; S.days[i].h = h; save(); render(); } else toast('تاريخ هجري غير صالح', true);
   }
-  if (el.classList.contains('slotfile') && el.files.length) { const f = el.files[0]; el.value = ''; processSlot(el.dataset.slot, f); return; }
+  if (el.classList.contains('slotfile') && el.files.length) { const f = el.files[0]; el.value = ''; if (await unlock('رفع ' + SLOT_NAMES[el.dataset.slot])) processSlot(el.dataset.slot, f); return; }
   if (el.id === 'jsonIn' && el.files[0]) {
+    if (!(await unlock('استيراد نسخة احتياطية'))) { el.value = ''; return; }
     try { const d = JSON.parse(await el.files[0].text()); if (!d.v || !d.s) throw 0; S = deepMerge(clone(DEFAULT_STATE), d); S.days.forEach(fixDay); save(true); await drawBrand(); toast('تم استيراد النسخة الاحتياطية'); render(); }
     catch (x) { toast('الملف ليس نسخة احتياطية صالحة', true); }
     el.value = '';
@@ -2693,7 +2706,7 @@ document.addEventListener('click', async e => {
     case 'delCom': if (await confirmBox('حذف اللجنة رقم ' + S.com[i].no + '؟')) { S.com.splice(i, 1); S.distributed = false; re(); } return;
     case 'autoCounts': autoCounts(); toast('تم توزيع الأعداد على اللجان حسب السعة'); return re();
     case 'distribute': { const r = distributeStudents(); if (!r.ok) toast(r.msg, true); else toast('تم توزيع الطلاب وإعطاء أرقام الجلوس'); return render(); }
-    case 'pick': if (await askCode('رفع ' + ({ noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' }[b.dataset.slot]))) { const f = $('#file_' + b.dataset.slot); f.dataset.ok = '1'; f.click(); } return;
+    case 'pick': $('#file_' + b.dataset.slot).click(); return;
     case 'stuSrc': SF.src = b.dataset.v; SF.g = 'all'; SF.sec = 'all'; saveSF(); return render();
     case 'buildSt': { const r = buildStFromTa(); toast(r.miss.length ? 'لم يُعثر على معلم لـ: ' + r.miss.join('، ') : 'تم ربط جميع مواد الجدول بمعلميها', !!r.miss.length); return re(); }
     case 'exportTa': { const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; const ws = XLSX.utils.json_to_sheet((S.ta.length ? S.ta : [{ g: 1, sub: 'رياضيات 1', sec: '1-2-3', t: 'اسم المعلم' }]).map(x => ({ 'اسم المعلم': x.t, 'المادة': x.sub, 'الصف': GNAME[x.g], 'الشعب': x.sec }))); ws['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 18 }, { wch: 26 }]; ws['!views'] = [{ RTL: true }]; XLSX.utils.book_append_sheet(wb, ws, 'الإسناد'); return download(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), 'إسناد المعلمين.xlsx'); }
@@ -2746,7 +2759,7 @@ document.addEventListener('click', async e => {
     case 'word': { const g = currentGroups(); if (!g[0].pages.length) return toast('لا توجد صفحات', true); return wordDoc(g, fname(formDef().t)); }
     case 'excel': return excelFromGroups(currentGroups(), fname(formDef().t));
     case 'exportJson': return download(new Blob([JSON.stringify(S)], { type: 'application/json' }), `نسخة احتياطية - الاختبارات - ${dateToIso(new Date())}.json`);
-    case 'importJson': if (await askCode('استيراد نسخة احتياطية')) $('#jsonIn').click(); return;
+    case 'importJson': $('#jsonIn').click(); return;
     case 'resetAll': if (await askCode('إعادة ضبط كل البيانات')) { S = clone(DEFAULT_STATE); S.days.forEach(fixDay); save(true); await drawBrand(); toast('تمت إعادة الضبط'); render(); } return;
   }
 });
@@ -2763,6 +2776,7 @@ window.addEventListener('hashchange', () => { const h = location.hash.slice(1); 
   await drawBrand();
   render();
 })();
+document.addEventListener('keydown', e => { const l = e.target.closest && e.target.closest('label.btn[for]'); if (l && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); const f = document.getElementById(l.htmlFor); if (f) f.click(); } });
 
 /* ===================== لوحة القيادة ===================== */
 const DAY_ITEMS = [
