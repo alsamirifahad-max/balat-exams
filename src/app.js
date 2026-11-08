@@ -1404,7 +1404,7 @@ const FORMS = [
   // ===== الجداول
   { id: 'schedule', grp: 'الجداول', t: 'جدول الاختبارات العام', build: () => [
     title(`جدول الاختبارات العام للمرحلة الثانوية – الفصل الدراسي ${esc(S.s.sem)} ${esc(S.s.yearTxt)} – الدور ${esc(S.s.round)}`) + scheduleTable({ big: true }) + sp(8) +
-    `<p class="lbl">تعليمات مهمة للاختبار :</p><ul class="ins">${S.s.instr.split('\n').filter(x => x.trim()).map(x => `<li>${esc(x)}</li>`).join('')}</ul>` + sp(10) +
+    `<div class="insbox"><p class="ih">تعليمات مهمة للاختبار</p><ul class="ins">${S.s.instr.split('\n').filter(x => x.trim()).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` + sp(10) +
     `<table class="sg" dir="rtl" border="0" width="100%"><tr><td style="text-align:center;width:33%"><div class="sbox"><b>وكيل الشؤون التعليمية</b><br><br>${esc(S.s.eduDep)}</div></td><td style="text-align:center;width:34%"><b>ختم المدرسة</b><div class="stamp"></div></td><td style="text-align:center;width:33%"><div class="sbox"><b>مدير المدرسة</b><br><br>${esc(S.s.principal)}</div></td></tr></table>`] },
   { id: 'comSchedule', grp: 'الجداول', t: 'جدول اللجنة (يُعلّق على باب كل لجنة)', land: 1, opts: ['com'], build: o => comOpt(o).map(c => comHead(c) + sp(8) + scheduleTable()) },
   { id: 'qFile', grp: 'الجداول', t: 'ملف توزيع الأسئلة ونماذج الإجابة على اللجان', land: 1, opts: ['com'], build: o => comOpt(o).map(c => comHead(c, true) + sp(8) + scheduleTable()) },
@@ -1971,7 +1971,7 @@ function planFill(el) {
   const lis = $$('.pbody ol.ins > li, .pbody ul.ins:not(.small) > li', c);
   if (extra > 20 && lis.length >= 4) { const each = Math.min((extra * 0.75) / lis.length, 16); plan.li = Math.round(each * 10) / 10; extra -= each * lis.length; }
   if (extra > 10) {
-    const gaps = $$('.pbody > .sp, .pbody > p.lbl, .pbody > table.t, .pbody > ul.ins, .pbody > ol.ins', c).slice(1);
+    const gaps = $$('.pbody > .sp, .pbody > p.lbl, .pbody > table.t, .pbody > ul.ins, .pbody > ol.ins, .pbody > .insbox', c).slice(1);
     const hasSg = !!c.querySelector('table.sg');
     const slots = gaps.length + (hasSg ? 2 : 0);
     if (slots) { const each = Math.min(extra / slots, 90); plan.gap = Math.round(each); extra -= each * gaps.length; if (hasSg) plan.sg = Math.min(Math.round(extra), 240); }
@@ -1982,7 +1982,7 @@ function applyFill(el, plan) {
   if (!plan) return; const tables = $$('table.t', el);
   plan.rows.forEach(x => { const tr = tables[x.ti] && tables[x.ti].rows[x.ri]; if (tr) Array.from(tr.cells).forEach(td => { if ((td.rowSpan || 1) === 1) td.style.height = x.h + 'px'; }); });
   if (plan.li) $$('.pbody ol.ins > li, .pbody ul.ins:not(.small) > li', el).forEach(li => { li.style.paddingBottom = plan.li + 'px'; });
-  if (plan.gap) $$('.pbody > .sp, .pbody > p.lbl, .pbody > table.t, .pbody > ul.ins, .pbody > ol.ins', el).slice(1).forEach(e => { e.style.marginTop = ((parseFloat(getComputedStyle(e).marginTop) || 0) + plan.gap) + 'px'; });
+  if (plan.gap) $$('.pbody > .sp, .pbody > p.lbl, .pbody > table.t, .pbody > ul.ins, .pbody > ol.ins, .pbody > .insbox', el).slice(1).forEach(e => { e.style.marginTop = ((parseFloat(getComputedStyle(e).marginTop) || 0) + plan.gap) + 'px'; });
   if (plan.sg) { const sg = $$('table.sg', el).pop(); if (sg) sg.style.marginTop = ((parseFloat(sg.style.marginTop) || 0) + Math.round(plan.sg)) + 'px'; }
 }
 function layoutPages(els) { els.forEach(el => { try { applyFill(el, planFill(el)); } catch (e) { } }); }
@@ -2016,7 +2016,7 @@ function wordDoc(groups, name) {
   const LINE = { style: D.BorderStyle.SINGLE, size: 6, color: '333333' };
   const HDRB = b64ToBytes(HDR), FTRB = b64ToBytes(FTR);
   const BLOCK = new Set(['TABLE', 'P', 'DIV', 'UL', 'OL']);
-  const CLS = { dt: { size: 15, bold: true, center: true }, ds: { size: 10.5, center: true }, txt: { size: 12.5, justify: true }, lbl: { size: 12, bold: true }, note: { size: 9.5 }, cut: { size: 10, center: true, color: '999999' } };
+  const CLS = { ih: { size: 11, bold: true }, dt: { size: 15, bold: true, center: true }, ds: { size: 10.5, center: true }, txt: { size: 12.5, justify: true }, lbl: { size: 12, bold: true }, note: { size: 9.5 }, cut: { size: 10, center: true, color: '999999' } };
   function runs(node, st, out) {
     node.childNodes.forEach(n => {
       if (n.nodeType === 3) { const t = n.nodeValue.replace(/\s+/g, ' '); if (t.trim() || (t === ' ' && out.length)) out.push(new D.TextRun({ text: t, bold: st.bold, boldComplexScript: st.bold, color: st.color || undefined, size: Math.round(st.size * 2), sizeComplexScript: Math.round(st.size * 2), rightToLeft: true, font: { ascii: 'Arial', hAnsi: 'Arial', cs: 'Arial' } })); return; }
@@ -2053,7 +2053,7 @@ function wordDoc(groups, name) {
         } else if (n.tagName === 'UL' || n.tagName === 'OL') {
           const small = n.classList.contains('small');
           Array.from(n.children).forEach((li, i) => {
-            const s2 = Object.assign({}, st, { size: small ? 10.5 : 11, bold: !small });
+            const s2 = Object.assign({}, st, { size: small ? 10 : 10.5, bold: false });
             const r = runs(li, s2, []); r.unshift(new D.TextRun({ text: (n.tagName === 'OL' ? (i + 1) + '. ' : '• '), bold: s2.bold, size: s2.size * 2, sizeComplexScript: s2.size * 2, rightToLeft: true }));
             out.push(new D.Paragraph({ bidirectional: true, indent: { start: 280 }, spacing: { after: 30 }, children: r }));
           });
