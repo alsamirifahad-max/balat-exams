@@ -1,0 +1,13 @@
+{
+  "name": "balat-exams-tooling",
+  "private": true,
+  "description": "مكتبات نظام الاختبارات بإصدارات مثبتة",
+  "dependencies": {
+    "xlsx": "0.18.5",
+    "docx": "8.5.0",
+    "pdfjs-dist": "3.11.174",
+    "html2canvas": "1.4.1",
+    "jspdf": "2.5.1",
+    "@fontsource/tajawal": "5.3.0"
+  }
+}
