@@ -1571,7 +1571,7 @@ function vStaff() {
   const load = {}; Object.keys(S.obs).forEach(k => obsList(k).forEach(n => { if (n) load[n] = (load[n] || 0) + 1; }));
   let obsHtml = '<p class="hint">أضف أيام الجدول أولاً.</p>';
   if (se) {
-    const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName));
+    const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName)); if (typeof exSet === 'function') exSet(se.key).forEach(n => busy.add(n));
     const cnt = {}; S.com.map(c => c.no).concat(['R']).forEach(no => obsList(`${se.key}_${no}`).forEach(n => { if (n) cnt[normName(n)] = (cnt[normName(n)] || 0) + 1; }));
     obsHtml = `<div class="tw"><table class="et obs"><tr><th>اللجنة</th><th>المقر</th><th>الطلاب</th><th title="عدد الملاحظين المطلوب">العدد المطلوب</th><th>الملاحظون</th></tr>${S.com.map(c => {
       const key = `${se.key}_${c.no}`, list = obsList(key);
@@ -1579,6 +1579,7 @@ function vStaff() {
       <td><input class="in" type="number" min="1" max="5" data-k="obsN.${c.no}" data-num="1" value="${obsNeed(c.no)}" style="width:4rem" id="on_${c.no}"></td>
       <td><div class="obsl">${obsSlots(se, c, key, list, busy, cnt, load)}</div></td></tr>${typeof OBS_T !== 'undefined' && OBS_T && OBS_T.key === key ? obsPickRow(key, busy, cnt, load) : ''}`; }).join('')}</table></div>
       ${typeof obsResBlock === 'function' ? obsResBlock(se, busy, cnt, load) : ''}
+      ${typeof obsExBlock === 'function' ? obsExBlock(se) : ''}${typeof obsLogBlock === 'function' ? obsLogBlock(se) : ''}
       ${SWAP ? `<p class="upnote ok">اخترت «${esc(obsList(SWAP.key)[SWAP.i] || '')}» للتبديل — اضغط ⇅ عند الملاحظ الآخر لإتمام التبديل، أو <button class="btn sm ghost" data-act="obsSwapCancel" type="button">إلغاء</button></p>` : ''}
       <details><summary>أحمال الملاحظة لكل معلم (جميع الفترات)</summary><div class="loadl">${Object.entries(load).sort((a, b) => b[1] - a[1]).map(([n, v]) => `<span>${esc(n)} <b>${v}</b></span>`).join('') || '<span class="hint">لا يوجد توزيع بعد</span>'}</div></details>`;
   }
@@ -1615,6 +1616,7 @@ function vStaff() {
     ${qbar('obsNames', 'أسماء الملاحظين على اللجان (كل الفترات):')}
     <details class="setadv"><summary>نموذج آخر: جدول توزيع الملاحظين مع المقر وعدد الطلاب</summary>${qbar('obsTable', 'كل الفترات:')}${se ? qbar('obsTable', 'الفترة المختارة:', '', { ses: OBS_SEL }) : ''}</details>
     ${typeof comCountCtl === 'function' ? comCountCtl() : ''}
+    <label class="inl">ترتيب اللجان في الكشوف <select class="in" data-k="s.obsOrd" id="f_obsOrd"><option value="place"${(S.s.obsOrd || 'place') === 'place' ? ' selected' : ''}>المبنى أولاً ثم الصالة الرياضية والمرافق</option><option value="num"${S.s.obsOrd === 'num' ? ' selected' : ''}>حسب رقم اللجنة</option></select></label>
     <div class="acts wrap">
       <label class="inl">الفترة <select class="in" id="obsSel">${ses.map(x => `<option value="${x.key}"${x.key === OBS_SEL ? ' selected' : ''}>${dayName(x.day)} ${dateShort(x.day)} – ${esc(x.per.n)}</option>`).join('')}</select></label>
       <label class="inl">عدد الملاحظين الافتراضي لكل لجنة <input class="in" type="number" min="1" max="5" data-k="s.obsDef" data-num="1" value="${S.s.obsDef || 1}" style="width:4rem" id="f_obsDef"></label>
@@ -1694,7 +1696,7 @@ function autoObservers() {
   if (!S.teachers.length) return false;
   let rot = 0;
   ses.forEach(se => {
-    const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName));
+    const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName)); if (typeof exSet === 'function') exSet(se.key).forEach(n => busy.add(n));
     const used = new Set();
     S.com.forEach(c => {
       const list = [];
@@ -1921,7 +1923,7 @@ function obsTablePages(o) {
   const out = [];
   sesOpt(o || {}).forEach(se => {
     const rows = [];
-    S.com.forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, name: l[i] || '', first: i === 0, n }); });
+    (typeof comsOrdered === 'function' ? comsOrdered() : S.com).forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, name: l[i] || '', first: i === 0, n }); });
     const per = 32;
     for (let k = 0; k < rows.length; k += per) {
       const part = rows.slice(k, k + per);

@@ -388,7 +388,7 @@ function obsSlots(se, c, key, list, busy, cnt, load) {
   const slots = Math.max(list.length, obsNeed(c.no)); let h = '';
   for (let i = 0; i < slots; i++) {
     const n = list[i] || '', on = OBS_T && OBS_T.key === key && OBS_T.i === i, dup = n && cnt[normName(n)] > 1, bz = n && busy.has(normName(n)), sw = SWAP && SWAP.key === key && SWAP.i === i;
-    h += n ? `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}${on ? ' tgt' : ''}"><button type="button" class="obn" data-tact="obsT" data-k="${key}" data-i="${i}" title="${dup ? 'مكرر في نفس الفترة — ' : bz ? 'معلم مادة مختبرة في هذه الفترة — ' : ''}المس للتغيير">${esc(n)}</button><button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`
+    h += n ? `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}${on ? ' tgt' : ''}"><button type="button" class="obn" data-tact="obsT" data-k="${key}" data-i="${i}" title="${dup ? 'مكرر في نفس الفترة — ' : bz ? 'معلم مادة مختبرة في هذه الفترة — ' : ''}المس للتغيير">${esc(n)}</button>${c.no !== 'R' ? `<button type="button" class="ic rep" data-tact="obsRep" data-k="${key}" data-i="${i}" title="غائب ← استبدال من الاحتياط">↺</button>` : ''}<button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`
       : `<button type="button" class="obe${on ? ' on' : ''}" data-tact="obsT" data-k="${key}" data-i="${i}">＋ الملاحظ ${i + 1}</button>`;
   }
   return h + `<button type="button" class="btn sm ghost" data-act="obsAdd" data-k="${key}">+ ملاحظ</button>`;
@@ -430,7 +430,7 @@ function obsResBlock(se, busy, cnt, load) {
 }
 function resAuto(sk) {
   const se = sessions().find(x => x.key === sk); if (!se) return;
-  const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName));
+  const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName)); exSet(sk).forEach(n => busy.add(n));
   const used = new Set(); S.com.forEach(c => obsList(`${sk}_${c.no}`).forEach(n => n && used.add(normName(n))));
   const load = {}; Object.keys(S.obs).forEach(k => obsList(k).forEach(n => { if (n) load[normName(n)] = (load[normName(n)] || 0) + 1; }));
   const cur = obsList(`${sk}_R`).filter(Boolean).filter(n => !used.has(normName(n)) && !busy.has(normName(n)));
@@ -444,7 +444,7 @@ function comCountCtl() {
 function obsNamesPages(o) {
   const out = [];
   sesOpt(o || {}).forEach(se => {
-    const rows = []; S.com.forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, n: l[i] || '' }); });
+    const rows = []; comsOrdered().forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, n: l[i] || '' }); });
     const res = obsList(`${se.key}_R`).filter(Boolean);
     const plc = c => (c.fl || c.rm || '').trim(), freq = {}; S.com.forEach(c => { const k = plc(c); freq[k] = (freq[k] || 0) + 1; });
     const main = Object.keys(freq).sort((a, b) => freq[b] - freq[a])[0];
@@ -469,7 +469,7 @@ function obsNamesPages(o) {
       <table width="100%" style="font-weight:800;font-size:11.5pt;margin:2px 0 4px" dir="rtl"><tr><td style="text-align:right">الملاحظين لهذا اليوم / ${dayName(d)}</td><td style="text-align:center">وتاريخ: ${h[2]} / ${h[1]} / ${h[0]}هـ</td><td style="text-align:left">الفترة / ${esc(se.per.n || '')}</td></tr></table>`;
     const cols = '<colgroup><col style="width:3.5%"><col style="width:21%"><col style="width:15%"><col style="width:10.5%"><col style="width:3.5%"><col style="width:21%"><col style="width:15%"><col style="width:10.5%"></colgroup>';
     const tbl = T([head, ...body], { cls: 'dense obsN' }).replace(/^(<table[^>]*>)/, '$1' + cols);
-    out.push(top + tbl + sp(10) + sigs([['نائب رئيس لجنة الاختبارات', S.s.eduDep], ['رئيس لجنة الاختبارات', S.s.principal]]));
+    const lg = obsLog(se.key); out.push(top + tbl + (lg.length ? `<p style="font-size:9pt;margin:4px 0 0"><b>الاستبدالات:</b> ${lg.map(x => `${esc(x.inn)} بدلاً عن ${esc(x.out)} (لجنة ${esc(x.com)})`).join('، ')}</p>` : '') + sp(10) + sigs([['نائب رئيس لجنة الاختبارات', S.s.eduDep], ['رئيس لجنة الاختبارات', S.s.principal]]));
   });
   return out;
 }
@@ -478,4 +478,51 @@ document.addEventListener('click', async e => {
   if (a === 'resAuto') resAuto(b.dataset.v);
   else if (a === 'comAdd') { const l = S.com[S.com.length - 1]; const n = S.com.length ? Math.max(...S.com.map(c => +c.no || 0)) + 1 : 1; S.com.push({ no: n, fl: l ? l.fl : '', rm: '', cap: l ? l.cap : 30, c: { 1: 0, 2: 0, 3: 0 } }); S.distributed = false; save(); render(); toast(`أُضيفت اللجنة ${n} — أصبح العدد ${S.com.length}`); }
   else if (a === 'comDel') { const l = S.com[S.com.length - 1]; if (!l) return; if (!await confirmBox(`حذف آخر لجنة (رقم ${l.no}${comSum(l) ? ` وفيها ${comSum(l)} طالباً` : ''})؟ يُحذف ملاحظوها أيضاً.`)) return; S.com.pop(); Object.keys(S.obs).forEach(k => { if (k.endsWith('_' + l.no)) delete S.obs[k]; }); S.distributed = false; save(); render(); toast(`أصبح عدد اللجان ${S.com.length}`); }
+});
+
+/* ===================== ترتيب اللجان، المعتذرون، الاستبدال من الاحتياط ===================== */
+const OUTSIDE = /صال|مسرح|مصل|مكتب|معمل|ملعب|قاع/;
+function comsOrdered() { const L = S.com.slice(); if ((S.s.obsOrd || 'place') === 'num') return L.sort((a, b) => (+a.no) - (+b.no)); return L.sort((a, b) => (OUTSIDE.test((a.fl || '') + ' ' + (a.rm || '')) - OUTSIDE.test((b.fl || '') + ' ' + (b.rm || ''))) || (+a.no) - (+b.no)); }
+function exAll() { S.obsEx = S.obsEx || {}; return S.obsEx; }
+function exSet(sk) { return new Set((exAll()[sk] || []).map(normName)); }
+function obsLog(sk) { S.obsLog = S.obsLog || {}; return S.obsLog[sk] = S.obsLog[sk] || []; }
+var EX_DAY = true;
+function obsExBlock(se) {
+  const ex = exAll()[se.key] || [], exs = exSet(se.key), all = tchAll().slice().sort((a, b) => AR.compare(normName(a), normName(b)));
+  return `<div class="obres obex"><div class="obrh"><b>المعتذرون في هذه الفترة</b><small class="hint">لا يظهرون ضمن المتاحين ولا يضعهم التوزيع التلقائي.</small></div>
+    <div class="wchips">${ex.length ? ex.map(n => `<span class="exn">${esc(n)}<button type="button" data-tact="exDel" data-v="${se.key}" data-n="${esc(n)}" aria-label="إزالة">×</button></span>`).join('') : '<span class="hint">لا يوجد معتذرون.</span>'}</div>
+    <details class="wrest"><summary>+ إضافة معتذر</summary><label class="ck" style="margin:6px 0"><input type="checkbox" id="exDay" ${EX_DAY ? 'checked' : ''}> لكل فترات يوم ${dayName(se.day)} ${dateShort(se.day)}</label>
+    <div class="wchips">${all.filter(n => !exs.has(normName(n))).map(n => `<button type="button" class="wchip" data-tact="exAdd" data-v="${se.key}" data-n="${esc(n)}">${esc(n)}</button>`).join('')}</div></details></div>`;
+}
+function obsLogBlock(se) {
+  const lg = obsLog(se.key); if (!lg.length) return '';
+  return `<div class="obres"><div class="obrh"><b>الاستبدالات في هذه الفترة</b></div>${lg.map((x, i) => `<div class="lvbar"><span>${esc(x.inn)} بدلاً عن ${esc(x.out)} — لجنة ${esc(x.com)} <small>(${esc(x.at)})</small></span><button class="btn sm ghost" data-tact="repUndo" data-v="${se.key}" data-i="${i}" type="button">تراجع</button></div>`).join('')}</div>`;
+}
+function exAddName(sk, n, wholeDay) {
+  const se = sessions().find(x => x.key === sk); const keys = wholeDay && se ? sessions().filter(x => x.di === se.di).map(x => x.key) : [sk];
+  let moved = 0;
+  keys.forEach(k => { const L = exAll()[k] = exAll()[k] || []; if (!L.some(x => normName(x) === normName(n))) L.push(n);
+    Object.keys(S.obs).forEach(ok => { if (ok.slice(0, ok.lastIndexOf('_')) !== k) return; const l = obsList(ok); l.forEach((v, i) => { if (v && normName(v) === normName(n)) { l[i] = ''; moved++; } }); S.obs[ok] = l; }); });
+  save(); render(); toast(`${n} معتذر ${keys.length > 1 ? 'لكل فترات اليوم' : 'في هذه الفترة'}${moved ? ` — أُزيل من ${moved} خانة، اختر بديلاً أو استخدم الاحتياط` : ''}`);
+}
+function obsReplace(key, i) {
+  const sk = key.slice(0, key.lastIndexOf('_')), com = key.slice(key.lastIndexOf('_') + 1), L = obsList(key).slice(), out = L[i];
+  const R = obsList(`${sk}_R`).slice(), ex = exSet(sk); const j = R.findIndex(n => n && !ex.has(normName(n)) && normName(n) !== normName(out));
+  if (j < 0) return toast('لا يوجد اسم في الاحتياط لهذه الفترة — أضف احتياطاً أو اختر بديلاً بلمسة', true);
+  const inn = R[j]; R.splice(j, 1); L[i] = inn; S.obs[key] = L; S.obs[`${sk}_R`] = R;
+  const E = exAll()[sk] = exAll()[sk] || []; if (out && !E.some(x => normName(x) === normName(out))) E.push(out);
+  obsLog(sk).push({ com, out, inn, at: stamp(), i }); save(); render(); toast(`${inn} بدلاً عن ${out} في لجنة ${com} ✓ — الكشف محدّث`);
+}
+function repUndo(sk, idx) {
+  const lg = obsLog(sk), x = lg[idx]; if (!x) return; const key = `${sk}_${x.com}`, L = obsList(key).slice(); const p = L.findIndex(n => n && normName(n) === normName(x.inn));
+  if (p >= 0) L[p] = x.out; else L.push(x.out); S.obs[key] = L; const R = obsList(`${sk}_R`).slice(); R.unshift(x.inn); S.obs[`${sk}_R`] = R;
+  exAll()[sk] = (exAll()[sk] || []).filter(n => normName(n) !== normName(x.out)); lg.splice(idx, 1); save(); render(); toast('تم التراجع عن الاستبدال');
+}
+document.addEventListener('change', e => { if (e.target && e.target.id === 'exDay') EX_DAY = e.target.checked; });
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'obsRep') { const n = obsList(b.dataset.k)[+b.dataset.i]; if (await confirmBox(`${n} غائب أو معتذر؟ يحل محله أول اسم في الاحتياط، ويُسجَّل الاستبدال.`)) obsReplace(b.dataset.k, +b.dataset.i); }
+  else if (a === 'exAdd') exAddName(b.dataset.v, b.dataset.n, EX_DAY);
+  else if (a === 'exDel') { const k = b.dataset.v; exAll()[k] = (exAll()[k] || []).filter(n => normName(n) !== normName(b.dataset.n)); save(); render(); }
+  else if (a === 'repUndo') repUndo(b.dataset.v, +b.dataset.i);
 });
