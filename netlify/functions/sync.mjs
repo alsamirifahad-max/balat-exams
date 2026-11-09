@@ -2,7 +2,7 @@
 import { getStore } from '@netlify/blobs';
 import { createHash } from 'node:crypto';
 
-const SECS = ['ta', 'ex', 'ta-agent', 'ta-shared'];
+const SECS = ['ta', 'ex', 'ta-agent', 'ta-shared', 'daily'];
 const HIST_MAX = 20;
 const histKey = (sec, at) => 'hist/' + sec + '/' + String(at).replace(/[^0-9TZ]/g, '');
 const MAX_FAILS = 8, WINDOW = 15 * 60 * 1000;

@@ -1,7 +1,7 @@
 import pathlib
 d = pathlib.Path(__file__).parent
 src = (d / 'index.src.html').read_text(encoding='utf-8')
-app = ((d / 'app.js').read_text(encoding='utf-8') + '\n' + (d / 'home.js').read_text(encoding='utf-8')).replace('__LOGO__', (d / 'logo_white.b64').read_text().strip())
+app = ((d / 'app.js').read_text(encoding='utf-8') + '\n' + (d / 'home.js').read_text(encoding='utf-8') + '\n' + (d / 'daily.js').read_text(encoding='utf-8')).replace('__LOGO__', (d / 'logo_white.b64').read_text().strip())
 out = src.replace('__DATA__', (d / 'data.js').read_text(encoding='utf-8')).replace('__APP__', app)
 (d.parent / 'site').mkdir(exist_ok=True)
 (d.parent / 'site' / 'index.html').write_text(out, encoding='utf-8')

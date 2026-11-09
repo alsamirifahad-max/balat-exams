@@ -221,12 +221,12 @@ async function runBag(op, kind, arg) {
    ===================================================================== */
 var PEOPLE = {
   admin: { n: 'مسؤول الاختبارات', who: 'فهد', c: '#2563eb', d: 'كل مراحل العمل: الملفات والإسناد والجدول واللجان والتكليفات والمطبوعات', ic: 'ف', set: 'ta', home: 'files' },
-  agent: { n: 'وكيل المعلمين', who: 'الوكيل', c: '#ea580c', d: 'قائمة المعلمين والإسناد فقط — بحفظه الخاص دون المساس بالاختبارات', ic: 'و', set: 'ta-agent', home: 'assign' },
+  agent: { n: 'وكيل المعلمين', who: 'الوكيل', c: '#ea580c', d: 'المعلمون والإسناد بحفظه الخاص، وحصص الانتظار والمناوبة اليومية — دون المساس بالاختبارات', ic: 'و', set: 'ta-agent', home: 'daily' },
   sup: { n: 'مشرف دور / لجنة', who: 'المشرف', c: '#ca8a04', d: 'شاشة «يوم الاختبار» ومطبوعات اليوم بضغطة واحدة — للاطلاع والطباعة', ic: 'م', set: 'ta', home: 'today' }
 };
 var BOTH_C = '#059669';
 var ROLE = (() => { try { const r = localStorage.getItem(LS_KEY + '-role'); return PEOPLE[r] ? r : ''; } catch (e) { return ''; } })();
-var ROLE_TABS = { admin: null, agent: ['files', 'assign', 'backup', 'settings'], sup: ['today', 'forms', 'backup'] };
+var ROLE_TABS = { admin: null, agent: ['files', 'assign', 'daily', 'backup', 'settings'], sup: ['today', 'daily', 'forms', 'backup'] };
 function roleAllows(k) { if (!ROLE_TABS) return true; const r = ROLE_TABS[ROLE || 'admin']; return !r || r.includes(k); }
 function exReadOnly() { return (!!ROLE && ROLE !== 'admin') || ACTIVE === 'ta-agent'; }
 function setRole(r) {
@@ -304,8 +304,8 @@ function stageTasks(k) {
   const gt = gradeTotals(), ct = comTotals(); const ses = sessions();
   let need = 0, filled = 0; ses.forEach(se => S.com.forEach(c => { need += obsNeed(c.no); filled += Math.min(obsNeed(c.no), obsList(`${se.key}_${c.no}`).filter(Boolean).length); }));
   const T = {
-    files: ROLE === 'agent' ? [['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch']] : [
-      ['رفع ملف نور', S.students.length > 0, 'fc_noor'], ['رفع ملف الإرشاد الطلابي', S.guide.length > 0, 'fc_guide'], ['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch']],
+    files: ROLE === 'agent' ? [['رفع الجدول المدرسي العام', !!(S.daily && S.daily.tt), 'fc_tt'], ['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch']] : [
+      ['رفع ملف نور', S.students.length > 0, 'fc_noor'], ['رفع ملف الإرشاد الطلابي', S.guide.length > 0, 'fc_guide'], ['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch'], ['رفع الجدول المدرسي العام', !!(S.daily && S.daily.tt), 'fc_tt']],
     assign: [['اختيار الحفظ الذي تعمل عليه', chosen, 'setsCard'], ['إدخال الإسناد (رفع ملف أو تعديل)', S.ta.length > 0, 'h:ملف الإسناد'], ['لكل سطر معلم', S.ta.length > 0 && S.ta.every(x => tx(x.t)), 'h:تعديل الإسناد']],
     schedule: [['إدخال أيام الاختبار وتواريخها', S.days.length > 0, 'first'], ['إدخال مواد كل صف', sched.length > 0, 'first']],
     committees: [['أعداد اللجان تطابق الطلاب', G.every(g => gt[g] === ct[g]), 'first'], ['توزيع الطلاب بالأسماء وأرقام الجلوس', !!S.distributed, 'first']],
@@ -345,6 +345,9 @@ var HELP = {
   'القوائم الخاصة': 'طلاب الانتساب والعوق البصري الذين يُختبرون في لجان خاصة.',
   'الحفظ والمزامنة': 'فعّل المزامنة بالرمز لتُحفظ بياناتك على السحابة وتظهر على أي جهاز. لكل قسم سجل آخر 20 نسخة.',
   'أوراق هذا اليوم': 'كل أوراق يوم الاختبار المختار. «حقيبة اليوم كاملة» تجمعها كلها في ملف واحد بغلاف وفهرس.',
+  'استمارة حصص الانتظار': 'أضف المعلم الغائب فتظهر حصصه من الجدول المدرسي، واختر المنتظر من المتاحين في الحصة نفسها. التنبيه الأحمر يعني تعارضاً: لديه حصة، أو غائب، أو مكلف بانتظار آخر.',
+  'تقرير الإشراف والمناوبة': 'مشرفو الفسحتين والمناوبون لليوم. احفظه «جدولاً ثابتاً» ليُعبّأ تلقائياً كل أسبوع في اليوم نفسه.',
+  'الجدول المدرسي العام': 'حصص كل معلم في اليوم المختار؛ الخانة الفارغة تعني أنه متاح.',
   'نماذج تحتاجها أثناء الاختبار': 'محاضر ونماذج فارغة جاهزة للطباعة عند الحاجة أثناء الاختبار.'
 };
 function injectHelp(root) {
