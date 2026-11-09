@@ -28,14 +28,14 @@
 /* التخطيط: شريط علوي بهوية الوزارة، تبويبات أفقية، ومحتوى في بطاقات؛ صفحة النماذج: قائمة جانبية + معاينة ورق A4 */
 :root{
   --navy:#0b3a46; --navy2:#12505f; --accent:#1f9d66; --accent-ink:#ffffff;
-  --bg:#edf2f3; --surface:#ffffff; --surface2:#f5f9fa; --ink:#10232a; --muted:#4c666e; --line:#d0dde0; --soft:#e6eff0;
-  --info:#0a6a82; --info-bg:#e3f2f6; --info-line:#8cc8d8; --shadow:0 1px 2px rgba(12,40,48,.06),0 6px 18px rgba(12,40,48,.05);
+  --bg:#f3f1ec; --surface:#fffdf9; --surface2:#f9f6f0; --ink:#1d2a2f; --muted:#56676c; --line:#e2dbcf; --soft:#efe9de;
+  --info:#13707d; --info-bg:#e5f1f0; --info-line:#97cdcc; --shadow:0 1px 2px rgba(12,40,48,.06),0 6px 18px rgba(12,40,48,.05);
   --warn:#b4541a; --bad:#b3193f; --ok:#16794e;
   --ui:'Tajawal',Tahoma,Arial,sans-serif; --doc:'Tajawal','Sakkal Majalla',Arial,sans-serif;
   color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b1518;--surface:#132229;--surface2:#192c34;--ink:#eef4f5;--muted:#aec2c7;--line:#2f4a52;--soft:#1d343c;--accent:#36c48c;--info:#8fd3e6;--info-bg:#12303a;--info-line:#2f6c7c;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0b1518;--surface:#132229;--surface2:#192c34;--ink:#eef4f5;--muted:#aec2c7;--line:#2f4a52;--soft:#1d343c;--accent:#36c48c;--info:#8fd3e6;--info-bg:#12303a;--info-line:#2f6c7c;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121a1d;--surface:#18242a;--surface2:#1e2d33;--ink:#e7ece9;--muted:#a5b4b2;--line:#2d3f45;--soft:#22353b;--accent:#3cc38f;--info:#8ccbd0;--info-bg:#17333a;--info-line:#3a7179;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121a1d;--surface:#18242a;--surface2:#1e2d33;--ink:#e7ece9;--muted:#a5b4b2;--line:#2d3f45;--soft:#22353b;--accent:#3cc38f;--info:#8ccbd0;--info-bg:#17333a;--info-line:#3a7179;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -666,6 +666,17 @@ table.et td{border-bottom-color:color-mix(in srgb,var(--line) 75%,transparent)}
 main#main{--sct:var(--sc)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) main#main{--sct:color-mix(in srgb,var(--sc) 45%,#e6f2f4)}}
 :root[data-theme="dark"] main#main{--sct:color-mix(in srgb,var(--sc) 45%,#e6f2f4)}
+
+/* لمسات إضافية مريحة */
+.card{border-top-width:3px}
+.board .bcard.none{border-color:color-mix(in srgb,#dc2626 55%,var(--line))}
+.absg{background:linear-gradient(180deg,color-mix(in srgb,#e11d48 5%,var(--surface2)),var(--surface2) 120px)}
+.absg > summary{align-items:center}.absg > summary .hlp{margin-inline-start:auto}
+.achip{box-shadow:0 1px 0 color-mix(in srgb,var(--line) 70%,transparent)}
+.wchips{gap:6px}
+.dtabs button.on{box-shadow:0 2px 8px color-mix(in srgb,var(--sc,#0e7490) 25%,transparent)}
+
+.absg .achip{font-size:.78rem;padding:3px 5px 3px 9px;min-height:30px}.absg .wchips{gap:5px}
 </style>
 </head>
 <body>
@@ -1869,7 +1880,7 @@ function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
-  const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && p.k === 'assign';
+  const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && (p.k === 'assign' || p.k === 'daily');
   m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
@@ -4185,8 +4196,8 @@ var HELP = {
   'القوائم الخاصة': 'طلاب الانتساب والعوق البصري الذين يُختبرون في لجان خاصة.',
   'الحفظ والمزامنة': 'فعّل المزامنة بالرمز لتُحفظ بياناتك على السحابة وتظهر على أي جهاز. لكل قسم سجل آخر 20 نسخة.',
   'أوراق هذا اليوم': 'كل أوراق يوم الاختبار المختار. «حقيبة اليوم كاملة» تجمعها كلها في ملف واحد بغلاف وفهرس.',
-  'استمارة حصص الانتظار': 'أضف المعلم الغائب فتظهر حصصه من الجدول المدرسي، واختر المنتظر من المتاحين في الحصة نفسها. التنبيه الأحمر يعني تعارضاً: لديه حصة، أو غائب، أو مكلف بانتظار آخر.',
-  'تقرير الإشراف والمناوبة': 'مشرفو الفسحتين والمناوبون لليوم. احفظه «جدولاً ثابتاً» ليُعبّأ تلقائياً كل أسبوع في اليوم نفسه.',
+  'استمارة حصص الانتظار': 'المس اسم الغائب فتظهر حصصه وشعبه لهذا اليوم. تحت كل حصة: معلمو الصف نفسه أولاً ثم بقية المتاحين، والنجمة ★ للأقل انتظاراً. «تعبئة تلقائية» تملأ الكل، والتنبيه الأحمر يعني تعارضاً. الغياب لعدة أيام من 🕘 تحت الاسم. تُطبع مقسّمة حسب الصف في ورقة واحدة.',
+  'تقرير الإشراف والمناوبة': 'المناوبة أولويتها لمن لديه الحصة السابعة اليوم (⑦ في القائمة)، وزر التعبئة التلقائية يختار منهم الأقل مناوبةً في الفصل. القوائم تنبّه للغائب والمكرر. احفظ اليوم «جدولاً ثابتاً» ليُعبّأ تلقائياً كل أسبوع.',
   'الجدول المدرسي العام': 'حصص كل معلم في اليوم المختار؛ الخانة الفارغة تعني أنه متاح.',
   'نماذج تحتاجها أثناء الاختبار': 'محاضر ونماذج فارغة جاهزة للطباعة عند الحاجة أثناء الاختبار.'
 };
@@ -4370,9 +4381,20 @@ function dutyIssue(iso, name, where) {
   return '';
 }
 function dutyOpts(iso) {
-  const d = wdOf(iso), abs = absentSet(iso), names = ttNames(); const here = [], none = [], away = [];
-  names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
-  return [{ label: `✓ متواجدون اليوم حسب الجدول (${here.length})`, items: here }, { label: 'ليس لديهم حصص اليوم', items: none }, { label: '✕ غائبون اليوم', items: away }];
+  const d = wdOf(iso), abs = absentSet(iso), names = ttNames(); const p7 = [], here = [], none = [], away = [];
+  names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d >= 0 && D().tt && ttCell(n, d, 7)) p7.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
+  const g = [];
+  if (p7.length) g.push({ label: `⑦ لديهم الحصة السابعة اليوم — الأولى بالمناوبة (${p7.length})`, items: p7 });
+  g.push({ label: `✓ متواجدون اليوم حسب الجدول (${here.length})`, items: here }, { label: 'ليس لديهم حصص اليوم', items: none }, { label: '✕ غائبون اليوم', items: away });
+  return g;
+}
+function dutyCount(name, a, b) { let n = 0; const k = normName(name); Object.entries(D().duty).forEach(([iso, u]) => { if (iso < a || iso > b) return; (u.duty || []).forEach(r => { if (r.n && normName(r.n) === k) n++; }); }); return n; }
+function autoDuty(iso) {
+  const d = wdOf(iso); if (d < 0 || !D().tt) return -1; const u = D().duty[iso] = U(iso), abs = absentSet(iso);
+  const used = new Set(); (u.b || []).forEach(x => { if (x.gen) used.add(normName(x.gen)); (x.rows || []).forEach(r => r.n && used.add(normName(r.n))); }); (u.duty || []).forEach(r => r.n && used.add(normName(r.n)));
+  const [a, b] = statRange('t');
+  const cand = ttNames().filter(n => ttCell(n, d, 7) && !abs.has(normName(n)) && !used.has(normName(n))).sort((x, y) => dutyCount(x, a, b) - dutyCount(y, a, b) || AR.compare(normName(x), normName(y)));
+  let k = 0; u.duty.forEach(r => { if (!r.n && cand[k]) { r.n = cand[k++]; } }); return k;
 }
 
 /* ---------- الصفحة ---------- */
@@ -4410,8 +4432,8 @@ function absGrid(iso) {
   const chip = n => { const on = abs.has(normName(n)), c = d >= 0 ? ttDayLoad(n, d) : 0, lv = leaveOf(iso, n);
     return `<button type="button" class="achip${on ? ' on' : ''}${c ? '' : ' zero'}" data-act="wAbs" data-n="${esc(n)}" aria-pressed="${on}">${lv ? '🕘 ' : ''}${esc(n)}<i>${c}</i></button>`; };
   const nAbs = (D().wait[iso] || { blocks: [] }).blocks.length;
-  return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs} غائب — اضغط لإضافة أو إزالة` : 'المس أسماء الغائبين'}</span></summary>
-    <p class="hint">المس اسم كل غائب فيظهر جدول حصصه لهذا اليوم تحته مباشرة، والمس الاسم مرة ثانية للإلغاء. الرقم بجانب الاسم عدد حصصه اليوم.</p>
+  return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs} غائب` : 'المس الاسم'}</span><button type="button" class="hlp" data-help="المس اسم الغائب فتظهر حصصه لهذا اليوم، والمسه ثانية للإلغاء. الرقم = حصصه اليوم." aria-label="شرح">؟</button></summary>
+
     ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
 }
 function leaveCtl(iso, b, bi) {
@@ -4439,7 +4461,7 @@ function vWait(iso) {
   const issues = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => subIssue(iso, bi, p, ((b.rows || {})[p] || {}).t)).length, 0);
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">المس أسماء الغائبين فتظهر حصص كل منهم وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b>: يظهر أولاً معلمو الصف نفسه (أول/ثاني/ثالث)، ثم بقية المتاحين — هجائياً، والمميَّز بنجمة هو الأقل انتظاراً. تُطبع الاستمارة مقسّمة حسب الصف في ورقة واحدة.</p>
+
     ${d >= 0 && !holOf(iso) ? absGrid(iso) : ''}
     <div class="acts wrap">${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
@@ -4467,9 +4489,9 @@ function vDuty(iso) {
   const blocks = cfg.b.map((b, i) => `<article class="dblk"><header><b>${esc(b.t)}</b><small>(${esc(b.g)})</small><label class="inl">المشرف العام ${sel(`${P}.b.${i}.gen`, u.b[i] && u.b[i].gen, 'g')}</label></header>
     <div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم المشرف</th><th style="width:30%">الجهة</th><th>الملاحظات</th></tr>${(u.b[i] ? u.b[i].rows : []).map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.b.${i}.rows.${j}.n`, r.n, 'b')}</td><td>${inp(`${P}.b.${i}.rows.${j}.loc`, r.loc || '')}</td><td>${inp(`${P}.b.${i}.rows.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div>
     <div class="acts"><button class="btn sm ghost" data-act="dRow" data-v="${i}" type="button">+ موقع إشراف</button></div></article>`).join('');
-  const duty = `<article class="dblk"><header><b>المناوبة</b><small>الموظفون المناوبون</small></header><div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم الموظف المناوب</th><th>ملحوظات</th></tr>${u.duty.map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.duty.${j}.n`, r.n, 'd')}</td><td>${inp(`${P}.duty.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div><div class="acts"><button class="btn sm ghost" data-act="dRow" data-v="duty" type="button">+ مناوب</button></div></article>`;
+  const duty = `<article class="dblk"><header><b>المناوبة</b><small>الموظفون المناوبون</small></header><div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم الموظف المناوب</th><th>ملحوظات</th></tr>${u.duty.map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.duty.${j}.n`, r.n, 'd')}</td><td>${inp(`${P}.duty.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div><div class="acts"><button class="btn sm pri" data-act="dAutoDuty" type="button">⑦ تعبئة تلقائية من أصحاب الحصة السابعة</button><button class="btn sm ghost" data-act="dRow" data-v="duty" type="button">+ مناوب</button></div></article>`;
   return `<section class="card"><h2>تقرير الإشراف والمناوبة اليومي — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">القوائم تعرض أولاً المعلمين <b>المتواجدين اليوم حسب الجدول</b>، وتنبّه إلى الغائب أو المكلف بأكثر من موقع. ${saved ? '' : D().week[wdOf(iso)] ? 'عُبّئ من الجدول الثابت لهذا اليوم من الأسبوع.' : ''}</p>
+
     <div class="acts wrap"><button class="btn pri" data-act="dPrint" data-v="duty" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="duty" type="button">PDF</button><button class="btn" data-act="dWord" data-v="duty" type="button">Word</button><span class="sp1"></span>
       <button class="btn" data-act="dWeek" type="button">حفظ كجدول ثابت لكل يوم ${wdOf(iso) >= 0 ? TT_DAYS[wdOf(iso)] : ''}</button>${saved ? '<button class="btn ghost" data-act="dReset" type="button">مسح تعبئة هذا اليوم</button>' : ''}</div>
     <div class="dblks">${blocks}${duty}</div>
@@ -4575,6 +4597,7 @@ document.addEventListener('click', async e => {
   if (a === 'wSet') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, b.dataset.n); save(); render(); return; }
   if (a === 'wClr') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, ''); save(); render(); return; }
   if (a === 'wAuto') { const n = autoFill(iso); save(); render(); return toast(n ? `عُبّئت ${n} حصة بالمعلمين المتاحين الأقل انتظاراً` : 'لا توجد حصص فارغة تحتاج تعبئة'); }
+  if (a === 'dAutoDuty') { const n = autoDuty(iso); save(); render(); return toast(n < 0 ? 'ارفع الجدول المدرسي أولاً' : n ? `عُبّئ ${n} مناوب من أصحاب الحصة السابعة (الأقل مناوبةً أولاً)` : 'لا توجد خانات فارغة أو لا يوجد متاح من أصحاب الحصة السابعة'); }
   if (a === 'dRow') { const u = D().duty[iso] = U(iso); if (b.dataset.v === 'duty') u.duty.push({ n: '', note: '' }); else u.b[+b.dataset.v].rows.push({ n: '', loc: '', note: '' }); save(); return render(); }
   if (a === 'dWeek') { const w = wdOf(iso); if (w < 0) return toast('اختر يوماً دراسياً', true); D().week[w] = clone(U(iso)); save(); return toast(`حُفظ كجدول ثابت — سيُعبّأ تلقائياً في كل يوم ${TT_DAYS[w]}`); }
   if (a === 'dReset') { if (await confirmBox('مسح تعبئة المناوبة لهذا اليوم؟')) { delete D().duty[iso]; save(); render(); } return; }

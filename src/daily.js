@@ -127,9 +127,20 @@ function dutyIssue(iso, name, where) {
   return '';
 }
 function dutyOpts(iso) {
-  const d = wdOf(iso), abs = absentSet(iso), names = ttNames(); const here = [], none = [], away = [];
-  names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
-  return [{ label: `✓ متواجدون اليوم حسب الجدول (${here.length})`, items: here }, { label: 'ليس لديهم حصص اليوم', items: none }, { label: '✕ غائبون اليوم', items: away }];
+  const d = wdOf(iso), abs = absentSet(iso), names = ttNames(); const p7 = [], here = [], none = [], away = [];
+  names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d >= 0 && D().tt && ttCell(n, d, 7)) p7.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
+  const g = [];
+  if (p7.length) g.push({ label: `⑦ لديهم الحصة السابعة اليوم — الأولى بالمناوبة (${p7.length})`, items: p7 });
+  g.push({ label: `✓ متواجدون اليوم حسب الجدول (${here.length})`, items: here }, { label: 'ليس لديهم حصص اليوم', items: none }, { label: '✕ غائبون اليوم', items: away });
+  return g;
+}
+function dutyCount(name, a, b) { let n = 0; const k = normName(name); Object.entries(D().duty).forEach(([iso, u]) => { if (iso < a || iso > b) return; (u.duty || []).forEach(r => { if (r.n && normName(r.n) === k) n++; }); }); return n; }
+function autoDuty(iso) {
+  const d = wdOf(iso); if (d < 0 || !D().tt) return -1; const u = D().duty[iso] = U(iso), abs = absentSet(iso);
+  const used = new Set(); (u.b || []).forEach(x => { if (x.gen) used.add(normName(x.gen)); (x.rows || []).forEach(r => r.n && used.add(normName(r.n))); }); (u.duty || []).forEach(r => r.n && used.add(normName(r.n)));
+  const [a, b] = statRange('t');
+  const cand = ttNames().filter(n => ttCell(n, d, 7) && !abs.has(normName(n)) && !used.has(normName(n))).sort((x, y) => dutyCount(x, a, b) - dutyCount(y, a, b) || AR.compare(normName(x), normName(y)));
+  let k = 0; u.duty.forEach(r => { if (!r.n && cand[k]) { r.n = cand[k++]; } }); return k;
 }
 
 /* ---------- الصفحة ---------- */
@@ -167,8 +178,8 @@ function absGrid(iso) {
   const chip = n => { const on = abs.has(normName(n)), c = d >= 0 ? ttDayLoad(n, d) : 0, lv = leaveOf(iso, n);
     return `<button type="button" class="achip${on ? ' on' : ''}${c ? '' : ' zero'}" data-act="wAbs" data-n="${esc(n)}" aria-pressed="${on}">${lv ? '🕘 ' : ''}${esc(n)}<i>${c}</i></button>`; };
   const nAbs = (D().wait[iso] || { blocks: [] }).blocks.length;
-  return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs} غائب — اضغط لإضافة أو إزالة` : 'المس أسماء الغائبين'}</span></summary>
-    <p class="hint">المس اسم كل غائب فيظهر جدول حصصه لهذا اليوم تحته مباشرة، والمس الاسم مرة ثانية للإلغاء. الرقم بجانب الاسم عدد حصصه اليوم.</p>
+  return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs} غائب` : 'المس الاسم'}</span><button type="button" class="hlp" data-help="المس اسم الغائب فتظهر حصصه لهذا اليوم، والمسه ثانية للإلغاء. الرقم = حصصه اليوم." aria-label="شرح">؟</button></summary>
+
     ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
 }
 function leaveCtl(iso, b, bi) {
@@ -196,7 +207,7 @@ function vWait(iso) {
   const issues = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => subIssue(iso, bi, p, ((b.rows || {})[p] || {}).t)).length, 0);
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">المس أسماء الغائبين فتظهر حصص كل منهم وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b>: يظهر أولاً معلمو الصف نفسه (أول/ثاني/ثالث)، ثم بقية المتاحين — هجائياً، والمميَّز بنجمة هو الأقل انتظاراً. تُطبع الاستمارة مقسّمة حسب الصف في ورقة واحدة.</p>
+
     ${d >= 0 && !holOf(iso) ? absGrid(iso) : ''}
     <div class="acts wrap">${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
@@ -224,9 +235,9 @@ function vDuty(iso) {
   const blocks = cfg.b.map((b, i) => `<article class="dblk"><header><b>${esc(b.t)}</b><small>(${esc(b.g)})</small><label class="inl">المشرف العام ${sel(`${P}.b.${i}.gen`, u.b[i] && u.b[i].gen, 'g')}</label></header>
     <div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم المشرف</th><th style="width:30%">الجهة</th><th>الملاحظات</th></tr>${(u.b[i] ? u.b[i].rows : []).map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.b.${i}.rows.${j}.n`, r.n, 'b')}</td><td>${inp(`${P}.b.${i}.rows.${j}.loc`, r.loc || '')}</td><td>${inp(`${P}.b.${i}.rows.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div>
     <div class="acts"><button class="btn sm ghost" data-act="dRow" data-v="${i}" type="button">+ موقع إشراف</button></div></article>`).join('');
-  const duty = `<article class="dblk"><header><b>المناوبة</b><small>الموظفون المناوبون</small></header><div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم الموظف المناوب</th><th>ملحوظات</th></tr>${u.duty.map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.duty.${j}.n`, r.n, 'd')}</td><td>${inp(`${P}.duty.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div><div class="acts"><button class="btn sm ghost" data-act="dRow" data-v="duty" type="button">+ مناوب</button></div></article>`;
+  const duty = `<article class="dblk"><header><b>المناوبة</b><small>الموظفون المناوبون</small></header><div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم الموظف المناوب</th><th>ملحوظات</th></tr>${u.duty.map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.duty.${j}.n`, r.n, 'd')}</td><td>${inp(`${P}.duty.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div><div class="acts"><button class="btn sm pri" data-act="dAutoDuty" type="button">⑦ تعبئة تلقائية من أصحاب الحصة السابعة</button><button class="btn sm ghost" data-act="dRow" data-v="duty" type="button">+ مناوب</button></div></article>`;
   return `<section class="card"><h2>تقرير الإشراف والمناوبة اليومي — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">القوائم تعرض أولاً المعلمين <b>المتواجدين اليوم حسب الجدول</b>، وتنبّه إلى الغائب أو المكلف بأكثر من موقع. ${saved ? '' : D().week[wdOf(iso)] ? 'عُبّئ من الجدول الثابت لهذا اليوم من الأسبوع.' : ''}</p>
+
     <div class="acts wrap"><button class="btn pri" data-act="dPrint" data-v="duty" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="duty" type="button">PDF</button><button class="btn" data-act="dWord" data-v="duty" type="button">Word</button><span class="sp1"></span>
       <button class="btn" data-act="dWeek" type="button">حفظ كجدول ثابت لكل يوم ${wdOf(iso) >= 0 ? TT_DAYS[wdOf(iso)] : ''}</button>${saved ? '<button class="btn ghost" data-act="dReset" type="button">مسح تعبئة هذا اليوم</button>' : ''}</div>
     <div class="dblks">${blocks}${duty}</div>
@@ -332,6 +343,7 @@ document.addEventListener('click', async e => {
   if (a === 'wSet') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, b.dataset.n); save(); render(); return; }
   if (a === 'wClr') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, ''); save(); render(); return; }
   if (a === 'wAuto') { const n = autoFill(iso); save(); render(); return toast(n ? `عُبّئت ${n} حصة بالمعلمين المتاحين الأقل انتظاراً` : 'لا توجد حصص فارغة تحتاج تعبئة'); }
+  if (a === 'dAutoDuty') { const n = autoDuty(iso); save(); render(); return toast(n < 0 ? 'ارفع الجدول المدرسي أولاً' : n ? `عُبّئ ${n} مناوب من أصحاب الحصة السابعة (الأقل مناوبةً أولاً)` : 'لا توجد خانات فارغة أو لا يوجد متاح من أصحاب الحصة السابعة'); }
   if (a === 'dRow') { const u = D().duty[iso] = U(iso); if (b.dataset.v === 'duty') u.duty.push({ n: '', note: '' }); else u.b[+b.dataset.v].rows.push({ n: '', loc: '', note: '' }); save(); return render(); }
   if (a === 'dWeek') { const w = wdOf(iso); if (w < 0) return toast('اختر يوماً دراسياً', true); D().week[w] = clone(U(iso)); save(); return toast(`حُفظ كجدول ثابت — سيُعبّأ تلقائياً في كل يوم ${TT_DAYS[w]}`); }
   if (a === 'dReset') { if (await confirmBox('مسح تعبئة المناوبة لهذا اليوم؟')) { delete D().duty[iso]; save(); render(); } return; }

@@ -28,14 +28,14 @@
 /* التخطيط: شريط علوي بهوية الوزارة، تبويبات أفقية، ومحتوى في بطاقات؛ صفحة النماذج: قائمة جانبية + معاينة ورق A4 */
 :root{
   --navy:#0b3a46; --navy2:#12505f; --accent:#1f9d66; --accent-ink:#ffffff;
-  --bg:#edf2f3; --surface:#ffffff; --surface2:#f5f9fa; --ink:#10232a; --muted:#4c666e; --line:#d0dde0; --soft:#e6eff0;
-  --info:#0a6a82; --info-bg:#e3f2f6; --info-line:#8cc8d8; --shadow:0 1px 2px rgba(12,40,48,.06),0 6px 18px rgba(12,40,48,.05);
+  --bg:#f3f1ec; --surface:#fffdf9; --surface2:#f9f6f0; --ink:#1d2a2f; --muted:#56676c; --line:#e2dbcf; --soft:#efe9de;
+  --info:#13707d; --info-bg:#e5f1f0; --info-line:#97cdcc; --shadow:0 1px 2px rgba(12,40,48,.06),0 6px 18px rgba(12,40,48,.05);
   --warn:#b4541a; --bad:#b3193f; --ok:#16794e;
   --ui:'Tajawal',Tahoma,Arial,sans-serif; --doc:'Tajawal','Sakkal Majalla',Arial,sans-serif;
   color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b1518;--surface:#132229;--surface2:#192c34;--ink:#eef4f5;--muted:#aec2c7;--line:#2f4a52;--soft:#1d343c;--accent:#36c48c;--info:#8fd3e6;--info-bg:#12303a;--info-line:#2f6c7c;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0b1518;--surface:#132229;--surface2:#192c34;--ink:#eef4f5;--muted:#aec2c7;--line:#2f4a52;--soft:#1d343c;--accent:#36c48c;--info:#8fd3e6;--info-bg:#12303a;--info-line:#2f6c7c;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121a1d;--surface:#18242a;--surface2:#1e2d33;--ink:#e7ece9;--muted:#a5b4b2;--line:#2d3f45;--soft:#22353b;--accent:#3cc38f;--info:#8ccbd0;--info-bg:#17333a;--info-line:#3a7179;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121a1d;--surface:#18242a;--surface2:#1e2d33;--ink:#e7ece9;--muted:#a5b4b2;--line:#2d3f45;--soft:#22353b;--accent:#3cc38f;--info:#8ccbd0;--info-bg:#17333a;--info-line:#3a7179;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -666,6 +666,17 @@ table.et td{border-bottom-color:color-mix(in srgb,var(--line) 75%,transparent)}
 main#main{--sct:var(--sc)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) main#main{--sct:color-mix(in srgb,var(--sc) 45%,#e6f2f4)}}
 :root[data-theme="dark"] main#main{--sct:color-mix(in srgb,var(--sc) 45%,#e6f2f4)}
+
+/* لمسات إضافية مريحة */
+.card{border-top-width:3px}
+.board .bcard.none{border-color:color-mix(in srgb,#dc2626 55%,var(--line))}
+.absg{background:linear-gradient(180deg,color-mix(in srgb,#e11d48 5%,var(--surface2)),var(--surface2) 120px)}
+.absg > summary{align-items:center}.absg > summary .hlp{margin-inline-start:auto}
+.achip{box-shadow:0 1px 0 color-mix(in srgb,var(--line) 70%,transparent)}
+.wchips{gap:6px}
+.dtabs button.on{box-shadow:0 2px 8px color-mix(in srgb,var(--sc,#0e7490) 25%,transparent)}
+
+.absg .achip{font-size:.78rem;padding:3px 5px 3px 9px;min-height:30px}.absg .wchips{gap:5px}
 </style>
 </head>
 <body>
