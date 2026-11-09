@@ -677,6 +677,9 @@ main#main{--sct:var(--sc)}
 .dtabs button.on{box-shadow:0 2px 8px color-mix(in srgb,var(--sc,#0e7490) 25%,transparent)}
 
 .absg .achip{font-size:.78rem;padding:3px 5px 3px 9px;min-height:30px}.absg .wchips{gap:5px}
+
+.wkt td{vertical-align:top}.wkt td .cf{display:block}
+@media (max-width:700px){table.wkt,table.wkt tbody{display:block}table.wkt tr:first-child{display:none}table.wkt tr{display:grid;grid-template-columns:1fr;gap:6px;padding:10px 4px;border-bottom:1px solid var(--line)}table.wkt td{display:block;border:0;padding:0}}
 </style>
 </head>
 <body>
@@ -4197,7 +4200,8 @@ var HELP = {
   'الحفظ والمزامنة': 'فعّل المزامنة بالرمز لتُحفظ بياناتك على السحابة وتظهر على أي جهاز. لكل قسم سجل آخر 20 نسخة.',
   'أوراق هذا اليوم': 'كل أوراق يوم الاختبار المختار. «حقيبة اليوم كاملة» تجمعها كلها في ملف واحد بغلاف وفهرس.',
   'استمارة حصص الانتظار': 'المس اسم الغائب فتظهر حصصه وشعبه لهذا اليوم. تحت كل حصة: معلمو الصف نفسه أولاً ثم بقية المتاحين، والنجمة ★ للأقل انتظاراً. «تعبئة تلقائية» تملأ الكل، والتنبيه الأحمر يعني تعارضاً. الغياب لعدة أيام من 🕘 تحت الاسم. تُطبع مقسّمة حسب الصف في ورقة واحدة.',
-  'تقرير الإشراف والمناوبة': 'المناوبة أولويتها لمن لديه الحصة السابعة اليوم (⑦ في القائمة)، وزر التعبئة التلقائية يختار منهم الأقل مناوبةً في الفصل. القوائم تنبّه للغائب والمكرر. احفظ اليوم «جدولاً ثابتاً» ليُعبّأ تلقائياً كل أسبوع.',
+  'تقرير الإشراف والمناوبة': 'المناوبة أولويتها لمن لديه الحصة الأخيرة اليوم — السابعة، أو السادسة إن انتهى اليوم بها (⑦ في القائمة)، وزر التعبئة التلقائية يختار منهم الأقل مناوبةً في الفصل. القوائم تنبّه للغائب والمكرر. احفظ اليوم «جدولاً ثابتاً» ليُعبّأ تلقائياً كل أسبوع.',
+  'جدول المناوبة الأسبوعي': 'يُجهَّز مرة واحدة: مناوبو كل يوم من أصحاب الحصة الأخيرة في ذلك اليوم (السابعة، أو السادسة في الأيام التي تنتهي بها)، موزعين بعدل على الأسبوع. يُعبّأ به تقرير كل يوم تلقائياً، وإن غاب أحدهم يظهر زر «بديل» من أصحاب الحصة الأخيرة في اليوم نفسه.',
   'الجدول المدرسي العام': 'حصص كل معلم في اليوم المختار؛ الخانة الفارغة تعني أنه متاح.',
   'نماذج تحتاجها أثناء الاختبار': 'محاضر ونماذج فارغة جاهزة للطباعة عند الحاجة أثناء الاختبار.'
 };
@@ -4370,7 +4374,39 @@ function U(iso) {
   const all = D().duty; if (all[iso]) return all[iso];
   const cfg = D().cfg, wk = D().week[wdOf(iso)];
   const blank = { b: cfg.b.map(b => ({ gen: '', rows: b.locs.map(l => ({ n: '', loc: l, note: '' })) })), duty: Array.from({ length: cfg.dutyRows || 3 }, () => ({ n: '', note: '' })), sem: S.s.sem };
-  return wk ? Object.assign(clone(wk), { sem: S.s.sem }) : blank;
+  if (!wk) return blank; const w = clone(wk);
+  return { b: Array.isArray(w.b) && w.b.length ? w.b : blank.b, duty: Array.isArray(w.duty) && w.duty.some(r => r && r.n) ? w.duty.map(r => ({ n: r.n || '', note: '' })) : blank.duty, sem: S.s.sem, fromWeek: true };
+}
+/* ----- جدول المناوبة الأسبوعي الثابت المرتبط بالحصة الأخيرة ----- */
+function weekTpl(wd) { const W = D().week; if (!W[wd]) W[wd] = {}; const t = W[wd], n = D().cfg.dutyRows || 3; t.duty = Array.isArray(t.duty) ? t.duty : []; while (t.duty.length < n) t.duty.push({ n: '' }); return t; }
+let LP_CACHE = null;
+function lastP(wd) { const t = D().tt; if (!t) return 7; if (!LP_CACHE || LP_CACHE.t !== t) LP_CACHE = { t, m: {} }; if (LP_CACHE.m[wd] == null) { let m = 0; t.teachers.forEach(x => { for (let p = 7; p > m; p--) if (x.c[wd + '-' + p]) { m = p; break; } }); LP_CACHE.m[wd] = m || 7; } return LP_CACHE.m[wd]; }
+const PNAME = { 5: 'الخامسة', 6: 'السادسة', 7: 'السابعة', 8: 'الثامنة' };
+function lastLbl(wd) { const p = lastP(wd); return `الحصة الأخيرة (${PNAME[p] || p})`; }
+function has7(n, wd) { return !!(D().tt && ttCell(n, wd, lastP(wd))); }
+function dutyOptsWd(wd) { const p7 = [], here = [], none = []; ttNames().forEach(n => { if (has7(n, wd)) p7.push(n); else if (ttDayLoad(n, wd)) here.push(n); else none.push(n); });
+  return [{ label: `⑦ لديهم ${lastLbl(wd)} يوم ${TT_DAYS[wd]} (${p7.length})`, items: p7 }, { label: 'متواجدون ذلك اليوم', items: here }, { label: 'ليس لديهم حصص ذلك اليوم', items: none }]; }
+function autoWeek() {
+  if (!D().tt) return -1; const [a, b] = statRange('t'), wkCount = {}; let filled = 0;
+  for (let wd = 0; wd < 5; wd++) { const t = weekTpl(wd); t.duty.forEach(r => { if (r.n) wkCount[normName(r.n)] = (wkCount[normName(r.n)] || 0) + 1; }); }
+  for (let wd = 0; wd < 5; wd++) { const t = weekTpl(wd), used = new Set(t.duty.filter(r => r.n).map(r => normName(r.n)));
+    const pool = ttNames().filter(n => has7(n, wd) && !used.has(normName(n))).sort((x, y) => (wkCount[normName(x)] || 0) - (wkCount[normName(y)] || 0) || dutyCount(x, a, b) - dutyCount(y, a, b) || AR.compare(normName(x), normName(y)));
+    t.duty.forEach(r => { if (!r.n && pool.length) { r.n = pool.shift(); wkCount[normName(r.n)] = (wkCount[normName(r.n)] || 0) + 1; used.add(normName(r.n)); filled++; } }); }
+  return filled;
+}
+function vWeekDuty() {
+  const n = D().cfg.dutyRows || 3;
+  const rows = [0, 1, 2, 3, 4].map(wd => { const t = weekTpl(wd), opt = dutyOptsWd(wd);
+    return `<tr><td><b>${TT_DAYS[wd]}</b></td>${t.duty.slice(0, Math.max(n, t.duty.length)).map((r, j) => `<td>${pickSel(`daily.week.${wd}.duty.${j}.n`, r.n || '', opt, { ph: '— اختر —' })}${r.n && D().tt && !has7(r.n, wd) ? `<span class="cf">⚠ ليس لديه الحصة الأخيرة</span>` : ''}</td>`).join('')}</tr>`; }).join('');
+  return `<section class="card wkduty"><h2>جدول المناوبة الأسبوعي الثابت</h2>
+    <div class="acts wrap"><button class="btn pri" data-act="dWeekAuto" type="button">⑦ توزيع عادل على أيام الأسبوع</button><button class="btn ghost" data-act="dWeekClr" type="button">مسح الجدول</button></div>
+    <div class="tw"><table class="et wkt"><tr><th style="width:80px">اليوم</th>${Array.from({ length: n }, (_, j) => `<th>المناوب ${j + 1}</th>`).join('')}</tr>${rows}</table></div></section>`;
+}
+function dutyRep(iso, j) {
+  const u = D().duty[iso] = U(iso), d = wdOf(iso), abs = absentSet(iso), [a, b] = statRange('t');
+  const used = new Set(); (u.b || []).forEach(x => { if (x.gen) used.add(normName(x.gen)); (x.rows || []).forEach(r => r.n && used.add(normName(r.n))); }); u.duty.forEach(r => r.n && used.add(normName(r.n)));
+  const c = ttNames().filter(n => has7(n, d) && !abs.has(normName(n)) && !used.has(normName(n))).sort((x, y) => dutyCount(x, a, b) - dutyCount(y, a, b) || AR.compare(normName(x), normName(y)))[0];
+  if (!c) return ''; const old = u.duty[j].n; u.duty[j].n = c; u.duty[j].note = old ? `بدلاً عن ${old}` : ''; return c;
 }
 function dutyIssue(iso, name, where) {
   if (!name) return ''; const k = normName(name);
@@ -4382,9 +4418,9 @@ function dutyIssue(iso, name, where) {
 }
 function dutyOpts(iso) {
   const d = wdOf(iso), abs = absentSet(iso), names = ttNames(); const p7 = [], here = [], none = [], away = [];
-  names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d >= 0 && D().tt && ttCell(n, d, 7)) p7.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
+  names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d >= 0 && D().tt && has7(n, d)) p7.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
   const g = [];
-  if (p7.length) g.push({ label: `⑦ لديهم الحصة السابعة اليوم — الأولى بالمناوبة (${p7.length})`, items: p7 });
+  if (p7.length) g.push({ label: `⑦ لديهم ${lastLbl(d)} اليوم — الأولى بالمناوبة (${p7.length})`, items: p7 });
   g.push({ label: `✓ متواجدون اليوم حسب الجدول (${here.length})`, items: here }, { label: 'ليس لديهم حصص اليوم', items: none }, { label: '✕ غائبون اليوم', items: away });
   return g;
 }
@@ -4393,7 +4429,7 @@ function autoDuty(iso) {
   const d = wdOf(iso); if (d < 0 || !D().tt) return -1; const u = D().duty[iso] = U(iso), abs = absentSet(iso);
   const used = new Set(); (u.b || []).forEach(x => { if (x.gen) used.add(normName(x.gen)); (x.rows || []).forEach(r => r.n && used.add(normName(r.n))); }); (u.duty || []).forEach(r => r.n && used.add(normName(r.n)));
   const [a, b] = statRange('t');
-  const cand = ttNames().filter(n => ttCell(n, d, 7) && !abs.has(normName(n)) && !used.has(normName(n))).sort((x, y) => dutyCount(x, a, b) - dutyCount(y, a, b) || AR.compare(normName(x), normName(y)));
+  const cand = ttNames().filter(n => has7(n, d) && !abs.has(normName(n)) && !used.has(normName(n))).sort((x, y) => dutyCount(x, a, b) - dutyCount(y, a, b) || AR.compare(normName(x), normName(y)));
   let k = 0; u.duty.forEach(r => { if (!r.n && cand[k]) { r.n = cand[k++]; } }); return k;
 }
 
@@ -4489,14 +4525,14 @@ function vDuty(iso) {
   const blocks = cfg.b.map((b, i) => `<article class="dblk"><header><b>${esc(b.t)}</b><small>(${esc(b.g)})</small><label class="inl">المشرف العام ${sel(`${P}.b.${i}.gen`, u.b[i] && u.b[i].gen, 'g')}</label></header>
     <div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم المشرف</th><th style="width:30%">الجهة</th><th>الملاحظات</th></tr>${(u.b[i] ? u.b[i].rows : []).map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.b.${i}.rows.${j}.n`, r.n, 'b')}</td><td>${inp(`${P}.b.${i}.rows.${j}.loc`, r.loc || '')}</td><td>${inp(`${P}.b.${i}.rows.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div>
     <div class="acts"><button class="btn sm ghost" data-act="dRow" data-v="${i}" type="button">+ موقع إشراف</button></div></article>`).join('');
-  const duty = `<article class="dblk"><header><b>المناوبة</b><small>الموظفون المناوبون</small></header><div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم الموظف المناوب</th><th>ملحوظات</th></tr>${u.duty.map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.duty.${j}.n`, r.n, 'd')}</td><td>${inp(`${P}.duty.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div><div class="acts"><button class="btn sm pri" data-act="dAutoDuty" type="button">⑦ تعبئة تلقائية من أصحاب الحصة السابعة</button><button class="btn sm ghost" data-act="dRow" data-v="duty" type="button">+ مناوب</button></div></article>`;
+  const duty = `<article class="dblk"><header><b>المناوبة</b><small>الموظفون المناوبون</small></header><div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم الموظف المناوب</th><th>ملحوظات</th></tr>${u.duty.map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.duty.${j}.n`, r.n, 'd')}${r.n && absentSet(iso).has(normName(r.n)) ? `<button class="btn sm" data-act="dDutyRep" data-j="${j}" type="button">↺ بديل من أصحاب الحصة الأخيرة</button>` : ''}</td><td>${inp(`${P}.duty.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div><div class="acts"><button class="btn sm pri" data-act="dAutoDuty" type="button">⑦ تعبئة تلقائية من أصحاب الحصة الأخيرة</button><button class="btn sm ghost" data-act="dRow" data-v="duty" type="button">+ مناوب</button></div></article>`;
   return `<section class="card"><h2>تقرير الإشراف والمناوبة اليومي — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
 
     <div class="acts wrap"><button class="btn pri" data-act="dPrint" data-v="duty" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="duty" type="button">PDF</button><button class="btn" data-act="dWord" data-v="duty" type="button">Word</button><span class="sp1"></span>
       <button class="btn" data-act="dWeek" type="button">حفظ كجدول ثابت لكل يوم ${wdOf(iso) >= 0 ? TT_DAYS[wdOf(iso)] : ''}</button>${saved ? '<button class="btn ghost" data-act="dReset" type="button">مسح تعبئة هذا اليوم</button>' : ''}</div>
     <div class="dblks">${blocks}${duty}</div>
     <details class="sub"><summary>إعدادات النموذج (الفسح والمواقع)</summary><div class="grid2">${cfg.b.map((b, i) => `<label>اسم ${i + 1} ${inp(`daily.cfg.b.${i}.t`, b.t)}</label><label>الصفوف ${inp(`daily.cfg.b.${i}.g`, b.g)}</label>`).join('')}<label>رقم النموذج ${inp('daily.cfg.no', cfg.no)}</label><label>رمز النموذج ${inp('daily.cfg.code', cfg.code)}</label></div></details>
-  </section>`;
+  </section>${vWeekDuty()}`;
 }
 function ttSrc() { return TT_WHICH === 'next' && D().ttNext ? D().ttNext : D().tt; }
 function vTT(iso) {
@@ -4597,7 +4633,10 @@ document.addEventListener('click', async e => {
   if (a === 'wSet') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, b.dataset.n); save(); render(); return; }
   if (a === 'wClr') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, ''); save(); render(); return; }
   if (a === 'wAuto') { const n = autoFill(iso); save(); render(); return toast(n ? `عُبّئت ${n} حصة بالمعلمين المتاحين الأقل انتظاراً` : 'لا توجد حصص فارغة تحتاج تعبئة'); }
-  if (a === 'dAutoDuty') { const n = autoDuty(iso); save(); render(); return toast(n < 0 ? 'ارفع الجدول المدرسي أولاً' : n ? `عُبّئ ${n} مناوب من أصحاب الحصة السابعة (الأقل مناوبةً أولاً)` : 'لا توجد خانات فارغة أو لا يوجد متاح من أصحاب الحصة السابعة'); }
+  if (a === 'dWeekAuto') { const n = autoWeek(); save(); render(); return toast(n < 0 ? 'ارفع الجدول المدرسي أولاً' : n ? `وُزّع ${n} مناوباً على أيام الأسبوع من أصحاب الحصة الأخيرة — يُعبّأ تلقائياً كل يوم` : 'الجدول مكتمل'); }
+  if (a === 'dWeekClr') { if (await confirmBox('مسح جدول المناوبة الأسبوعي الثابت؟ الأيام المحفوظة لا تتأثر.')) { for (let w = 0; w < 5; w++) if (D().week[w]) D().week[w].duty = []; save(); render(); } return; }
+  if (a === 'dDutyRep') { const c = dutyRep(iso, +b.dataset.j); save(); render(); return toast(c ? `${c} بدلاً عن الغائب ✓` : 'لا يوجد بديل متاح من أصحاب الحصة الأخيرة', !c); }
+  if (a === 'dAutoDuty') { const n = autoDuty(iso); save(); render(); return toast(n < 0 ? 'ارفع الجدول المدرسي أولاً' : n ? `عُبّئ ${n} مناوب من أصحاب الحصة الأخيرة (الأقل مناوبةً أولاً)` : 'لا توجد خانات فارغة أو لا يوجد متاح من أصحاب الحصة الأخيرة'); }
   if (a === 'dRow') { const u = D().duty[iso] = U(iso); if (b.dataset.v === 'duty') u.duty.push({ n: '', note: '' }); else u.b[+b.dataset.v].rows.push({ n: '', loc: '', note: '' }); save(); return render(); }
   if (a === 'dWeek') { const w = wdOf(iso); if (w < 0) return toast('اختر يوماً دراسياً', true); D().week[w] = clone(U(iso)); save(); return toast(`حُفظ كجدول ثابت — سيُعبّأ تلقائياً في كل يوم ${TT_DAYS[w]}`); }
   if (a === 'dReset') { if (await confirmBox('مسح تعبئة المناوبة لهذا اليوم؟')) { delete D().duty[iso]; save(); render(); } return; }
