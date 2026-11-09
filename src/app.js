@@ -1013,26 +1013,45 @@ function buildStFromTa() {
 }
 
 /* ===================== الواجهة: التبويبات ===================== */
-const ALL_TABS = [
-  ['home', 'لوحة القيادة'], ['settings', 'الإعدادات العامة'], ['schedule', 'جدول الاختبارات'], ['committees', 'اللجان والأعداد'],
-  ['students', 'الطلاب'], ['assign', 'الإسناد والمعلمون'], ['staff', 'الملاحظون والتكليفات'], ['forms', 'النماذج والطباعة'], ['backup', 'النسخ الاحتياطي']
+/* ===================== مسار العمل: مراحل مرقّمة لكل منها لونها ===================== */
+const FLOW = [
+  { k: 'files', n: 1, t: 'الملفات الأساسية', d: 'ملف نور · ملف الإرشاد الطلابي · قائمة المعلمين — الأساس الذي يُبنى عليه كل شيء', c: '#2563eb', ic: '<path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5 12 11l2.5 2.5"/>' },
+  { k: 'assign', n: 2, t: 'الإسناد', d: 'توزيع المواد والشعب على المعلمين — تنعكس فيه قائمة المعلمين', c: '#7c3aed', ic: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' },
+  { k: 'schedule', n: 3, t: 'جدول الاختبارات', d: 'الأيام والفترات ومواد كل صف', c: '#0f766e', ic: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>' },
+  { k: 'committees', n: 4, t: 'اللجان والجلوس', d: 'أعداد اللجان وتوزيع الطلاب وأرقام الجلوس', c: '#c2410c', ic: '<path d="M4 20v-6h16v6M7 14V9h10v5M9 9V5h6v4"/>' },
+  { k: 'staff', n: 5, t: 'التكليفات والملاحظة', d: 'واضعو الأسئلة وبيان الدرجات وتوزيع الملاحظين والقوائم الخاصة', c: '#be185d', ic: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="m16 11 2 2 4-4"/>' },
+  { k: 'forms', n: 6, t: 'المطبوعات', d: 'كل النماذج والكشوف والمحاضر — طباعة وPDF وWord', c: '#4338ca', ic: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>' }
 ];
-/* قسمان مستقلان: «الاختبارات» و«الإسناد» — لكل قسم حفظه ومزامنته الخاصة */
-const WS_TABS = { ex: ALL_TABS.map(x => x[0]), ta: ['assign', 'settings', 'backup'] };
-let WS = (() => { try { return localStorage.getItem(LS_KEY + '-ws') === 'ta' ? 'ta' : 'ex'; } catch (e) { return 'ex'; } })();
-const tabsOf = w => WS_TABS[w].map(k => ALL_TABS.find(x => x[0] === k));
-let TABS = tabsOf(WS);
-let TAB = 'home';
-function setWs(w) {
-  WS = w; try { localStorage.setItem(LS_KEY + '-ws', w); } catch (e) { }
-  TABS = tabsOf(WS);
-  go(w === 'ta' ? 'assign' : 'home');
+const UTILS = [
+  { k: 'home', t: 'لوحة المتابعة', d: 'الحالة العامة والتنبيهات وحقائب الطباعة الجاهزة', c: '#0b3a46', ic: '<path d="M3 12h4l3 7 4-14 3 7h4"/>' },
+  { k: 'settings', t: 'الإعدادات', d: 'الكليشة والتواقيع والصفوف والتاريخ والتعليمات', c: '#475569', ic: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>' },
+  { k: 'backup', t: 'الحفظ والنسخ', d: 'المزامنة بين الأجهزة والنسخ الاحتياطية', c: '#475569', ic: '<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 8a4 4 0 0 1 0 8"/><path d="M12 12v8M9 17l3 3 3-3"/>' }
+];
+const PAGES = [...FLOW, ...UTILS];
+const ALL_TABS = PAGES.map(p => [p.k, p.t]);
+let WS = 'ex';
+let TABS = ALL_TABS;
+let TAB = 'files';
+const ALIAS = { students: 'files' };
+function stageDone(k) {
+  return { files: S.students.length > 0 && S.teachers.length > 0, assign: S.ta.length > 0, schedule: S.days.length > 0 && S.days.some(d => d.p.some(p => G.some(g => (p.s[g] || '').trim()))), committees: !!S.distributed, staff: Object.values(S.obs || {}).some(l => (l || []).some(Boolean)), forms: null }[k];
 }
+const svgI = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function renderNav() {
-  const ws = `<div class="wsw" role="group" aria-label="القسم"><button type="button" class="${WS === 'ex' ? 'on' : ''}" data-act="ws" data-v="ex">قسم الاختبارات</button><button type="button" class="${WS === 'ta' ? 'on' : ''}" data-act="ws" data-v="ta">قسم الإسناد</button></div>`;
-  $('#nav').innerHTML = ws + TABS.map(([k, t]) => `<button class="navb${k === TAB ? ' on' : ''}" data-tab="${k}" type="button">${t}</button>`).join('');
+  $('#nav').innerHTML = `<div class="steps">${FLOW.map(s => { const d = stageDone(s.k); return `<button class="step${s.k === TAB ? ' on' : ''}${d === true ? ' done' : ''}" style="--sc:${s.c}" data-tab="${s.k}" type="button" aria-current="${s.k === TAB ? 'page' : 'false'}"><i>${d === true ? '✓' : s.n}</i><span>${s.t}</span></button>`; }).join('<span class="sline" aria-hidden="true"></span>')}</div>
+  <div class="utils">${UTILS.map(u => `<button class="util${u.k === TAB ? ' on' : ''}" data-tab="${u.k}" type="button" title="${u.t}">${svgI(u.ic, 17)}<span>${u.t}</span></button>`).join('')}</div>`;
+  const on = $('#nav .step.on, #nav .util.on'); if (on && on.scrollIntoView) try { on.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { }
 }
-function go(tab) { if (!TABS.some(x => x[0] === tab)) tab = TABS[0][0]; TAB = tab; try { localStorage.setItem(LS_KEY + '-tab', tab); } catch (e) { } renderNav(); render(); window.scrollTo({ top: 0 }); if (location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab); }
+function stageHero(p) {
+  const st = FLOW.find(s => s.k === p.k);
+  return `<header class="shero" style="--sc:${p.c}"><div class="sico">${svgI(p.ic, 26)}</div><div class="stx">${st ? `<small>المرحلة ${st.n} من ${FLOW.length}</small>` : '<small>أدوات</small>'}<h2>${p.t}</h2><p>${p.d}</p></div></header>`;
+}
+function stageNext(p) {
+  const i = FLOW.findIndex(s => s.k === p.k); if (i < 0) return '';
+  const prev = FLOW[i - 1], next = FLOW[i + 1];
+  return `<nav class="snext" aria-label="التنقل بين المراحل">${prev ? `<button type="button" class="btn ghost" data-tab="${prev.k}">→ ${prev.t}</button>` : '<span></span>'}${next ? `<button type="button" class="btn nx" style="--sc:${next.c}" data-tab="${next.k}">التالي: ${next.t} ←</button>` : ''}</nav>`;
+}
+function go(tab) { tab = ALIAS[tab] || tab; if (!TABS.some(x => x[0] === tab)) tab = 'files'; TAB = tab; try { localStorage.setItem(LS_KEY + '-tab', tab); } catch (e) { } renderNav(); render(); window.scrollTo({ top: 0 }); if (location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab); }
 function flowBar() {
   const st = [
     ['settings', 'الإعدادات', !!S.s.yearTxt], ['schedule', 'الجدول', S.days.length > 0], ['students', 'ملف نور', S.students.length > 0],
@@ -1041,11 +1060,16 @@ function flowBar() {
   return `<nav class="flow" aria-label="خطوات الإعداد">${st.map((x, i) => `<button type="button" class="fstep ${x[2] === true ? 'ok' : x[2] === false ? 'todo' : ''}${TAB === x[0] ? ' cur' : ''}" data-tab="${x[0]}"><i>${x[2] === true ? '✓' : i + 1}</i>${x[1]}</button>`).join('<span class="fsep"></span>')}</nav>`;
 }
 function render() {
-  const m = $('#main');
-  m.innerHTML = (TAB === 'home' || WS === 'ta' ? '' : flowBar()) + ({ home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, students: vStudents, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup }[TAB])();
+  const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
+  m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
+  m.innerHTML = stageHero(p) + `<div class="sbody">${({ home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
+  if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
+    j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
+    $('.sbody', m).prepend(j); }
   $$('.brand-hdr').forEach(i => i.src = HDR); $$('.brand-ftr').forEach(i => i.src = FTR);
   if (TAB === 'forms') renderPreview();
-  if (TAB === 'students') renderStuTable();
+  if (TAB === 'files') renderStuTable();
   if (TAB === 'home') setTimeout(renderThumbs, 30);
 }
 function inp(path, val, o = {}) {
@@ -1220,11 +1244,43 @@ function filteredStudents() {
   l.sort((a, b) => so === 'name' ? a.n.localeCompare(b.n, 'ar') : so === 'seat' ? (a.seat || 0) - (b.seat || 0) : (a.g - b.g || a.sec - b.sec || a.n.localeCompare(b.n, 'ar')));
   return l;
 }
-function vStudents() {
+function fileCard(slot, o) {
+  const u = S.uploads[slot];
+  return `<article class="fcard${u || o.has ? ' done' : ''}" style="--fc:${o.c}">
+    <div class="fhead"><span class="fnum">${o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div></div>
+    <div class="ffacts">${o.facts}</div>
+    ${dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
+    ${o.out ? `<div class="fout"><span>تحميل:</span>${o.out}</div>` : ''}
+  </article>`;
+}
+function vFiles() {
+  const t = stuTotals(), n = S.students.length, gm = S.guide.filter(x => x.g).length;
+  const cards = `<div class="fcards">
+    ${fileCard('noor', { n: 1, c: '#2563eb', t: 'ملف نور', d: 'قائمة الطلاب بالصف والشعبة — يُبنى عليها الحصر واللجان وأرقام الجلوس.', has: n > 0, fmt: 'Excel من نظام نور (‎.xls/.xlsx)', accept: '.xls,.xlsx,.csv',
+      facts: n ? `<b>${n}</b><span>طالباً</span><em>أول ${t[1]} · ثاني ${t[2]} · ثالث ${t[3]}</em>` : '<span class="fnone">لم يُرفع بعد</span>',
+      out: n ? `<button class="btn sm" data-act="stuExcelAll" type="button">Excel</button><button class="btn sm" data-act="jumpStu" data-f="pdf" type="button">PDF</button><button class="btn sm" data-act="jumpStu" data-f="word" type="button">Word</button><button class="btn sm" data-act="jumpStu" data-f="print" type="button">طباعة</button>` : '' })}
+    ${fileCard('guide', { n: 2, c: '#0891b2', t: 'ملف الإرشاد الطلابي', d: 'أسماء الطلاب وأرقام جوالات أولياء الأمور — يُطابَق بالاسم مع ملف نور.', has: S.guide.length > 0, fmt: 'Excel (‎.xls/.xlsx)', accept: '.xls,.xlsx,.csv',
+      facts: S.guide.length ? `<b>${S.guide.length}</b><span>اسماً</span><em>${n ? `طوبق ${gm} مع ملف نور` : 'ارفع ملف نور للمطابقة'}</em>` : '<span class="fnone">لم يُرفع بعد</span>',
+      out: S.guide.length ? `<button class="btn sm" data-act="guideExcel" type="button">Excel</button><button class="btn sm" data-act="jumpStu" data-f="phones" type="button">كشف الجوالات</button>` : '' })}
+    ${fileCard('tch', { n: 3, c: '#7c3aed', t: 'قائمة المعلمين', d: 'معلمو المدرسة — تنعكس في الإسناد والملاحظة وكشوف التوقيع. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt',
+      facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span><em>${S.ta.length ? (() => { const inTa = sameTeacher(S.ta.map(x => x.t)); const k = S.teachers.filter(inTa).length; return `${k} منهم في الإسناد${S.teachers.length - k ? ` · ${S.teachers.length - k} بلا إسناد` : ''}`; })() : 'لم يُرفع الإسناد بعد'}</em>` : '<span class="fnone">القائمة فارغة</span>',
+      out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button><button class="btn sm" data-act="qopen" data-form="tList" type="button">معاينة وطباعة</button>` })}
+  </div><div id="upMsg"></div><div id="upMsg_tch"></div>`;
+  const tlist = `<section class="card" id="tchCard">
+    <h2>قائمة المعلمين — تعديل يدوي</h2>
+    <p class="hint">اسم في كل سطر. تُضاف أسماء معلمي الإسناد تلقائياً، وكل قوائم اختيار المعلمين في الموقع مرتبة هجائياً.</p>
+    ${qbar('tList', 'كشف بأسماء المعلمين:')}
+    ${qbar('obsInstr', 'تعليمات الملاحظين مع التوقيع:')}
+    <div class="acts"><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
+    <details${S.teachers.length ? '' : ' open'}><summary>عرض القائمة وتعديلها (${S.teachers.length})</summary><textarea class="in ta" data-k="teachers" data-lines="1" rows="12" id="f_teachers">${esc(S.teachers.join('\n'))}</textarea></details>
+  </section>`;
+  return cards + vStudents(true) + tlist;
+}
+function vStudents(noUpload) {
   const t = stuTotals(), n = S.students.length;
   const secs = {}; S.students.forEach(x => { secs[x.g] = secs[x.g] || {}; secs[x.g][x.sec] = (secs[x.g][x.sec] || 0) + 1; });
   const allSecs = G.map(g => Object.keys(secs[g] || {}).map(Number).sort((a, b) => a - b));
-  return `
+  return `${noUpload ? '<!--' : ''}
   <section class="card">
     <h2>رفع ملفات الطلاب</h2>
     <p class="hint">لكل ملف خانته الخاصة. الرفع يحتاج الرمز الخاص، ويمكنك سحب الملف وإفلاته داخل الخانة. البيانات تبقى في متصفح هذا الجهاز ولا تُرسل لأي خادم.</p>
@@ -1233,7 +1289,7 @@ function vStudents() {
       ${dropZone('guide', 'ملف الإرشاد الطلابي', 'أسماء الطلاب وأرقام الجوالات — يُطابَق بالاسم مع ملف نور ويُطبع منه كشف الجوالات.', '.xls,.xlsx,.csv')}
     </div>
     <div id="upMsg"></div>
-  </section>
+  </section>${noUpload ? '-->' : ''}
   ${n || S.guide.length ? `<section class="card">
     <h2>حصر أعداد الطلاب</h2>
     <div class="stats">${G.map(g => `<div class="stat" style="--gc:${GCOL[g]}"><span>${GNAME[g]}</span><b>${t[g]}</b><small>${allSecs[g - 1].length} شعب</small></div>`).join('')}<div class="stat"><span>إجمالي الطلاب</span><b>${n}</b><small>${S.students.filter(x => x.ph).length} لديهم جوال</small></div></div>
@@ -1241,7 +1297,7 @@ function vStudents() {
     ${S.guide.length ? `<p class="hint">ملف الإرشاد: ${S.guide.length} اسماً، طوبق منها مع ملف نور ${S.guide.filter(x => x.g).length} (يظهر رقمه في عمود «جوال ملف الإرشاد»)، و${S.guide.filter(x => !x.g).length} اسماً غير موجود في ملف نور. <button class="btn sm ghost" data-act="exportUnmatched" type="button">تصدير غير المطابقين إلى Excel</button></p>` : ''}
   </section>
   <section class="card">
-    <h2>طباعة كشوف الطلاب</h2>
+    <h2 id="stuPrintCard">كشوف الطلاب — طباعة وتصدير</h2>
     ${S.guide.length ? `<div class="seg" role="group" aria-label="مصدر الكشف"><button type="button" class="${SF.src !== 'guide' ? 'on' : ''}" data-act="stuSrc" data-v="noor">من ملف نور (${S.students.length})</button><button type="button" class="${SF.src === 'guide' ? 'on' : ''}" data-act="stuSrc" data-v="guide">من ملف الإرشاد (${S.guide.length})</button></div>` : ''}
     <div class="acts wrap">
       <label class="inl">الصف <select class="in" data-sf="g" id="sf_g"><option value="all">جميع الصفوف</option>${G.map(g => `<option value="${g}"${SF.g == g ? ' selected' : ''}>${GNAME[g]}</option>`).join('')}</select></label>
@@ -1469,13 +1525,13 @@ function vAssign() {
   const taByG = g => S.ta.map((x, i) => [x, i]).filter(([x]) => +x.g === g);
   return `${teacherDatalist()}${G.map(g => `<datalist id="curr${g}">${currList(g).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>`).join('')}
   <section class="card">
-    <h2>إسناد المعلمين</h2>
-    <div class="dens"><label class="inl">كثافة الطباعة لكشوف المعلمين <select class="in" data-k="s.taPrint.dens" id="st_dens"><option value="cmp"${((S.s.taPrint || {}).dens || 'cmp') === 'cmp' ? ' selected' : ''}>مضغوطة — أكبر عدد من المعلمين في الصفحة</option><option value="mid"${(S.s.taPrint || {}).dens === 'mid' ? ' selected' : ''}>متوسطة</option><option value="std"${(S.s.taPrint || {}).dens === 'std' ? ' selected' : ''}>مريحة — أسطر واسعة للكتابة</option></select></label></div>
-    ${qbar('taSheet', 'كشف الإسناد:')}
+    <h2>ملف الإسناد</h2>
     <p class="hint">الإسناد هو الأساس الذي تُبنى عليه: تكليفات وضع الأسئلة، بيان استلام الأسئلة، محضر فتح المظاريف، محضر اتفاقية التصحيح، إقرار إنهاء المقرر، وتوزيع التصحيح. يقبل الموقع ملف PDF أو Word (‎.docx و‎.doc) أو Excel، وتُتجاوز تلقائياً إسنادات العوق البصري والتربية الفكرية وحصص النشاط.</p>
     <div class="drops one">${dropZone('ta', 'ملف إسناد المعلمين', `PDF أو Word أو Excel — الإسناد الحالي: ${S.ta.length} سطراً لـ ${tcount} معلماً`, '.xlsx,.xls,.csv,.docx,.doc,.pdf')}</div>
     <div class="acts wrap"><button class="btn sm ghost" data-act="exportTa" type="button">تنزيل الإسناد كملف Excel</button><button class="btn sm" data-act="buildSt" type="button">ربط مواد الجدول بمعلميها من الإسناد</button></div>
     <div id="upMsg"></div>
+    <div class="dens" style="margin-top:14px"><label class="inl">كثافة الطباعة لكشوف المعلمين <select class="in" data-k="s.taPrint.dens" id="st_dens"><option value="cmp"${((S.s.taPrint || {}).dens || 'cmp') === 'cmp' ? ' selected' : ''}>مضغوطة — أكبر عدد من المعلمين في الصفحة</option><option value="mid"${(S.s.taPrint || {}).dens === 'mid' ? ' selected' : ''}>متوسطة</option><option value="std"${(S.s.taPrint || {}).dens === 'std' ? ' selected' : ''}>مريحة — أسطر واسعة للكتابة</option></select></label></div>
+    ${qbar('taSheet', 'كشف الإسناد:')}
   </section>
   <section class="card">
     <h2>تعديل الإسناد</h2>
@@ -1491,15 +1547,7 @@ function vAssign() {
       <div class="acts wrap"><button class="btn sm" data-act="addTa" data-g="${g}" type="button">+ إضافة معلم / مادة</button>
       ${miss.length ? `<span class="hint">مواد في الخطة بلا إسناد:</span>${miss.map(n => `<button type="button" class="chip" data-act="addTa" data-g="${g}" data-sub="${esc(n)}">+ ${esc(n)}</button>`).join('')}` : '<span class="okt">جميع مواد الخطة مُسندة</span>'}</div></div>`; }).join('')}
   </section>
-  <section class="card">
-    <h2>قائمة المعلمين (للملاحظة والتوقيع على التعليمات)</h2>
-    <div class="drops one">${dropZone('tch', 'رفع قائمة معلمي المدرسة', `Excel أو Word أو PDF — كشف منسوبي المدرسة أو أي ملف فيه الأسماء. تراجع الأسماء قبل اعتمادها، وتختار الاستبدال أو الإضافة. القائمة الحالية: ${S.teachers.length} معلماً`, '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt')}</div><div id="upMsg_tch"></div>
-    ${qbar('tList', 'كشف بأسماء المعلمين:')}
-    ${qbar('obsInstr', 'تعليمات الملاحظين مع التوقيع:')}
-    <p class="hint">أو عدّل يدوياً: اسم في كل سطر. تُضاف أسماء معلمي الإسناد تلقائياً، وقوائم اختيار المعلمين في كل الموقع مرتبة هجائياً.</p>
-    <div class="acts"><button class="btn sm ghost" data-act="tchTpl" type="button">تنزيل القائمة كقالب Excel</button><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
-    <textarea class="in ta" data-k="teachers" data-lines="1" rows="10" id="f_teachers">${esc(S.teachers.join('\n'))}</textarea>
-  </section>`;
+  <section class="card linkcard"><h2>قائمة المعلمين</h2><p class="hint">${S.teachers.length} معلماً في القائمة — تُدار من «الملفات الأساسية» (رفع من Excel أو Word أو PDF، أو تعديل يدوي).</p><button class="btn sm" data-tab="files" type="button">فتح قائمة المعلمين ←</button></section>`;
 }
 function autoObservers() {
   const ses = sessions(); const load = {}; S.teachers.forEach(t => load[t] = 0);
@@ -2595,7 +2643,6 @@ document.addEventListener('click', async e => {
     case 'palette': return openPalette();
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
     case 'tchTpl': tchTemplate(); return;
-    case 'ws': setWs(b.dataset.v); return;
     case 'sortTeachers': S.teachers = arSort(S.teachers); toast('رُتبت القائمة هجائياً'); return re();
     case 'mergeTeachers': { const have = new Set(S.teachers.map(normName)); let n = 0; allTeachers().forEach(t => { if (!have.has(normName(t))) { S.teachers.push(t); n++; } }); S.teachers = arSort(S.teachers); toast(n ? `أضيف ${n} معلماً` : 'القائمة مكتملة'); return re(); }
     case 'qprint': return printPages(groupsOf(b.dataset.form, qopts(b)));
@@ -2604,6 +2651,16 @@ document.addEventListener('click', async e => {
     case 'qopen': return openPreview(groupsOf(b.dataset.form, qopts(b)), fname(FORMS.find(x => x.id === b.dataset.form).t));
     case 'qedit': FORM = b.dataset.form; FO = {}; return go('forms');
     case 'pvOpen': { const g = currentGroups(); return openPreview(g, fname(formDef().t)); }
+    case 'stuExcelAll': { const k = clone(SF); Object.assign(SF, { src: 'noor', g: 'all', sec: 'all', q: '', cols: ['i', 'n', 'id', 'g', 'sec', 'ph', 'ph2', 'seat', 'com'].filter(c => c !== 'ph2' || S.guide.length), title: 'طلاب المدرسة - ملف نور' }); stuExcel(); SF = k; return; }
+    case 'guideExcel': { const ws = XLSX.utils.aoa_to_sheet([['م', 'اسم الطالب', 'الجوال', 'الصف (من نور)', 'الشعبة (من نور)'], ...S.guide.map((x, i) => [i + 1, x.n, fmtPhone(x.ph), x.g ? gname(x.g) : '', x.sec || ''])]); ws['!cols'] = [{ wch: 5 }, { wch: 36 }, { wch: 14 }, { wch: 16 }, { wch: 10 }]; ws['!views'] = [{ RTL: true }]; const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; XLSX.utils.book_append_sheet(wb, ws, 'الإرشاد'); return download(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), 'ملف الإرشاد الطلابي.xlsx'); }
+    case 'jumpStu': {
+      const f = b.dataset.f, k = clone(SF);
+      if (f === 'phones') { Object.assign(SF, { src: S.guide.length && !S.students.length ? 'guide' : 'noor', g: 'all', sec: 'all', q: '', cols: ['i', 'n', 'g', 'sec', S.students.length && S.guide.length ? 'ph2' : 'ph'], title: 'كشف جوالات أولياء الأمور' }); saveSF(); render(); const c = $('#stuPrintCard'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return toast('جُهّز كشف الجوالات — اختر الصف أو الشعبة ثم اطبع أو حمّل'); }
+      Object.assign(SF, { src: 'noor', g: 'all', sec: 'all', q: '' }); const pages = stuPages(), nm = fname(SF.title.trim() || 'كشف الطلاب'); SF = k;
+      if (f === 'pdf') return downloadPdf([{ land: false, pages }], nm);
+      if (f === 'word') return wordDoc([{ land: false, pages }], nm);
+      return openPreview([{ land: false, pages }], nm);
+    }
     case 'stuPv': return openPreview([{ land: false, pages: stuPages() }], fname(SF.title.trim() || 'كشف الطلاب'));
     case 'pvPrint': if (PV) printPages(PV.groups); return;
     case 'pvPdf': if (PV) downloadPdf(PV.groups, PV.name); return;
@@ -2642,13 +2699,14 @@ window.addEventListener('hashchange', () => { const h = location.hash.slice(1); 
 (async function init() {
   load();
   try { const f = localStorage.getItem(LS_KEY + '-form'); if (f) FORM = f; } catch (e) { }
-  const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) TAB = h; else if (WS === 'ta') TAB = 'assign';
+  const h = ALIAS[location.hash.slice(1)] || location.hash.slice(1); if (TABS.some(t => t[0] === h)) TAB = h;
   renderNav(); setSaved(true);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
   await drawBrand();
   render();
   syncStart();
 })();
+document.addEventListener('click', e => { const j = e.target.closest && e.target.closest('[data-jump]'); if (!j) return; const el = document.getElementById(j.dataset.jump); if (el) { const y = el.getBoundingClientRect().top + scrollY - 70; scrollTo({ top: y, behavior: 'smooth' }); } });
 document.addEventListener('click', async e => {
   if (!e.target.closest || !e.target.closest('#saveState')) return;
   if (!SYNC_CODE) { if (await askCode('تفعيل الحفظ والمزامنة بين الأجهزة')) toast('فُعّلت المزامنة — بياناتك محفوظة ومتاحة على أي جهاز تدخل منه بالرمز'); }

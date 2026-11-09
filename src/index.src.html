@@ -321,6 +321,61 @@ body.noscroll{overflow:hidden}
   #printRoot .page:last-child{break-after:auto;page-break-after:auto}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
+
+/* ===== مسار العمل: شريط المراحل ===== */
+nav#nav{display:flex;align-items:center;gap:10px;padding-block:8px}
+nav#nav .steps{display:flex;align-items:center;gap:2px;flex:1 0 auto}
+.step{--sc:#3fd18c;display:inline-flex;align-items:center;gap:8px;font:inherit;font-weight:700;font-size:.86rem;color:#d4e6e8;background:transparent;border:0;border-radius:999px;padding:6px 12px 6px 14px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.step i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.78rem;font-weight:800;border:2px solid color-mix(in srgb,var(--sc) 70%,#fff);color:#fff;background:transparent;flex:none}
+.step:hover{background:rgba(255,255,255,.08);color:#fff}
+.step.done i{background:var(--sc);border-color:var(--sc)}
+.step.on{background:#fff;color:var(--sc)}
+.step.on i{background:var(--sc);border-color:var(--sc);color:#fff}
+.sline{width:14px;height:2px;background:rgba(255,255,255,.18);flex:none;border-radius:2px}
+nav#nav .utils{display:flex;gap:4px;flex:none;border-inline-start:1px solid rgba(255,255,255,.15);padding-inline-start:10px}
+.util{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:.8rem;font-weight:600;color:#bcd5da;background:transparent;border:0;border-radius:8px;padding:7px 10px;cursor:pointer;white-space:nowrap}
+.util:hover{background:rgba(255,255,255,.08);color:#fff}.util.on{background:rgba(255,255,255,.16);color:#fff}
+@media (max-width:1400px){.util span{display:none}}
+@media (max-width:700px){.step span{display:none}.step.on span{display:inline}.step{padding:5px}.step.on{padding:5px 12px 5px 6px}.sline{width:8px}}
+/* ===== رأس كل مرحلة ===== */
+main#main{--accent:var(--sc,#1f9d66)}
+.shero{display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:14px;border:1px solid color-mix(in srgb,var(--sc) 28%,var(--line));background:linear-gradient(120deg,color-mix(in srgb,var(--sc) 15%,var(--surface)),var(--surface) 70%);position:relative;overflow:hidden}
+.shero::after{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:var(--sc)}
+.shero .sico{width:56px;height:56px;border-radius:14px;background:var(--sc);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 6px 18px color-mix(in srgb,var(--sc) 35%,transparent)}
+.shero small{color:var(--sc);font-weight:800;font-size:.78rem;letter-spacing:.2px}
+.shero h2{margin:2px 0 4px;font-size:1.45rem;color:var(--ink)}
+.shero p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.6}
+.sbody{display:flex;flex-direction:column;gap:16px;min-width:0}
+.sbody > .card > h2::before,.sbody > section.card > h2::before{content:"";display:inline-block;width:5px;height:1.05em;border-radius:3px;background:var(--sc);margin-inline-end:9px;vertical-align:-3px}
+.sbody .card{border-top:3px solid color-mix(in srgb,var(--sc) 55%,var(--line))}
+.snext{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+.btn.nx{background:var(--sc);border-color:var(--sc);color:#fff;padding:11px 20px;font-size:.95rem;border-radius:10px;box-shadow:0 4px 14px color-mix(in srgb,var(--sc) 30%,transparent)}
+.btn.nx:hover{filter:brightness(1.08)}
+.linkcard{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+/* ===== بطاقات الملفات الأساسية ===== */
+.fcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.fcard{--accent:var(--fc);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;min-width:0}
+.fcard::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--fc)}
+.fcard.done{border-color:color-mix(in srgb,var(--fc) 40%,var(--line))}
+.fhead{display:flex;gap:12px;align-items:flex-start}
+.fnum{width:34px;height:34px;border-radius:10px;background:var(--fc);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.fhead h3{margin:0 0 3px;font-size:1.08rem}.fhead p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.6}
+.ffacts{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--fc) 8%,var(--surface));min-height:48px}
+.ffacts b{font-size:1.7rem;color:var(--fc);line-height:1}.ffacts span{font-weight:700}.ffacts em{font-style:normal;color:var(--muted);font-size:.82rem;flex-basis:100%}
+.ffacts .fnone{color:var(--muted);font-weight:600;align-self:center}
+.fcard .drop{padding:12px;border-width:1.5px}
+.fcard .drop .dic{width:40px;height:40px;background:var(--fc)}
+.fcard .drop.done{background:color-mix(in srgb,var(--fc) 6%,var(--surface));border-color:color-mix(in srgb,var(--fc) 45%,transparent)}
+.fcard .drop.done .dic{background:var(--fc)}
+.fout{display:flex;align-items:center;flex-wrap:wrap;gap:6px;border-top:1px dashed var(--line);padding-top:10px}
+.fout > span{font-size:.82rem;color:var(--muted);font-weight:700;margin-inline-end:4px}
+
+.jump{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;position:sticky;top:0;z-index:5;background:var(--bg);padding-block:8px;margin-block:-8px}
+.jump::-webkit-scrollbar{display:none}
+.jump button{font:inherit;font-size:.8rem;font-weight:700;white-space:nowrap;border:1px solid color-mix(in srgb,var(--sc) 35%,var(--line));background:color-mix(in srgb,var(--sc) 7%,var(--surface));color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
+.jump button:hover{background:var(--sc);color:#fff;border-color:var(--sc)}
+@media (max-width:600px){.qbar .qlbl{flex-basis:100%}.qbar .sp1{display:none}.qbar .btn{flex:1 1 0;padding-inline:6px}.qbar .btn.pri{flex-basis:100%}.qbar label.ck{flex-basis:auto}.topin{gap:8px;padding-block:8px}.topin h1{font-size:1rem}.topin .sub{display:none}.topsrch kbd{display:none}.topsrch{padding:6px 9px}.savestate{font-size:.72rem;padding:3px 8px}.shero p{font-size:.84rem}}
+@media (max-width:600px){.shero{padding:14px;gap:12px}.shero .sico{width:46px;height:46px}.shero h2{font-size:1.2rem}.fcard .drop{flex-wrap:wrap}.snext .btn{flex:1}}
 </style>
 </head>
 <body>
