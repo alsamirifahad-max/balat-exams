@@ -3,6 +3,8 @@ import { getStore } from '@netlify/blobs';
 import { createHash } from 'node:crypto';
 
 const SECS = ['ta', 'ex'];
+const HIST_MAX = 20;
+const histKey = (sec, at) => 'hist/' + sec + '/' + String(at).replace(/[^0-9TZ]/g, '');
 const MAX_FAILS = 8, WINDOW = 15 * 60 * 1000;
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const sha = s => createHash('sha256').update(s).digest('hex');
@@ -28,7 +30,7 @@ export async function handle(req, ip, store, env) {
   }
   if (rl.n) await store.delete(rk);
 
-  const by = (req.headers.get('x-by') || '').replace(/[^a-z-]/g, '').slice(0, 12);
+  const by = (req.headers.get('x-by') || '').replace(/[^A-Za-z0-9%._-]/g, '').slice(0, 220);
   const enc = req.headers.get('x-enc') === 'json' ? 'json' : 'gzip';
   if (req.method === 'POST' && url.searchParams.has('check')) return json({ ok: true });
   if (req.method === 'GET' && url.searchParams.has('meta')) {
@@ -37,6 +39,20 @@ export async function handle(req, ip, store, env) {
   }
   const sec = url.searchParams.get('sec');
   if (!SECS.includes(sec)) return json({ error: 'sec' }, 400);
+  // سجل النسخ: قائمة الإصدارات السابقة أو إصدار محدد
+  if (req.method === 'GET' && url.searchParams.has('hist')) {
+    const { blobs } = await store.list({ prefix: 'hist/' + sec + '/' });
+    const out = [];
+    for (const b of blobs) { const m = await store.get('hm/' + b.key.slice(5), { type: 'json' }); if (m) out.push(m); }
+    out.sort((a, b) => (a.at < b.at ? 1 : -1));
+    return json(out);
+  }
+  if (req.method === 'GET' && url.searchParams.get('ver')) {
+    const k = histKey(sec, url.searchParams.get('ver'));
+    const data = await store.get(k, { type: 'arrayBuffer' }); const m = await store.get('hm/' + k.slice(5), { type: 'json' });
+    if (!data || !m) return json({ none: true });
+    return new Response(data, { headers: { 'content-type': 'application/octet-stream', 'x-at': m.at, 'x-by': m.by || '', 'x-enc': m.enc || 'gzip', 'cache-control': 'no-store' } });
+  }
   if (req.method === 'GET') {
     const meta = await store.get('meta/' + sec, { type: 'json' });
     const data = await store.get('data/' + sec, { type: 'arrayBuffer' });
@@ -51,7 +67,14 @@ export async function handle(req, ip, store, env) {
     if (!body.byteLength || body.byteLength > 5.5 * 1024 * 1024) return json({ error: 'size' }, 413);
     const at = new Date().toISOString();
     // نسخة احتياطية من الإصدار السابق قبل الكتابة
-    if (cur) { const prev = await store.get('data/' + sec, { type: 'arrayBuffer' }); if (prev) await store.set('prev/' + sec, prev, { metadata: cur }); }
+    if (cur) {
+      const prev = await store.get('data/' + sec, { type: 'arrayBuffer' });
+      if (prev) { const k = histKey(sec, cur.at); await store.set(k, prev); await store.setJSON('hm/' + k.slice(5), cur); }
+      // الإبقاء على آخر HIST_MAX إصدار فقط
+      const { blobs } = await store.list({ prefix: 'hist/' + sec + '/' });
+      const keys = blobs.map(b => b.key).sort();
+      for (const k of keys.slice(0, Math.max(0, keys.length - HIST_MAX))) { await store.delete(k); await store.delete('hm/' + k.slice(5)); }
+    }
     await store.set('data/' + sec, body);
     const meta = { at, by, enc, size: body.byteLength };
     await store.setJSON('meta/' + sec, meta);

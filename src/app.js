@@ -1062,12 +1062,13 @@ function flowBar() {
 function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
-  m.innerHTML = stageHero(p) + `<div class="sbody">${({ home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + stageHero(p) + `<div class="sbody">${({ home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
     j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
     $('.sbody', m).prepend(j); }
   $$('.brand-hdr').forEach(i => i.src = HDR); $$('.brand-ftr').forEach(i => i.src = FTR);
+  pendShow();
   if (TAB === 'forms') renderPreview();
   if (TAB === 'files') renderStuTable();
   if (TAB === 'home') setTimeout(renderThumbs, 30);
@@ -1647,7 +1648,8 @@ function vBackup() {
   return `<section class="card">
     <h2>الحفظ والمزامنة بين الأجهزة</h2>
     <p class="hint">كل قسم يُحفظ مستقلاً: <b>قسم الإسناد</b> (الإسناد وقائمة المعلمين) و<b>قسم الاختبارات</b> (الجدول واللجان والطلاب والملاحظون والإعدادات). عند تفعيل المزامنة بالرمز تُحفظ البيانات تلقائياً على هذا الجهاز وعلى السحابة، وتظهر على أي جهاز تدخل منه بالرمز — فما يحفظه وكيل المعلمين في الإسناد يظهر عندك مباشرة.</p>
-    <div class="syncgrid">${['ta', 'ex'].map(s => `<div class="synccard"><b>${s === 'ta' ? 'قسم الإسناد' : 'قسم الاختبارات'}</b><span>${SYNC[s] && SYNC[s].at ? 'آخر مزامنة: ' + esc(fmtAt(SYNC[s].at)) : SYNC_CODE ? 'بانتظار أول مزامنة' : 'محفوظ على هذا الجهاز فقط'}</span>${SYNC_CODE && syncDirty(s) ? '<em class="tg del">تعديلات لم تُرفع بعد</em>' : SYNC_CODE ? '<em class="tg new">متزامن</em>' : ''}<button class="btn sm ghost" data-act="exportSec" data-v="${s}" type="button">تصدير هذا القسم فقط</button></div>`).join('')}</div>
+    <div class="syncgrid">${['ta', 'ex'].map(s => `<div class="synccard"><b>${s === 'ta' ? 'قسم الإسناد' : 'قسم الاختبارات'}</b><span>${SYNC[s] && SYNC[s].at ? 'آخر مزامنة: ' + esc(fmtAt(SYNC[s].at)) : SYNC_CODE ? 'بانتظار أول مزامنة' : 'محفوظ على هذا الجهاز فقط'}</span>${SYNC_CODE && syncDirty(s) ? '<em class="tg del">تعديلات لم تُرفع بعد</em>' : SYNC_CODE ? '<em class="tg new">متزامن</em>' : ''}<label class="inl mode">تعديلات الأجهزة الأخرى <select class="in" data-mode="${s}" id="mode_${s}"><option value="ask"${syncMode(s) === 'ask' ? ' selected' : ''}>اسألني قبل تطبيقها</option><option value="auto"${syncMode(s) === 'auto' ? ' selected' : ''}>طبّقها تلقائياً</option></select></label><div class="acts wrap" style="margin:0">${SYNC_CODE ? `<button class="btn sm" data-act="hist" data-v="${s}" type="button">سجل النسخ</button>` : ''}<button class="btn sm ghost" data-act="exportSec" data-v="${s}" type="button">تصدير هذا القسم فقط</button></div></div>`).join('')}</div>
+    <div class="acts wrap"><label class="inl">اسم هذا الجهاز <input class="in" id="devName" value="${esc(devName())}" placeholder="مثل: جوال وكيل المعلمين" style="width:14rem" maxlength="24"></label></div>
     <div class="acts wrap">${SYNC_CODE ? `<button class="btn pri" data-act="syncNow" type="button">مزامنة الآن</button><button class="btn ghost" data-act="syncOff" type="button">إيقاف المزامنة على هذا الجهاز</button>` : `<button class="btn pri" data-act="syncOn" type="button">تفعيل المزامنة بالرمز</button>`}</div>
     ${conf.length ? `<div class="sub"><b>نسخ محفوظة من تعارض سابق</b><p class="hint">حين يُعدَّل القسم نفسه من جهازين في الوقت نفسه، تُعتمد النسخة الأحدث على السحابة وتُحفظ تعديلاتك هنا لتستعيدها إن احتجت.</p>${conf.map(([s, c]) => `<div class="acts wrap"><span>${SYNC_SECS[s]} — ${esc(fmtAt(c.at))}</span><button class="btn sm" data-act="restoreConf" data-v="${s}" type="button">استعادة هذه النسخة</button><button class="btn sm ghost" data-act="dropConf" data-v="${s}" type="button">حذفها</button></div>`).join('')}</div>` : ''}
   </section>
@@ -2543,8 +2545,9 @@ function coreOf(sec) { const d = secData(sec); if (sec === 'ta') return JSON.str
 function pristine(sec) { const cur = S; let h; try { S = clone(DEFAULT_STATE); normState(); h = coreOf(sec); } finally { S = cur; } return h === coreOf(sec); }
 function syncDirty(sec) { const s = SYNC[sec] || {}; return hashStr(JSON.stringify(secData(sec))) !== s.h; }
 function syncSoon() { if (!SYNC_CODE) return; clearTimeout(syncT); syncT = setTimeout(syncNow, 1800); syncBadge(); }
-function whoAmI() { return WS + '-' + (/Mobi|iPhone|Android/i.test(navigator.userAgent) ? 'm' : 'd'); }
-function byLabel(b) { const [w, d] = String(b || '').split('-'); return w ? `${w === 'ta' ? 'قسم الإسناد' : 'قسم الاختبارات'} (${d === 'm' ? 'جوال' : 'كمبيوتر'})` : ''; }
+function devName() { try { const n = localStorage.getItem(LS_KEY + '-dev'); if (n) return n; } catch (e) { } return /Mobi|iPhone|Android/i.test(navigator.userAgent) ? 'جوال' : 'كمبيوتر'; }
+function whoAmI() { return encodeURIComponent(devName().slice(0, 24)); }
+function byLabel(b) { b = String(b || ''); if (!b) return ''; if (/^(ta|ex)-[md]$/.test(b)) return b.endsWith('m') ? 'جوال' : 'كمبيوتر'; try { return decodeURIComponent(b); } catch (e) { return b; } }
 async function api(method, q, opt = {}) {
   const r = await fetch(API + q, { method, cache: 'no-store', headers: Object.assign({ 'x-code': SYNC_CODE, 'x-by': whoAmI() }, opt.headers || {}), body: opt.body });
   if (r.status === 401) { SYNC_CODE = ''; try { localStorage.removeItem(LS_KEY + '-code'); } catch (e) { } throw Object.assign(new Error('auth'), { code: 401 }); }
@@ -2566,23 +2569,28 @@ async function pushSec(sec, force) {
   const m = await r.json(); SYNC[sec] = { at: m.at, h: hashStr(str), t: Date.now() }; syncSave(); if (note) toast('تمت المزامنة' + note);
   return 'ok';
 }
-function busyTyping() { const a = document.activeElement; return a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && !a.closest('.modal'); }
+function busyTyping() { const a = document.activeElement; return a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/checkbox|radio|file/.test(a.type))) && !a.closest('.modal,.pickm'); }
 async function syncNow(opts = {}) {
   if (!SYNC_CODE || syncBusy) return; syncBusy = true; SYNC_ST = { state: 'busy' }; syncBadge();
   try {
     const meta = await (await api('GET', '?meta')).json(); let changed = false;
     for (const sec of ['ta', 'ex']) {
       const rm = meta[sec], lm = SYNC[sec] || {}, dirty = syncDirty(sec);
+      if (PENDING[sec] && rm && rm.at === lm.at) { delete PENDING[sec]; pendShow(); }
       if (rm && rm.at !== lm.at) {
         /* يوجد إصدار أحدث من جهاز آخر */
         if (!lm.at && dirty && !pristine(sec)) {
           const useCloud = await choiceBox(`يوجد على السحابة نسخة من «${SYNC_SECS[sec]}» حُفظت ${fmtAt(rm.at)}${rm.by ? ' من ' + byLabel(rm.by) : ''}، وعلى هذا الجهاز بيانات أخرى. أيهما تعتمد؟`, 'نسخة السحابة', 'بيانات هذا الجهاز');
           if (!useCloud) { await pushSec(sec, true); continue; }
+        } else if (lm.at && syncMode(sec) === 'ask') {
+          /* وضع «اسألني»: لا يُطبَّق التعديل حتى توافق */
+          if (!PENDING[sec] || PENDING[sec].at !== rm.at) { const p = await pullSec(sec); if (p) { PENDING[sec] = { at: p.at, by: p.by, data: p.data, diff: secDiff(sec, secData(sec), p.data) }; pendShow(); } }
+          continue;
         } else if (dirty && lm.at) { localStorage.setItem(LS_KEY + '-conflict-' + sec, JSON.stringify({ at: new Date().toISOString(), data: secData(sec) })); toast(`حُدّث «${SYNC_SECS[sec]}» من جهاز آخر — حُفظت تعديلاتك غير المتزامنة كنسخة في «النسخ الاحتياطي»`); }
         else if (busyTyping()) continue;
         const p = await pullSec(sec); if (!p) continue;
         applySec(sec, p.data); SYNC[sec] = { at: p.at, h: hashStr(JSON.stringify(secData(sec))), t: Date.now() }; syncSave(); changed = true;
-      } else if (dirty || !rm) {
+      } else if ((dirty || !rm) && !PENDING[sec]) {
         if ((await pushSec(sec)) === 'conflict') { opts.retry = (opts.retry || 0) + 1; if (opts.retry < 3) { syncBusy = false; return syncNow(opts); } }
       }
     }
@@ -2592,12 +2600,81 @@ async function syncNow(opts = {}) {
     syncOnline = false; SYNC_ST = { state: e.code === 401 ? 'auth' : 'off' };
   } finally { syncBusy = false; syncBadge(); }
 }
+/* ===== التحكم في تعديلات الأجهزة الأخرى: اسألني / تلقائي ===== */
+let PENDING = {};
+function syncMode(sec) { try { const m = JSON.parse(localStorage.getItem(LS_KEY + '-mode') || '{}'); return m[sec] || (sec === 'ta' ? 'ask' : 'auto'); } catch (e) { return sec === 'ta' ? 'ask' : 'auto'; } }
+function setSyncMode(sec, v) { let m = {}; try { m = JSON.parse(localStorage.getItem(LS_KEY + '-mode') || '{}'); } catch (e) { } m[sec] = v; try { localStorage.setItem(LS_KEY + '-mode', JSON.stringify(m)); } catch (e) { } }
+/* ملخص الفرق بين نسختين من القسم */
+function secDiff(sec, A, B) {
+  const out = []; let short = [];
+  if (sec === 'ta') {
+    const key = x => `${x.g}|${normName(x.sub)}|${String(x.sec || '').replace(/\s/g, '')}`, lab = x => `${x.sub} (${GSHORT[x.g] || ''}${x.sec ? '، ش ' + x.sec : ''})`;
+    const ma = new Map((A.ta || []).map(x => [key(x), x])), mb = new Map((B.ta || []).map(x => [key(x), x]));
+    let add = 0, del = 0, chg = 0;
+    mb.forEach((x, k) => { const y = ma.get(k); if (!y) { add++; out.push(['add', `إضافة: ${lab(x)} — ${x.t || 'بلا معلم'}`]); } else if (normName(y.t) !== normName(x.t)) { chg++; out.push(['chg', `تغيير المعلم: ${lab(x)} — ${y.t || 'بلا معلم'} ← ${x.t || 'بلا معلم'}`]); } else if (String(y.h || '') !== String(x.h || '')) { out.push(['chg', `تغيير الحصص: ${lab(x)} — ${y.h || '–'} ← ${x.h || '–'}`]); chg++; } });
+    ma.forEach((x, k) => { if (!mb.has(k)) { del++; out.push(['del', `حذف: ${lab(x)} — ${x.t || ''}`]); } });
+    const ta = new Set((A.teachers || []).map(normName)), tb = new Set((B.teachers || []).map(normName));
+    const tAdd = (B.teachers || []).filter(n => !ta.has(normName(n))), tDel = (A.teachers || []).filter(n => !tb.has(normName(n)));
+    tAdd.forEach(n => out.push(['add', `معلم جديد في القائمة: ${n}`])); tDel.forEach(n => out.push(['del', `حُذف من قائمة المعلمين: ${n}`]));
+    const nn = (n, one, many) => n === 1 ? one : `${n} ${many}`; if (add) short.push('أضاف ' + nn(add, 'سطراً', 'أسطر')); if (chg) short.push('غيّر ' + nn(chg, 'سطراً', 'أسطر')); if (del) short.push('حذف ' + nn(del, 'سطراً', 'أسطر')); if (tAdd.length || tDel.length) short.push(`المعلمون: +${tAdd.length} −${tDel.length}`);
+  } else {
+    const J = v => JSON.stringify(v == null ? null : v);
+    const sa = (A.students || []).length, sb = (B.students || []).length; if (sa !== sb) out.push(['chg', `عدد الطلاب: ${sa} ← ${sb}`]); else if (J(A.students) !== J(B.students)) out.push(['chg', 'تعديل في بيانات الطلاب أو توزيعهم على اللجان']);
+    if (J(A.days) !== J(B.days)) out.push(['chg', 'تغيير في جدول الاختبارات']);
+    if (J(A.com) !== J(B.com)) out.push(['chg', 'تغيير في اللجان أو أعدادها']);
+    const oa = A.obs || {}, ob = B.obs || {}; let oc = 0; new Set([...Object.keys(oa), ...Object.keys(ob)]).forEach(k => { if (J(oa[k]) !== J(ob[k])) oc++; }); if (oc) out.push(['chg', `تغيير في توزيع الملاحظين (${oc} موضع)`]);
+    if (J(A.st) !== J(B.st)) out.push(['chg', 'تغيير في المواد المختبرة أو واضعي الأسئلة']);
+    if (J(A.special) !== J(B.special)) out.push(['chg', 'تغيير في القوائم الخاصة']);
+    if (J(A.guide) !== J(B.guide)) out.push(['chg', 'تغيير في ملف الإرشاد']);
+    if (J(A.s) !== J(B.s)) out.push(['chg', 'تغيير في الإعدادات']);
+    short = out.slice(0, 2).map(x => x[1]); if (out.length > 2) short.push(`و${out.length - 2} تغييرات أخرى`);
+  }
+  return { lines: out, short: short.join('، ') || 'لا فرق ظاهر في البيانات' };
+}
+function pendShow() {
+  const box = $('#pendBox'); if (!box) return;
+  box.innerHTML = Object.entries(PENDING).map(([sec, p]) => `<div class="pend" role="alert"><div class="pdt"><b>تحديث لـ«${SYNC_SECS[sec]}» من ${esc(p.by || 'جهاز آخر')}</b><span>${esc(fmtAt(p.at))} — ${esc(p.diff.short)}</span></div>
+    <div class="pda"><button class="btn sm ghost" data-act="pendView" data-v="${sec}" type="button">عرض التغييرات</button><button class="btn sm pri" data-act="pendApply" data-v="${sec}" type="button">اعتماد تعديله</button><button class="btn sm" data-act="pendKeep" data-v="${sec}" type="button">الإبقاء على نسختي</button></div></div>`).join('');
+  syncBadge();
+}
+function diffModal(title, d, actions) {
+  let m = $('#diffModal'); if (!m) { m = document.createElement('div'); m.id = 'diffModal'; m.className = 'modal'; document.body.appendChild(m); }
+  m.innerHTML = `<div class="box tchbox"><h3>${esc(title)}</h3><p class="hint">${esc(d.short)}</p><div class="tlist dlist">${d.lines.length ? d.lines.map(([k, s]) => `<div class="dl ${k}">${esc(s)}</div>`).join('') : '<p class="hint">لا توجد فروق</p>'}</div><div class="acts">${actions || ''}<button class="btn ghost" data-dm="close" type="button">إغلاق</button></div></div>`;
+  m.hidden = false; m.onclick = e => { if (e.target === m || e.target.closest('[data-dm="close"]')) m.hidden = true; if (e.target.closest('[data-act]')) m.hidden = true; };
+}
+async function pendApply(sec) { const p = PENDING[sec]; if (!p) return; applySec(sec, p.data); SYNC[sec] = { at: p.at, h: hashStr(JSON.stringify(secData(sec))), t: Date.now() }; syncSave(); delete PENDING[sec]; try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) { } pendShow(); window.__thumbs = {}; await drawBrand(); renderNav(); render(); toast(`اعتُمد تعديل «${SYNC_SECS[sec]}»`); }
+async function pendKeep(sec) {
+  const p = PENDING[sec]; if (!p) return;
+  if (!(await confirmBox(`الإبقاء على نسختك من «${SYNC_SECS[sec]}» واعتمادها على السحابة؟ ستصل نسختك للأجهزة الأخرى، وتبقى نسخة ${p.by || 'الجهاز الآخر'} محفوظة في «سجل النسخ» لتستعيدها متى شئت.`))) return;
+  delete PENDING[sec]; try { await pushSec(sec, true); toast('اعتُمدت نسختك ✓'); } catch (e) { toast('تعذّر الاتصال — حاول مرة أخرى', true); } pendShow(); render();
+}
+async function showHistory(sec) {
+  let list; try { list = await (await api('GET', '?sec=' + sec + '&hist')).json(); } catch (e) { return toast('تعذّر جلب السجل — تحقق من الاتصال', true); }
+  let m = $('#diffModal'); if (!m) { m = document.createElement('div'); m.id = 'diffModal'; m.className = 'modal'; document.body.appendChild(m); }
+  m.innerHTML = `<div class="box tchbox"><h3>سجل نسخ «${SYNC_SECS[sec]}»</h3><p class="hint">آخر ${list.length} إصداراً محفوظاً على السحابة قبل الإصدار الحالي. «معاينة» تعرض الفرق عن نسختك الحالية، و«استعادة» تعيده نسخةً معتمدة.</p>
+    <div class="tlist">${list.length ? list.map(h => `<div class="hrow"><div><b>${esc(fmtAt(h.at))}</b><small>${esc(new Date(h.at).toLocaleDateString('ar-SA-u-nu-latn-ca-gregory'))} · ${esc(byLabel(h.by) || '—')}</small></div><button class="btn sm ghost" data-hv="${esc(h.at)}" type="button">معاينة</button><button class="btn sm" data-hr="${esc(h.at)}" type="button">استعادة</button></div>`).join('') : '<p class="hint">لا توجد إصدارات سابقة بعد.</p>'}</div>
+    <div class="acts"><button class="btn ghost" data-dm="close" type="button">إغلاق</button></div></div>`;
+  m.hidden = false;
+  const getVer = async at => { const r = await api('GET', '?sec=' + sec + '&ver=' + encodeURIComponent(at)); if (r.headers.get('content-type').includes('json')) return null; return JSON.parse(await ungz(new Uint8Array(await r.arrayBuffer()), r.headers.get('x-enc') || 'gzip')); };
+  m.onclick = async e => {
+    if (e.target === m || e.target.closest('[data-dm="close"]')) { m.hidden = true; return; }
+    const v = e.target.closest('[data-hv]'), r = e.target.closest('[data-hr]');
+    if (v) { const d = await getVer(v.dataset.hv); if (d) diffModal(`الفرق بين نسختك الحالية ونسخة ${fmtAt(v.dataset.hv)}`, secDiff(sec, secData(sec), d), `<button class="btn pri" data-hr2="${esc(v.dataset.hv)}" type="button">استعادة هذه النسخة</button>`); const dm = $('#diffModal'); dm.onclick = async ev => { if (ev.target === dm || ev.target.closest('[data-dm="close"]')) { dm.hidden = true; return; } const r2 = ev.target.closest('[data-hr2]'); if (r2) { dm.hidden = true; await restoreVer(sec, r2.dataset.hr2, getVer); } }; return; }
+    if (r) { m.hidden = true; await restoreVer(sec, r.dataset.hr, getVer); }
+  };
+}
+async function restoreVer(sec, at, getVer) {
+  if (!(await confirmBox(`استعادة نسخة «${SYNC_SECS[sec]}» المحفوظة ${fmtAt(at)}؟ تصبح هي المعتمدة على كل الأجهزة، ونسختك الحالية تُحفظ في السجل.`))) return;
+  const d = await getVer(at); if (!d) return toast('تعذّر جلب النسخة', true);
+  applySec(sec, d); delete PENDING[sec]; try { await pushSec(sec, true); } catch (e) { } save(true); window.__thumbs = {}; await drawBrand(); renderNav(); render(); toast('تمت الاستعادة ✓');
+}
 function fmtAt(iso) { try { const d = new Date(iso); return d.toLocaleString('ar-SA-u-nu-latn-ca-gregory', { weekday: 'long', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } }
 function syncBadge() {
   const el = $('#saveState'); if (!el) return;
   let txt, cls;
   if (!LOCAL_OK) { txt = 'تعذّر الحفظ في المتصفح — صدّر نسخة احتياطية'; cls = 'bad'; }
   else if (!SYNC_CODE) { txt = SYNC_ST.state === 'auth' ? 'انتهت صلاحية الرمز — اضغط لإعادة التفعيل' : 'محفوظ على هذا الجهاز · اضغط لتفعيل المزامنة'; cls = 'ok local'; }
+  else if (Object.keys(PENDING).length) { txt = 'تحديث من جهاز آخر بانتظار قرارك'; cls = 'warn'; }
   else if (SYNC_ST.state === 'busy' || syncT && ['ta', 'ex'].some(syncDirty)) { txt = 'جارٍ الحفظ والمزامنة…'; cls = 'busy'; }
   else if (SYNC_ST.state === 'off') { txt = 'محفوظ على الجهاز · المزامنة متوقفة (لا اتصال)'; cls = 'warn'; }
   else { txt = 'محفوظ ومتزامن'; cls = 'ok'; }
@@ -2666,6 +2743,8 @@ document.addEventListener('change', async e => {
   if (el.dataset.k && /^(days|com|s\.(codes|secOff|manualTot))/.test(el.dataset.k) && TAB !== 'forms') { if (TAB === 'committees' || /txt$/.test(el.dataset.k)) render(); return; }
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
   if (el.classList.contains('fo')) { FO[el.dataset.o] = el.value; renderPreview(); return; }
+  if (el.id === 'devName') { try { localStorage.setItem(LS_KEY + '-dev', el.value.trim()); } catch (e) { } toast('حُفظ اسم الجهاز — يظهر للأجهزة الأخرى عند وصول تعديلاتك'); return; }
+  if (el.dataset.mode) { setSyncMode(el.dataset.mode, el.value); toast(el.value === 'ask' ? 'سيُعرض عليك أي تعديل من جهاز آخر قبل تطبيقه' : 'ستُطبَّق تعديلات الأجهزة الأخرى تلقائياً'); if (el.value === 'auto') syncNow({ silent: true }); return; }
   if (el.id === 'obsSel') { OBS_SEL = el.value; SWAP = null; render(); return; }
   const act = el.dataset.actChange;
   if (act === 'dayG' && el.value) { const d = S.days[+el.dataset.i]; d.g = el.value; d.h = toHijri(d.g); save(); render(); }
@@ -2730,6 +2809,10 @@ document.addEventListener('click', async e => {
     case 'palette': return openPalette();
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
     case 'tchTpl': tchTemplate(); return;
+    case 'pendApply': return pendApply(b.dataset.v);
+    case 'pendKeep': return pendKeep(b.dataset.v);
+    case 'pendView': { const p = PENDING[b.dataset.v]; if (p) diffModal(`تعديلات ${p.by || 'الجهاز الآخر'} على «${SYNC_SECS[b.dataset.v]}»`, p.diff, `<button class="btn pri" data-act="pendApply" data-v="${b.dataset.v}" type="button">اعتماد تعديله</button><button class="btn" data-act="pendKeep" data-v="${b.dataset.v}" type="button">الإبقاء على نسختي</button>`); return; }
+    case 'hist': return showHistory(b.dataset.v);
     case 'qG': { const id = b.dataset.form; QG[id] = toggleG(QG[id], b.dataset.v); $$(`.gchips[data-form="${id}"]`).forEach(s => s.outerHTML = gradeChips(QG[id], 'qG', id)); return; }
     case 'foG': FO.g = toggleG(FO.g, b.dataset.v); $$('.gchips[data-form=""]').forEach(s => s.outerHTML = gradeChips(FO.g, 'foG', '')); return renderPreview();
     case 'pickOpen': { const s = b.parentElement.querySelector('select'); if (s) openPicker(s); return; }

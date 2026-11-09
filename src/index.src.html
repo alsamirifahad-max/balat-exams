@@ -420,6 +420,14 @@ body.nosc{overflow:hidden}
 .gchip:not(.all).on{background:var(--gc);color:#15262b;border-color:var(--accent)}
 .gchip:not(.all).on::before{content:"✓ "}
 @media (max-width:600px){.gchips{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;width:100%}.qbar .gchips{flex-basis:100%}.gchip{padding:7px 4px;font-size:.78rem;text-align:center}}
+.pend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;border:1.5px solid #e0a53a;background:color-mix(in srgb,#f5b942 14%,var(--surface));border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.pend .pdt{display:flex;flex-direction:column;gap:3px;min-width:0}.pend .pdt span{font-size:.85rem;color:var(--muted)}
+.pend .pda{display:flex;gap:6px;flex-wrap:wrap}
+@media (max-width:600px){.pend .pda{width:100%}.pend .pda .btn{flex:1}}
+.dlist .dl{padding:7px 10px;border-bottom:1px solid var(--line);font-size:.88rem;line-height:1.6}
+.dl.add{border-inline-start:4px solid #1f9d66}.dl.del{border-inline-start:4px solid #d14b6a}.dl.chg{border-inline-start:4px solid #e0a53a}
+.hrow{display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--line)}.hrow > div{flex:1;display:flex;flex-direction:column}.hrow small{color:var(--muted)}
+.synccard .mode{white-space:normal;flex-wrap:wrap}
 </style>
 </head>
 <body>
