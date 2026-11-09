@@ -405,7 +405,7 @@ function obsPickRow(key, busy, cnt, load) {
 }
 function obsNextEmpty(key, i) {
   const se = key.slice(0, key.lastIndexOf('_')), coms = S.com.map(c => c.no); let started = false;
-  for (const no of coms) { const k = `${se}_${no}`, L = obsList(k), n = Math.max(L.length, obsNeed(no));
+  for (const no of coms) { const k = `${se}_${no}`, L = obsList(k), n = Math.max(L.length, no === 'R' ? resNeed() : obsNeed(no));
     for (let j = 0; j < n; j++) { if (!started) { if (k === key && j === i) started = true; continue; } if (!L[j]) return { key: k, i: j }; } }
   return null;
 }
@@ -419,4 +419,63 @@ document.addEventListener('click', e => {
     setTimeout(() => { const el = document.querySelector('.obpick'); if (el) { const r = el.getBoundingClientRect(); if (r.top < 80 || r.bottom > innerHeight) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 40);
     if (!OBS_T) toast('اكتملت خانات الملاحظين لهذه الفترة ✓');
   }
+});
+
+/* ----- الاحتياط وعدد اللجان ----- */
+function resNeed() { const v = S.s.resN; return v === 0 || v === '0' ? 0 : Math.max(0, +(v == null || v === '' ? 7 : v)); }
+function obsResBlock(se, busy, cnt, load) {
+  const key = `${se.key}_R`, list = obsList(key);
+  return `<div class="obres"><div class="obrh"><b>الاحتياط</b><label class="inl">العدد <input class="in" type="number" min="0" max="20" data-k="s.resN" data-num="1" value="${resNeed()}" style="width:4rem"></label><button class="btn sm" data-tact="resAuto" data-v="${se.key}" type="button">تعبئة الاحتياط تلقائياً (الأقل تكليفاً)</button></div>
+    <div class="obsl">${obsSlots(se, { no: 'R' }, key, list, busy, cnt, load)}</div>${OBS_T && OBS_T.key === key ? obsPickRow(key, busy, cnt, load) : ''}</div>`;
+}
+function resAuto(sk) {
+  const se = sessions().find(x => x.key === sk); if (!se) return;
+  const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName));
+  const used = new Set(); S.com.forEach(c => obsList(`${sk}_${c.no}`).forEach(n => n && used.add(normName(n))));
+  const load = {}; Object.keys(S.obs).forEach(k => obsList(k).forEach(n => { if (n) load[normName(n)] = (load[normName(n)] || 0) + 1; }));
+  const cur = obsList(`${sk}_R`).filter(Boolean).filter(n => !used.has(normName(n)) && !busy.has(normName(n)));
+  const pool = tchAll().filter(t => !busy.has(normName(t)) && !used.has(normName(t)) && !cur.some(c => normName(c) === normName(t))).sort((a, b) => (load[normName(a)] || 0) - (load[normName(b)] || 0) || AR.compare(normName(a), normName(b)));
+  S.obs[`${sk}_R`] = cur.concat(pool).slice(0, Math.max(resNeed(), cur.length)); save(); render(); toast(`عُبّئ الاحتياط: ${S.obs[`${sk}_R`].length}`);
+}
+function comCountCtl() {
+  return `<div class="comcnt"><span>عدد اللجان</span><button class="btn sm" data-tact="comDel" type="button" aria-label="إنقاص لجنة">−</button><b>${S.com.length}</b><button class="btn sm" data-tact="comAdd" type="button" aria-label="زيادة لجنة">+</button><small class="hint">تُضاف اللجنة الجديدة بعد آخر لجنة بنفس المقر والسعة، وتعدّل تفاصيلها من «اللجان والأعداد».</small></div>`;
+}
+/* ----- كشف «أسماء الملاحظين على اللجان» بتصميم المدرسة ----- */
+function obsNamesPages(o) {
+  const out = [];
+  sesOpt(o || {}).forEach(se => {
+    const rows = []; S.com.forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, n: l[i] || '' }); });
+    const res = obsList(`${se.key}_R`).filter(Boolean);
+    const plc = c => (c.fl || c.rm || '').trim(), freq = {}; S.com.forEach(c => { const k = plc(c); freq[k] = (freq[k] || 0) + 1; });
+    const main = Object.keys(freq).sort((a, b) => freq[b] - freq[a])[0];
+    const lab = c => { const p = plc(c), red = /صال|مسرح|مكتب|مصل|معمل|قاع/.test(p); return { v: `<span style="white-space:nowrap;${red ? 'color:#c0392b;' : ''}">( ${c.no} ) ${esc(p)}</span>`, fs: '8.5pt' }; };
+    const n = rows.length, nr = Math.max(res.length, resNeed());
+    const R = Math.max(26, Math.ceil((n + 1 + nr) / 2)), leftObs = Math.max(n - R, Math.min(10, R - 1 - nr));
+    const HG = '#d9ead3', hd = t => ({ v: `<b>${t}</b>`, bg: HG });
+    const head = [hd('م'), hd('اسم المعلم'), hd('اللجنة'), hd('التوقيع'), hd('م'), hd('اسم المعلم'), hd('اللجنة'), hd('التوقيع')];
+    const nm = t => `<b style="white-space:nowrap">${esc(t)}</b>`;
+    const obsCells = k => { const r = rows[k]; return [{ v: k + 1, bg: '#eef5e9' }, { v: r ? nm(r.n) : '', al: 'right', fs: '9pt' }, r ? lab(r.c) : '', '']; };
+    const body = [];
+    for (let i = 0; i < R; i++) {
+      const right = obsCells(i); let left;
+      if (i < leftObs) left = obsCells(R + i);
+      else if (i === leftObs) left = [{ v: '<b>الاحتياط</b>', cs: 4, bg: '#dde7f0' }];
+      else { const j = i - leftObs - 1; left = [{ v: j + 1, bg: '#eef5e9' }, { v: res[j] ? nm(res[j]) : '', cs: 2, al: 'right', fs: '9pt' }, '']; }
+      body.push(right.concat(left));
+    }
+    const d = se.day, h = toHijri(d.g);
+    const top = `<div style="text-align:center;margin:2px 0 6px"><span style="display:inline-block;border:2px solid #4a6b2f;background:#c5e0a5;padding:6px 46px;font-size:17pt;font-weight:800;border-radius:4px">أسماء الملاحظين على اللجان</span></div>
+      <p style="text-align:center;font-weight:800;margin:4px 0;font-size:12pt">اختبار نهاية الفصل الدراسي ${esc(S.s.sem)} من العام الدراسي ${esc(S.s.yearTxt)}</p>
+      <table width="100%" style="font-weight:800;font-size:11.5pt;margin:2px 0 4px" dir="rtl"><tr><td style="text-align:right">الملاحظين لهذا اليوم / ${dayName(d)}</td><td style="text-align:center">وتاريخ: ${h[2]} / ${h[1]} / ${h[0]}هـ</td><td style="text-align:left">الفترة / ${esc(se.per.n || '')}</td></tr></table>`;
+    const cols = '<colgroup><col style="width:3.5%"><col style="width:21%"><col style="width:15%"><col style="width:10.5%"><col style="width:3.5%"><col style="width:21%"><col style="width:15%"><col style="width:10.5%"></colgroup>';
+    const tbl = T([head, ...body], { cls: 'dense obsN' }).replace(/^(<table[^>]*>)/, '$1' + cols);
+    out.push(top + tbl + sp(10) + sigs([['نائب رئيس لجنة الاختبارات', S.s.eduDep], ['رئيس لجنة الاختبارات', S.s.principal]]));
+  });
+  return out;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'resAuto') resAuto(b.dataset.v);
+  else if (a === 'comAdd') { const l = S.com[S.com.length - 1]; const n = S.com.length ? Math.max(...S.com.map(c => +c.no || 0)) + 1 : 1; S.com.push({ no: n, fl: l ? l.fl : '', rm: '', cap: l ? l.cap : 30, c: { 1: 0, 2: 0, 3: 0 } }); S.distributed = false; save(); render(); toast(`أُضيفت اللجنة ${n} — أصبح العدد ${S.com.length}`); }
+  else if (a === 'comDel') { const l = S.com[S.com.length - 1]; if (!l) return; if (!await confirmBox(`حذف آخر لجنة (رقم ${l.no}${comSum(l) ? ` وفيها ${comSum(l)} طالباً` : ''})؟ يُحذف ملاحظوها أيضاً.`)) return; S.com.pop(); Object.keys(S.obs).forEach(k => { if (k.endsWith('_' + l.no)) delete S.obs[k]; }); S.distributed = false; save(); render(); toast(`أصبح عدد اللجان ${S.com.length}`); }
 });

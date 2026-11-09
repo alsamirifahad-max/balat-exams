@@ -215,7 +215,7 @@ function waitChips(iso, bi, p, r) {
   const pool = same.length ? same : all, sug = new Set(pool.slice().sort((a, b) => sc(a) - sc(b) || AR.compare(normName(a), normName(b))).slice(0, 3));
   const chip = n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}${same.includes(n) ? ' sg g' + gr : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}"${sug.has(n) ? ' title="الأقل انتظاراً"' : ''}>${esc(n)}</button>`;
   return `<div class="wpick">${all.length ? `${same.length ? `<small class="wgl g${gr}">① معلمو ${GSHORT[gr]} ثانوي المتاحون (${same.length})</small><div class="wchips">${same.map(chip).join('')}</div>` : ''}
-    ${rest.length ? `<small class="wgl">${same.length ? '② بقية المتاحين' : `المتاحون في الحصة ${p}`} (${rest.length})</small><div class="wchips">${rest.map(chip).join('')}</div>` : ''}` : '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}
+    ${rest.length ? (same.length ? `<details class="wrest"><summary>② بقية المتاحين (${rest.length}) — عرض</summary><div class="wchips">${rest.map(chip).join('')}</div></details>` : `<small class="wgl">المتاحون في الحصة ${p} (${rest.length})</small><div class="wchips">${rest.map(chip).join('')}</div>`) : ''}` : '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}
     <details class="wother"><summary>اسم آخر…</summary>${pickSel(path, '', g, { ph: '— كل المعلمين —' })}</details></div>`;
 }
 function vDuty(iso) {

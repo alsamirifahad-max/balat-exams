@@ -1572,12 +1572,13 @@ function vStaff() {
   let obsHtml = '<p class="hint">أضف أيام الجدول أولاً.</p>';
   if (se) {
     const busy = new Set(sessionSubjects(se).flatMap(x => teachersOfSubject(x.sub, x.g).concat(teacherOf(x.sub, x.g))).filter(Boolean).map(normName));
-    const cnt = {}; S.com.forEach(c => obsList(`${se.key}_${c.no}`).forEach(n => { if (n) cnt[normName(n)] = (cnt[normName(n)] || 0) + 1; }));
+    const cnt = {}; S.com.map(c => c.no).concat(['R']).forEach(no => obsList(`${se.key}_${no}`).forEach(n => { if (n) cnt[normName(n)] = (cnt[normName(n)] || 0) + 1; }));
     obsHtml = `<div class="tw"><table class="et obs"><tr><th>اللجنة</th><th>المقر</th><th>الطلاب</th><th title="عدد الملاحظين المطلوب">العدد المطلوب</th><th>الملاحظون</th></tr>${S.com.map(c => {
       const key = `${se.key}_${c.no}`, list = obsList(key);
       return `<tr><td><b>${c.no}</b></td><td class="tnames">${esc(comPlace(c))}</td><td>${comSum(c)}</td>
       <td><input class="in" type="number" min="1" max="5" data-k="obsN.${c.no}" data-num="1" value="${obsNeed(c.no)}" style="width:4rem" id="on_${c.no}"></td>
       <td><div class="obsl">${obsSlots(se, c, key, list, busy, cnt, load)}</div></td></tr>${typeof OBS_T !== 'undefined' && OBS_T && OBS_T.key === key ? obsPickRow(key, busy, cnt, load) : ''}`; }).join('')}</table></div>
+      ${typeof obsResBlock === 'function' ? obsResBlock(se, busy, cnt, load) : ''}
       ${SWAP ? `<p class="upnote ok">اخترت «${esc(obsList(SWAP.key)[SWAP.i] || '')}» للتبديل — اضغط ⇅ عند الملاحظ الآخر لإتمام التبديل، أو <button class="btn sm ghost" data-act="obsSwapCancel" type="button">إلغاء</button></p>` : ''}
       <details><summary>أحمال الملاحظة لكل معلم (جميع الفترات)</summary><div class="loadl">${Object.entries(load).sort((a, b) => b[1] - a[1]).map(([n, v]) => `<span>${esc(n)} <b>${v}</b></span>`).join('') || '<span class="hint">لا يوجد توزيع بعد</span>'}</div></details>`;
   }
@@ -1610,8 +1611,10 @@ function vStaff() {
   </section>
   <section class="card">
     <h2>توزيع الملاحظين على اللجان</h2>
-    ${qbar('obsTable', 'جدول الملاحظين (كل الفترات):')}
-    ${se ? qbar('obsTable', 'جدول الملاحظين (الفترة المختارة):', '', { ses: OBS_SEL }) : ''}
+    ${se ? qbar('obsNames', 'أسماء الملاحظين على اللجان (الفترة المختارة):', '', { ses: OBS_SEL }) : ''}
+    ${qbar('obsNames', 'أسماء الملاحظين على اللجان (كل الفترات):')}
+    <details class="setadv"><summary>نموذج آخر: جدول توزيع الملاحظين مع المقر وعدد الطلاب</summary>${qbar('obsTable', 'كل الفترات:')}${se ? qbar('obsTable', 'الفترة المختارة:', '', { ses: OBS_SEL }) : ''}</details>
+    ${typeof comCountCtl === 'function' ? comCountCtl() : ''}
     <div class="acts wrap">
       <label class="inl">الفترة <select class="in" id="obsSel">${ses.map(x => `<option value="${x.key}"${x.key === OBS_SEL ? ' selected' : ''}>${dayName(x.day)} ${dateShort(x.day)} – ${esc(x.per.n)}</option>`).join('')}</select></label>
       <label class="inl">عدد الملاحظين الافتراضي لكل لجنة <input class="in" type="number" min="1" max="5" data-k="s.obsDef" data-num="1" value="${S.s.obsDef || 1}" style="width:4rem" id="f_obsDef"></label>
@@ -1704,6 +1707,7 @@ function autoObservers() {
       }
       S.obs[`${se.key}_${c.no}`] = list;
     });
+    if (typeof resNeed === 'function') { const rp = S.teachers.filter(t => !used.has(t) && !busy.has(normName(t))).sort((a, b) => load[a] - load[b] || AR.compare(normName(a), normName(b))); S.obs[`${se.key}_R`] = rp.slice(0, resNeed()); }
     rot = (rot + 7) % S.teachers.length;
   });
   return true;
@@ -1772,6 +1776,7 @@ const FORMS = [
   { id: 'deliver', grp: 'اللجان', t: 'لوحات تسليم اللجان', land: 1, opts: ['grpsize'], build: o => deliverPages(+o.size || 6) },
   // ===== أعمال يومية
   { id: 'daily', grp: 'الأعمال اليومية', t: 'كشف الملاحظين واستلام أوراق الإجابة', opts: ['ses'], build: o => sesOpt(o).map(se => title('كشف الملاحظين واستلام أوراق الإجابة') + sesInfo(se) + sp(6) + dailyTable(se)) },
+  { id: 'obsNames', grp: 'الأعمال اليومية', t: 'أسماء الملاحظين على اللجان (كشف التوقيع اليومي)', opts: ['ses'], build: o => obsNamesPages(o) },
   { id: 'obsTable', grp: 'الأعمال اليومية', t: 'جدول توزيع الملاحظين على اللجان (مع التوقيع)', opts: ['ses'], build: o => obsTablePages(o) },
   { id: 'gradeStmt', grp: 'المعلمون والأسئلة', t: 'بيان توزيع الدرجات', build: () => [title('بيان توزيع الدرجات', yearLine()) + gsContent(false)] },
   { id: 'openEnv', grp: 'الأعمال اليومية', t: 'محضر فتح مظروف أسئلة', opts: ['ses'], build: o => sesOpt(o).map(openEnvPage) },

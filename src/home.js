@@ -3,6 +3,7 @@ const DAY_ITEMS = [
   { k: 'openEnv', t: 'محضر فتح مظروف الأسئلة', per: 'ses' },
   { k: 'agree', t: 'محضر اتفاقية التصحيح وسلامة الأسئلة', per: 'ses' },
   { k: 'daily', t: 'كشف الملاحظين واستلام أوراق الإجابة', per: 'ses' },
+  { k: 'obsNames', t: 'أسماء الملاحظين على اللجان (للتوقيع)', per: 'ses' },
   { k: 'obsTable', t: 'جدول توزيع الملاحظين مع التوقيع', per: 'ses' },
   { k: 'qEnv', t: 'ظروف أسئلة الطلاب (لكل لجنة)', per: 'ses', heavy: true },
   { k: 'aEnv', t: 'ظروف أوراق إجابات الطلاب', per: 'ses' },
@@ -20,7 +21,7 @@ function pickDay() {
   i = S.days.findIndex(d => d.g > t); return { i: i >= 0 ? i : 0, today: false };
 }
 let HOME_DAY = null;
-function bagSel() { S.s.bagSel = S.s.bagSel || { openEnv: true, agree: true, daily: true, obsTable: true, qEnv: false, aEnv: true, dailyAbs: true }; return S.s.bagSel; }
+function bagSel() { S.s.bagSel = S.s.bagSel || { openEnv: true, agree: true, daily: true, obsTable: false, qEnv: false, aEnv: true, dailyAbs: true }; if (S.s.bagSel.obsNames == null) S.s.bagSel.obsNames = true; return S.s.bagSel; }
 function fById(id) { return FORMS.find(f => f.id === id); }
 function dayGroups(di) {
   const d = S.days[di]; if (!d) return [];

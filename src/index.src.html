@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>نظام الإسناد واللجان وأعمال الاختبارات</title>
 <meta name="description" content="نظام إعداد وطباعة أعمال الاختبارات – مدرسة بلاط الشهداء الثانوية">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0e3a46">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="أعمال الاختبارات">
 <script src="xlsx.full.min.js"></script>
 <script src="docx.umd.js" defer></script>
 <style>
@@ -594,6 +602,9 @@ body.nosc{overflow:hidden}
  table.obs td:nth-child(1) b{font-size:1.25rem;color:var(--sc)}table.obs td:nth-child(2){font-size:.8rem}table.obs td:nth-child(3)::after{content:" طالباً";font-size:.72rem;color:var(--muted)}
  table.obs td:nth-child(5){grid-column:1/-1}table.obs tr.obpick{display:block;padding:8px 6px}table.obs tr.obpick td{display:block}}
 .ob .obn{white-space:nowrap}
+.wrest > summary{cursor:pointer;font-size:.8rem;font-weight:700;color:#0e7490;padding:4px 0}.wrest[open] > summary{color:var(--muted)}
+.obres{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:color-mix(in srgb,#64748b 6%,var(--surface))}.obrh{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:8px}.obrh b{font-size:1rem}.obpick.obr{margin-top:8px;padding:8px;border-radius:10px;background:color-mix(in srgb,#0e7490 6%,var(--surface))}
+.comcnt{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0 10px}.comcnt b{font-size:1.25rem;min-width:2.2rem;text-align:center}.comcnt .btn{min-width:38px;font-size:1.1rem}
 .ttnext{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.ttnext > b{font-size:.92rem}.ttnext .drop{padding:10px}
 .pickl1{padding:3px 14px;font-size:.78rem;font-weight:800;color:var(--accent);background:var(--bg);border-bottom:1px solid var(--line)}
 .setnow{display:flex;gap:12px;align-items:center;border:2px solid var(--sc2);border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--sc2) 8%,var(--surface));margin-top:8px}

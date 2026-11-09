@@ -19,6 +19,7 @@ shutil.copy(nm/'html2canvas/dist/html2canvas.min.js', d.parent/'site'/'html2canv
 shutil.copy(nm/'jspdf/dist/jspdf.umd.min.js', d.parent/'site'/'jspdf.umd.min.js')
 shutil.copy(d/'cal-1448.webp', d.parent/'site'/'cal-1448.webp')
 shutil.copy(d/'cal-1448-t2.jpg', d.parent/'site'/'cal-1448-t2.jpg')
+for f in ('manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png'): shutil.copy(d/f, d.parent/'site'/f)
 shutil.copy(nm/'pdfjs-dist/build/pdf.worker.min.js', d.parent/'site'/'pdf.worker.min.js')
 # ---- نسخة الملف الواحد ----
 import base64, re
