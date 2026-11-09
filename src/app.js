@@ -1287,6 +1287,7 @@ function vCommittees() {
   const ct = comTotals(), gt = gradeTotals(), src = S.students.length ? 'من ملف الطلاب المرفوع' : 'من الأعداد اليدوية في الإعدادات';
   const warn = G.filter(g => ct[g] !== gt[g]);
   return `
+  ${typeof distCard === 'function' ? distCard() : ''}
   <section class="card">
     <h2>اللجان وأعداد الطلاب فيها</h2>
     ${qbar('comCounts', 'أعداد الطلاب في اللجان:')}
@@ -1792,7 +1793,7 @@ const FORMS = [
   { id: 'receipt', grp: 'المعلمون والأسئلة', t: 'بيان استلام أسئلة الاختبارات من المعلمين', build: () => [title('بيان استلام أسئلة الاختبارات من المعلمين', yearLine()) + receiptTable()] },
   { id: 'assign', grp: 'المعلمون والأسئلة', t: 'تكليف وضع أسئلة الاختبارات', opts: ['grade', 'gs'], build: o => assignPages(o) },
   { id: 'complete', grp: 'المعلمون والأسئلة', t: 'إقرار إنهاء المقرر الدراسي', opts: ['grade'], build: o => completePages(o) },
-  { id: 'correct', grp: 'المعلمون والأسئلة', t: 'توزيع أوراق اللجان على المصححين', opts: ['grade'], build: o => correctPages(o) },
+  { id: 'correct', grp: 'اللجان', t: 'توزيع الطلاب على لجان الاختبارات (حسب المادة والمعلم)', opts: ['grade'], build: o => correctPages(o) },
   { id: 'obsInstr', grp: 'المعلمون والأسئلة', t: 'تعليمات ملاحظي اللجان مع توقيع المعلمين', build: () => obsInstrPages() },
   // ===== نماذج فارغة
   { id: 'absence', grp: 'المحاضر والنماذج', t: 'محضر غياب طالب عن الاختبار', opts: ['copies'], build: o => rep(o, absencePage) },
@@ -2017,21 +2018,7 @@ function completePages(o) {
       `<p class="txt">أُقر أنا المعلم الموقع أدناه بأنني أنهيت تدريس كامل المقررات الدراسية في الوقت المحدد، وعلى ذلك جرى التوقيع.</p>` + T(rows, { cls: 'dense' });
   });
 }
-function correctPages(o) {
-  return G.filter(g => gOk(o, g)).map(g => {
-    const subs = []; S.days.forEach(d => d.p.forEach(p => { const s = (p.s[g] || '').trim(); if (s && !subs.includes(s)) subs.push(s); }));
-    const coms = S.com.filter(c => +c.c[g] > 0);
-    const k = Math.max(1, subs.length), per = Math.ceil(coms.length / k);
-    const rows = [[H('المادة'), H('الشعب'), H('رقم اللجنة'), H('مقرها'), H('عدد الطلاب'), H('المعلم')]];
-    let total = 0;
-    subs.forEach((s, si) => {
-      const part = coms.slice(si * per, si * per + per);
-      part.forEach((c, i) => { total += +c.c[g]; const r = []; if (i === 0) r.push(Gc(g, `<b>${esc(s)}</b>`, { rs: part.length })); if (si === 0 && i === 0) r.push({ v: 'جميع الشعب', rs: coms.length }); r.push(`<b>${c.no}</b>`, { v: esc(comPlace(c)), fs: '8pt' }, +c.c[g]); if (i === 0) r.push({ v: `<b>${esc(teacherOf(s, g))}</b>`, rs: part.length }); rows.push(r); });
-    });
-    rows.push([L('عدد الطلاب', { cs: 4 }), L(total), L('')]);
-    return title(`توزيع أوراق طلاب ${GNAME[g].replace('الصف ', '')} على المصححين حسب اللجان`, yearLine()) + T(rows, { cls: 'dense' });
-  });
-}
+function correctPages(o) { return distPages(o); }
 const DENS = { cmp: { per: 38, cls: 'cmp' }, mid: { per: 30, cls: 'mid' }, std: { per: 24, cls: 'tall' } };
 function densOf() { return DENS[(S.s.taPrint || {}).dens] || DENS.cmp; }
 function taSheetPages(o) {

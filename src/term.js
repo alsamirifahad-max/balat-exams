@@ -607,7 +607,7 @@ setTimeout(() => { try { const done = localStorage.getItem(LS_KEY + '-semFixV1')
 
 /* ===================== الإسناد: لوحة طباعة موحدة، وألوان المواد، والشعب كشارات ===================== */
 const SUBJ_HUES = [210, 145, 28, 340, 270, 48, 185, 0, 95, 235];
-function subjColor(sub) { const b = normName(String(sub || '').replace(/[\d\s\-–_/]+$/g, '')).replace(/^ال/, ''); if (!b) return 'var(--line)'; let h = 0; for (const ch of b) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return `hsl(${SUBJ_HUES[h % SUBJ_HUES.length]} 58% 46%)`; }
+function subjColor(sub) { const b = normName(String(sub || '').replace(/[\d\s\-–_/]+$/g, '')).replace(/^ال/, ''); if (!b) return 'var(--line)'; let h = 2166136261; for (const ch of b) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0; h = (h ^ (h >>> 13)) >>> 0; return `hsl(${SUBJ_HUES[h % SUBJ_HUES.length]} 58% 46%)`; }
 function secChips(v) { const a = String(v || '').split(/[\s,،\-–]+/).filter(Boolean); return a.length ? `<span class="secs">${a.map(n => `<i>${esc(n)}</i>`).join('')}</span>` : '<span class="hint">اختر الشعب ▾</span>'; }
 function taPick() { const p = S.s.taPrint = S.s.taPrint || {}; if (!Array.isArray(p.fs)) p.fs = ['taSheet']; return p.fs; }
 function taPrintPanel() {
@@ -644,3 +644,73 @@ function hintsToHelp(root) {
   });
 }
 if (typeof injectHelp === 'function') { const __ih = injectHelp; injectHelp = function (r) { __ih(r); try { hintsToHelp(r); } catch (e) { } }; }
+
+/* ===================== توزيع الطلاب على لجان الاختبارات (لكل صف) — مرن ===================== */
+var DIST_G = 1;
+function distComs(g) { return comsOrdered().filter(c => +c.c[g] > 0); }
+function distSubs(g) { const out = []; S.days.forEach(d => d.p.forEach(p => { const s = (p.s[g] || '').trim(); if (s && !out.includes(s)) out.push(s); })); return out; }
+function distOf(g) {
+  S.dist = S.dist || {}; let d = S.dist[g];
+  if (!d || !Array.isArray(d.blocks) || !d.blocks.length) { const subs = distSubs(g), n = distComs(g).length, k = Math.max(1, subs.length), base = Math.floor(n / k), rem = n % k;
+    d = S.dist[g] = { sec: 'جميع الشعب', blocks: (subs.length ? subs : ['']).map((s, i) => ({ sub: s, t: (typeof teacherOf === 'function' && s ? teacherOf(s, g) : '') || '', n: base + (i >= k - rem ? 1 : 0) })) }; }
+  return d;
+}
+function distSlices(g) { const d = distOf(g), coms = distComs(g); let at = 0; return d.blocks.map((b, i) => { const last = i === d.blocks.length - 1; const n = last ? Math.max(0, coms.length - at) : Math.max(0, Math.min(+b.n || 0, coms.length - at)); const part = coms.slice(at, at + n); at += n; return { b, i, part }; }); }
+function distCard() {
+  const g = DIST_G, d = distOf(g), coms = distComs(g), sl = distSlices(g), set = d.blocks.slice(0, -1).reduce((a, b) => a + (+b.n || 0), 0);
+  const tabs = G.map(x => `<button type="button" class="${x === g ? 'on' : ''}" data-tact="distG" data-v="${x}" style="--gc:${GCOL[x]}">${GSHORT[x]} ثانوي</button>`).join('');
+  const rows = sl.map(({ b, i, part }) => { const tot = part.reduce((a, c) => a + (+c.c[g] || 0), 0), last = i === d.blocks.length - 1;
+    return `<div class="dsrow" style="--sx:${subjColor(b.sub)}"><div class="dsn">${i + 1}</div>
+      <div class="dsf"><label>المادة ${pickSel(`dist.${g}.blocks.${i}.sub`, b.sub, subOpts(g), { kind: 's', ph: '— المادة —', other: 'كتابة مادة أخرى…' })}</label>
+      <label>المعلم ${pickSel(`dist.${g}.blocks.${i}.t`, b.t, tchOpts(b.sub ? teachersOfSubject(b.sub, g) : [], 'معلمو المادة'), { ph: '— المعلم —' })}</label></div>
+      <div class="dsc">${last ? `<span class="dsall">الباقي</span>` : `<button type="button" class="btn sm" data-tact="distN" data-i="${i}" data-d="-1">−</button><b>${part.length}</b><button type="button" class="btn sm" data-tact="distN" data-i="${i}" data-d="1">+</button>`}<small>${part.length ? `لجان ${part[0].no}–${part[part.length - 1].no} · ${tot} طالباً` : 'لا لجان'}</small></div>
+      <button type="button" class="x" data-tact="distDel" data-i="${i}" aria-label="حذف">×</button></div>`; }).join('');
+  return `<section class="card distc"><h2>توزيع الطلاب على لجان الاختبارات</h2>
+    <div class="semchips gtabs" role="tablist">${tabs}</div>
+    <div class="dsmeta"><span><b>${coms.length}</b> لجنة فيها طلاب ${GSHORT[g]} · <b>${coms.reduce((a, c) => a + (+c.c[g] || 0), 0)}</b> طالباً</span><label class="inl">عمود الشعب ${inp(`dist.${g}.sec`, d.sec || '', { ph: 'جميع الشعب' })}</label></div>
+    <div class="dsrows">${rows}</div>
+    ${set > coms.length ? `<p class="upnote warn">مجموع اللجان المحددة أكبر من عدد لجان الصف — قلّل العدد.</p>` : ''}
+    <div class="acts wrap"><button class="btn sm" data-tact="distAdd" type="button">+ مادة / معلم</button><button class="btn sm ghost" data-tact="distEven" type="button">توزيع بالتساوي</button><button class="btn sm ghost" data-tact="distReset" type="button">إعادة من جدول الاختبارات</button></div>
+    ${qbar('correct', 'الطباعة:')}</section>`;
+}
+function distPages(o) {
+  const TC = { 1: '#2e8b3a', 2: '#d98a00', 3: '#a85a1a' }, CC = { 1: '#dbe5f1', 2: '#dbe5f1', 3: '#ffffff' };
+  return G.filter(g => gOk(o, g) && distComs(g).length).map(g => {
+    const d = distOf(g), sl = distSlices(g).filter(x => x.part.length), coms = sl.flatMap(x => x.part), plc = c => (c.fl || c.rm || '').trim();
+    const rows = [[H('المادة', { w: '17%' }), H('الشعب', { w: '13%' }), H('رقم اللجنة', { w: '11%' }), H('مقرها', { w: '15%' }), H('عدد الطلاب', { w: '11%' }), H('المعلم')]];
+    let total = 0, idx = 0;
+    sl.forEach((x, si) => { const alt = si % 2 ? '#f2f2f2' : '#ffffff';
+      x.part.forEach((c, i) => { total += +c.c[g] || 0; const r = [];
+        if (i === 0) r.push({ v: `<b>${esc(x.b.sub)}</b>`, rs: x.part.length, bg: alt });
+        if (idx === 0) r.push({ v: `<b>${esc(d.sec || 'جميع الشعب')}</b>`, rs: coms.length, bg: '#ffffff' });
+        r.push({ v: `<b>${c.no}</b>`, bg: CC[g] });
+        const p = plc(c), prev = idx > 0 ? plc(coms[idx - 1]) : null; if (p !== prev) { let k = idx; while (k < coms.length && plc(coms[k]) === p) k++; r.push({ v: `<b>${esc(p)}</b>`, rs: k - idx, bg: '#f2f2f2' }); }
+        r.push({ v: `<b>${+c.c[g] || 0}</b>`, bg: GCOL[g] });
+        if (i === 0) r.push({ v: `<b>${esc(x.b.t || '')}</b>`, rs: x.part.length, bg: alt });
+        rows.push(r); idx++; }); });
+    rows.push([{ v: '<b>عدد الطلاب</b>', cs: 5, bg: '#e7e6e6' }, { v: `<b>${total}</b>`, bg: GCOL[g] }]);
+    return `<p class="dt" style="color:${TC[g]}">توزيع طلاب ${GSHORT[g]} ثانوي على لجان الاختبارات</p>` + T(rows, { cls: 'dense nogrow' });
+  });
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact, g = DIST_G;
+  if (a === 'distG') { DIST_G = +b.dataset.v; render(); return; }
+  if (!a.startsWith('dist')) return; const d = distOf(g);
+  if (a === 'distN') { const bl = d.blocks[+b.dataset.i]; bl.n = Math.max(0, (+bl.n || 0) + +b.dataset.d); }
+  else if (a === 'distDel') { if (d.blocks.length < 2) return toast('يلزم سطر واحد على الأقل', true); d.blocks.splice(+b.dataset.i, 1); }
+  else if (a === 'distAdd') { const n = distComs(g).length, k = d.blocks.length + 1; d.blocks.push({ sub: '', t: '', n: 0 }); const base = Math.floor(n / k); d.blocks.forEach((x, i) => x.n = base + (i >= k - n % k ? 1 : 0)); }
+  else if (a === 'distEven') { const n = distComs(g).length, k = d.blocks.length; d.blocks.forEach((x, i) => x.n = Math.floor(n / k) + (i >= k - n % k ? 1 : 0)); }
+  else if (a === 'distReset') { if (!await confirmBox(`إعادة بناء توزيع ${GNAME[g]} من جدول الاختبارات والإسناد؟`)) return; delete S.dist[g]; distOf(g); }
+  save(); render();
+});
+
+/* ===================== تنبيه نسخة جديدة من الموقع ===================== */
+var BUILD_ID = '__BUILD__';
+async function checkVersion() {
+  try { const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; const v = (await r.text()).trim(); if (!v || v === BUILD_ID || BUILD_ID.startsWith('__')) return;
+    if ($('#newVer')) return; const d = document.createElement('div'); d.id = 'newVer'; d.className = 'newver'; d.innerHTML = '<span>✨ تحديث جديد للموقع متاح</span><button class="btn sm pri" type="button">تحديث الآن</button>'; d.querySelector('button').onclick = () => location.reload(); document.body.appendChild(d);
+  } catch (e) { }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
+setInterval(() => { if (document.visibilityState === 'visible') checkVersion(); }, 120000);
+setTimeout(checkVersion, 4000);
