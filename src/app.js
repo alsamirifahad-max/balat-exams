@@ -1290,6 +1290,7 @@ function vCommittees() {
   ${typeof distCard === 'function' ? distCard() : ''}
   <section class="card">
     <h2>اللجان وأعداد الطلاب فيها</h2>
+    ${typeof bldCtl === 'function' ? bldCtl() : ''}
     ${qbar('comCounts', 'أعداد الطلاب في اللجان:')}
     ${qbar('comPlaces', 'مقرات اللجان:')}
     ${qbar('sticker', 'كروكي اللجان:')}
@@ -1618,6 +1619,7 @@ function vStaff() {
     ${qbar('obsNames', 'أسماء الملاحظين على اللجان (كل الفترات):')}
     <details class="setadv"><summary>نموذج آخر: جدول توزيع الملاحظين مع المقر وعدد الطلاب</summary>${qbar('obsTable', 'كل الفترات:')}${se ? qbar('obsTable', 'الفترة المختارة:', '', { ses: OBS_SEL }) : ''}</details>
     ${typeof comCountCtl === 'function' ? comCountCtl() : ''}
+    ${typeof bldCtl === 'function' ? bldCtl() : ''}
     <label class="inl">ترتيب اللجان في الكشوف <select class="in" data-k="s.obsOrd" id="f_obsOrd"><option value="place"${(S.s.obsOrd || 'place') === 'place' ? ' selected' : ''}>المبنى أولاً ثم الصالة الرياضية والمرافق</option><option value="num"${S.s.obsOrd === 'num' ? ' selected' : ''}>حسب رقم اللجنة</option></select></label>
     <div class="acts wrap">
       <label class="inl">الفترة <select class="in" id="obsSel">${ses.map(x => `<option value="${x.key}"${x.key === OBS_SEL ? ' selected' : ''}>${dayName(x.day)} ${dateShort(x.day)} – ${esc(x.per.n)}</option>`).join('')}</select></label>

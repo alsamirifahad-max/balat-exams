@@ -2129,6 +2129,7 @@ function vCommittees() {
   ${typeof distCard === 'function' ? distCard() : ''}
   <section class="card">
     <h2>اللجان وأعداد الطلاب فيها</h2>
+    ${typeof bldCtl === 'function' ? bldCtl() : ''}
     ${qbar('comCounts', 'أعداد الطلاب في اللجان:')}
     ${qbar('comPlaces', 'مقرات اللجان:')}
     ${qbar('sticker', 'كروكي اللجان:')}
@@ -2457,6 +2458,7 @@ function vStaff() {
     ${qbar('obsNames', 'أسماء الملاحظين على اللجان (كل الفترات):')}
     <details class="setadv"><summary>نموذج آخر: جدول توزيع الملاحظين مع المقر وعدد الطلاب</summary>${qbar('obsTable', 'كل الفترات:')}${se ? qbar('obsTable', 'الفترة المختارة:', '', { ses: OBS_SEL }) : ''}</details>
     ${typeof comCountCtl === 'function' ? comCountCtl() : ''}
+    ${typeof bldCtl === 'function' ? bldCtl() : ''}
     <label class="inl">ترتيب اللجان في الكشوف <select class="in" data-k="s.obsOrd" id="f_obsOrd"><option value="place"${(S.s.obsOrd || 'place') === 'place' ? ' selected' : ''}>المبنى أولاً ثم الصالة الرياضية والمرافق</option><option value="num"${S.s.obsOrd === 'num' ? ' selected' : ''}>حسب رقم اللجنة</option></select></label>
     <div class="acts wrap">
       <label class="inl">الفترة <select class="in" id="obsSel">${ses.map(x => `<option value="${x.key}"${x.key === OBS_SEL ? ' selected' : ''}>${dayName(x.day)} ${dateShort(x.day)} – ${esc(x.per.n)}</option>`).join('')}</select></label>
@@ -5117,7 +5119,7 @@ function obsNamesPages(o) {
   sesOpt(o || {}).forEach(se => {
     const rows = []; comsOrdered().forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, n: l[i] || '' }); });
     const res = obsList(`${se.key}_R`).filter(Boolean);
-    const plc = c => (c.fl || c.rm || '').trim(), freq = {}; S.com.forEach(c => { const k = plc(c); freq[k] = (freq[k] || 0) + 1; });
+    const plc = c => bldOf(c), freq = {}; S.com.forEach(c => { const k = plc(c); freq[k] = (freq[k] || 0) + 1; });
     const main = Object.keys(freq).sort((a, b) => freq[b] - freq[a])[0];
     const lab = c => { const p = plc(c), red = /صال|مسرح|مكتب|مصل|معمل|قاع/.test(p); return { v: `<span style="white-space:nowrap;${red ? 'color:#c0392b;' : ''}">( ${c.no} ) ${esc(p)}</span>`, fs: '8.5pt' }; };
     const n = rows.length, nr = Math.max(res.length, resNeed());
@@ -5153,7 +5155,7 @@ document.addEventListener('click', async e => {
 
 /* ===================== ترتيب اللجان، المعتذرون، الاستبدال من الاحتياط ===================== */
 const OUTSIDE = /صال|مسرح|مصل|مكتب|معمل|ملعب|قاع/;
-function comsOrdered() { const L = S.com.slice(); if ((S.s.obsOrd || 'place') === 'num') return L.sort((a, b) => (+a.no) - (+b.no)); return L.sort((a, b) => (OUTSIDE.test((a.fl || '') + ' ' + (a.rm || '')) - OUTSIDE.test((b.fl || '') + ' ' + (b.rm || ''))) || (+a.no) - (+b.no)); }
+function comsOrdered() { const L = S.com.slice(); if ((S.s.obsOrd || 'place') === 'num') return L.sort((a, b) => (+a.no) - (+b.no)); return L.sort((a, b) => (OUTSIDE.test(bldOf(a)) - OUTSIDE.test(bldOf(b))) || (+a.no) - (+b.no)); }
 function exAll() { S.obsEx = S.obsEx || {}; return S.obsEx; }
 function exSet(sk) { return new Set((exAll()[sk] || []).map(normName)); }
 function obsLog(sk) { S.obsLog = S.obsLog || {}; return S.obsLog[sk] = S.obsLog[sk] || []; }
@@ -5214,7 +5216,7 @@ function boardHtml(di) {
       const on = a && a.n === nm;
       return `<div class="bob${on ? ' on' : ''}"><button type="button" class="bname" data-tact="bAtt" data-s="${sk}" data-c="${c.no}" data-i="${i}" data-n="${esc(nm)}" aria-pressed="${!!on}">${on ? '✓ ' : ''}${esc(nm)}${on ? `<small>${esc(a.at)}</small>` : ''}</button>${!on && canEdit ? `<button type="button" class="ic rep" data-tact="bRep" data-k="${key}" data-i="${i}" title="غائب ← استبدال من الاحتياط">↺</button>` : ''}</div>`; });
     const st = !cnt ? 'none' : ok === cnt ? 'ok' : ok ? 'part' : 'wait';
-    return `<article class="bcard ${st}"><header><b>${c.no}</b><span>${esc((c.fl || c.rm || '').trim())}</span><small>${comSum(c)} طالباً</small></header>${people.join('')}</article>`;
+    return `<article class="bcard ${st}"><header><b>${c.no}</b><span>${esc(bldOf(c))}</span><small>${comSum(c)} طالباً</small></header>${people.join('')}</article>`;
   }).join('');
   const pct = tot ? Math.round(100 * here / tot) : 0;
   return `<section class="card board"><div class="bhead"><div><h2>لوحة الملاحظين — ${dayName(day)} ${dateShort(day)}</h2><p class="hint">المس اسم الملاحظ عند حضوره فيصبح أخضر. ↺ يستبدل الغائب بأول اسم في الاحتياط. التحديث يظهر على أجهزة الجميع.</p></div>
@@ -5347,7 +5349,7 @@ function distCard() {
 function distPages(o) {
   const TC = { 1: '#2e8b3a', 2: '#d98a00', 3: '#a85a1a' }, CC = { 1: '#dbe5f1', 2: '#dbe5f1', 3: '#ffffff' };
   return G.filter(g => gOk(o, g) && distComs(g).length).map(g => {
-    const d = distOf(g), sl = distSlices(g).filter(x => x.part.length), coms = sl.flatMap(x => x.part), plc = c => (c.fl || c.rm || '').trim();
+    const d = distOf(g), sl = distSlices(g).filter(x => x.part.length), coms = sl.flatMap(x => x.part), plc = c => bldOf(c);
     const rows = [[H('المادة', { w: '17%' }), H('الشعب', { w: '13%' }), H('رقم اللجنة', { w: '11%' }), H('مقرها', { w: '15%' }), H('عدد الطلاب', { w: '11%' }), H('المعلم')]];
     let total = 0, idx = 0;
     sl.forEach((x, si) => { const alt = si % 2 ? '#f2f2f2' : '#ffffff';
@@ -5376,7 +5378,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794240474';
+var BUILD_ID = '1794240972';
 async function checkVersion() {
   try { const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; const v = (await r.text()).trim(); if (!v || v === BUILD_ID || BUILD_ID.startsWith('__')) return;
     if ($('#newVer')) return; const d = document.createElement('div'); d.id = 'newVer'; d.className = 'newver'; d.innerHTML = '<span>✨ تحديث جديد للموقع متاح</span><button class="btn sm pri" type="button">تحديث الآن</button>'; d.querySelector('button').onclick = () => location.reload(); document.body.appendChild(d);
@@ -5385,6 +5387,11 @@ async function checkVersion() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
 setInterval(() => { if (document.visibilityState === 'visible') checkVersion(); }, 120000);
 setTimeout(checkVersion, 4000);
+
+/* المقر العام للجنة (المبنى / الصالة الرياضية) — مستقل عن الدور والقاعة */
+function gymFrom() { const v = S.s.gymFrom; return v === '' || v === 0 || v === '0' ? 0 : (+v || 25); }
+function bldOf(c) { if (c.bld) return c.bld; if (OUTSIDE.test((c.fl || '') + ' ' + (c.rm || ''))) return (c.fl || c.rm || '').trim(); const k = gymFrom(); return k && +c.no >= k ? 'الصالة الرياضية' : 'المبنى'; }
+function bldCtl() { return `<div class="comcnt"><span>المقر:</span><b style="font-size:.95rem">المبنى</b><span>من اللجنة 1 — و</span><b style="font-size:.95rem">الصالة الرياضية</b><span>من اللجنة</span><input class="in" type="number" min="0" data-k="s.gymFrom" data-num="1" value="${gymFrom()}" style="width:4.5rem"><small class="hint">يظهر في كشوف الملاحظين وتوزيع الطلاب ولوحة الاختبار. اكتب 0 إن لم تُستخدم الصالة.</small></div>`; }
 
 </script>
 </body>
