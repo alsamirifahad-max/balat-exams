@@ -80,7 +80,7 @@ function alerts() {
   const sched = []; S.days.forEach(d => d.p.forEach(p => G.forEach(g => { const sb = (p.s[g] || '').trim(); if (sb && !sched.some(x => x.g === g && x.sub === sb)) sched.push({ g, sub: sb }); })));
   const noT = sched.filter(x => { const r = S.st.find(y => +y.g === x.g && y.sub.trim() === x.sub); return !r || !String(r.t || '').trim(); });
   if (noT.length) add('bad', `مواد في الجدول بلا معلم مكلف بالأسئلة: ${noT.map(x => x.sub).join('، ')}.`, 'staff');
-  if (S.ta.length && ACTIVE !== 'ta-agent' && setMeta(ACTIVE).sem === S.s.sem) { const noTa = sched.filter(x => !teachersOfSubject(x.sub, x.g).length); if (noTa.length) add('warn', `مواد في الجدول لا يوجد لها إسناد: ${noTa.map(x => x.sub).join('، ')} — تحقق من الفصل الدراسي أو أسماء المواد.`, 'assign'); }
+  if (S.ta.length && setMeta(ACTIVE).sem === S.s.sem) { const noTa = sched.filter(x => !teachersOfSubject(x.sub, x.g).length); if (noTa.length) add('warn', `مواد في الجدول لا يوجد لها إسناد: ${noTa.map(x => x.sub).join('، ')} — تحقق من الفصل الدراسي أو أسماء المواد.`, 'assign'); }
   S.days.forEach((d, di) => { const wd = isoToDate(d.g).getUTCDay(); if (wd === 5 || wd === 6) add('warn', `يوم ${dayName(d)} ${dateShort(d)} في الجدول يوافق عطلة نهاية الأسبوع.`, 'schedule'); if (!d.p.some(p => G.some(g => (p.s[g] || '').trim()))) add('warn', `يوم ${dayName(d)} ${dateShort(d)} بلا مواد.`, 'schedule'); });
   const dupDates = S.days.map(d => d.g).filter((g, i, a) => a.indexOf(g) !== i); if (dupDates.length) add('bad', 'يوجد تاريخ مكرر في جدول الاختبارات.', 'schedule');
   let missing = 0, dups = 0, busy = 0; const anyObs = Object.keys(S.obs).some(k => obsList(k).some(Boolean));
