@@ -1044,7 +1044,7 @@ function stageDone(k) {
 const svgI = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function updSetChip() { const c = $('#setChip'); if (!c) return; const m = setMeta(ACTIVE); c.textContent = m.n + ' · ' + semShort(m.sem); c.title = `الإسناد الذي تعمل عليه: ${m.n} — الفصل الدراسي ${m.sem} ${m.y}`; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
 function roleFlow() { return FLOW.filter(s => typeof roleAllows !== 'function' || roleAllows(s.k)).map((s, i) => Object.assign({}, s, { n: i + 1 }, (typeof ROLE !== 'undefined' && ROLE === 'agent' && s.k === 'files') ? { t: 'المعلمون', d: 'قائمة معلمي المدرسة — ترفعها من Excel أو Word أو PDF وتنعكس في الإسناد' } : {})); }
-function renderNav() { updSetChip(); if (typeof updRoleChip === 'function') updRoleChip();
+function renderNav() { updSetChip(); if (typeof updWeekChip === 'function') updWeekChip(); if (typeof updRoleChip === 'function') updRoleChip();
   const RF = roleFlow();
   $('#nav').innerHTML = `<div class="steps">${RF.map(s => { const d = stageDone(s.k); return `<button class="step${s.k === TAB ? ' on' : ''}${d === true ? ' done' : ''}" style="--sc:${s.c}" data-tab="${s.k}" type="button" aria-current="${s.k === TAB ? 'page' : 'false'}"><i>${d === true ? '✓' : s.n}</i><span>${s.t}</span></button>`; }).join('<span class="sline" aria-hidden="true"></span>')}</div>
   <div class="utils">${UTILS.filter(u => typeof roleAllows !== 'function' || roleAllows(u.k)).map(u => `<button class="util${u.k === TAB ? ' on' : ''}${u.pin ? ' pin' : ''}" style="--uc:${u.c}" data-tab="${u.k}" type="button" title="${u.t}">${svgI(u.ic, 17)}<span>${u.t}</span></button>`).join('')}</div>`;
@@ -1243,6 +1243,7 @@ function vSchedule() {
   return `
   <section class="card">
     <h2>أيام الاختبار والفترات</h2>
+    ${typeof examCalBox === 'function' ? examCalBox() : ''}
     <p class="hint">أدخل التاريخ بالميلادي من التقويم أو اكتب اليوم/الشهر/السنة بالهجري؛ يتحول الآخر تلقائياً ويُكتب اسم اليوم من التاريخ. خانة «نص يدوي» تتجاوز التحويل إن أردت كتابة التاريخ كما تشاء.</p>
     <div class="acts wrap">
       <label class="inl">تاريخ أول يوم: <input class="in" type="date" id="genStart" value="${S.days[0] ? S.days[0].g : ''}"></label>
@@ -1645,6 +1646,7 @@ function setChooser() {
     <p class="hint">ثلاثة حفظ مستقلة تماماً، لا يتداخل أحدها مع الآخر، وكلها محفوظة على السحابة. اختر الحفظ الذي تعمل عليه على هذا الجهاز؛ <b>الاختبارات والتكليفات والملاحظة تُبنى على الحفظ النشط</b>. يمكنك تعديل الاسم والوصف بالضغط عليهما.</p>
     <div class="setnow" style="--sc2:${SET_DEF[ACTIVE].c}"><span class="setic">${SET_DEF[ACTIVE].ic}</span><div><small>تعمل الآن على</small><b>${esc(setMeta(ACTIVE).n)} — الفصل الدراسي ${esc(setMeta(ACTIVE).sem)} ${esc(setMeta(ACTIVE).y)}</b><span>كشوف الإسناد ونصاب المعلمين تُطبع بهذا الفصل، وقائمة المواد تُقترح من خطته. بقية النظام (الاختبارات والانتظار والمناوبة) يبقى على الفصل ${esc(S.s.sem)}.</span></div></div>
     ${chosen ? '' : `<p class="setcall">هذه أول مرة على هذا الجهاز — اختر الحفظ الذي ستعمل عليه: فهد يعمل على «حفظ فهد»، والوكيل على «حفظ الوكيل». <button class="btn sm" data-act="setUse" data-v="${ACTIVE}" type="button">متابعة على «${esc(setMeta(ACTIVE).n)}»</button></p>`}
+    ${typeof seedBox === 'function' ? seedBox() : ''}
     <div class="setgrid">${TA_SETS.map(id => { const d = secData(id), m = setMeta(id), on = id === ACTIVE, sy = SYNC[id], tc = new Set((d.ta || []).map(x => normName(x.t))).size;
       return `<article class="setc${on ? ' on' : ''}" style="--sc2:${SET_DEF[id].c}">
         <div class="seth"><span class="setic">${SET_DEF[id].ic}</span><div><input class="setn" data-setmeta="${id}" data-f="n" value="${esc(m.n)}" aria-label="اسم الحفظ" maxlength="30"><input class="setd" data-setmeta="${id}" data-f="d" value="${esc(m.d)}" placeholder="وصف، مثل: إسناد الفصل الثاني 1447" aria-label="وصف الحفظ" maxlength="60"></div></div>

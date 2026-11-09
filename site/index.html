@@ -553,6 +553,17 @@ body.nosc{overflow:hidden}
 .caldates{width:100%;margin-top:4px}.caldates summary{cursor:pointer;font-weight:700;font-size:.88rem;color:#b45309}.caldates .acts{margin:6px 0 0}.caldates input[type=date]{min-width:9.5rem}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tbar{background:color-mix(in srgb,#ea580c 14%,var(--surface));border-color:color-mix(in srgb,#ea580c 40%,var(--line))}:root:not([data-theme="light"]) .tbar span{color:var(--muted)}:root:not([data-theme="light"]) .tbar.done{background:color-mix(in srgb,#16a34a 12%,var(--surface))}}
 :root[data-theme="dark"] .tbar{background:color-mix(in srgb,#ea580c 14%,var(--surface));border-color:color-mix(in srgb,#ea580c 40%,var(--line))}:root[data-theme="dark"] .tbar span{color:var(--muted)}
+.wkchip{font-size:.76rem;font-weight:700;border-radius:999px;padding:4px 10px;background:color-mix(in srgb,#b45309 14%,var(--surface));color:#b45309;border:1px solid color-mix(in srgb,#b45309 35%,transparent);white-space:nowrap}.wkchip.hol{background:#dcfce7;color:#166534;border-color:#86efac}
+@media (max-width:600px){.wkchip{font-size:.7rem;padding:3px 8px}}
+.holed{display:flex;flex-direction:column;gap:6px;margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}.holed small{color:var(--muted)}
+.holr{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.holr input:first-child{flex:1;min-width:150px}.holr input[type=date]{min-width:9.5rem}.holr .x{border:0;background:none;color:var(--bad);font-size:1.3rem;cursor:pointer;padding:0 6px}
+.calsug{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;background:color-mix(in srgb,#b45309 8%,var(--surface));border:1px solid color-mix(in srgb,#b45309 30%,var(--line));border-radius:12px;padding:10px 12px;margin:6px 0 10px;font-size:.9rem}.calsug.ok{background:color-mix(in srgb,var(--ok) 8%,var(--surface));border-color:color-mix(in srgb,var(--ok) 35%,var(--line))}
+.seed{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;border:1px solid color-mix(in srgb,#ea580c 40%,var(--line));border-inline-start:5px solid #ea580c;background:color-mix(in srgb,#ea580c 7%,var(--surface));border-radius:12px;padding:12px 14px;margin:0 0 12px}.seed > div{flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px}.seed span{font-size:.86rem;color:var(--muted)}
+.seed.slim{display:block;padding:8px 12px}.seed.slim summary{cursor:pointer;font-weight:700;font-size:.88rem}
+.fsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0}.fsum div{background:var(--soft);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}.fsum b{font-size:1.35rem}.fsum span{font-size:.8rem;color:var(--muted)}
+.fk{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle}.fk.hi{background:#fecaca}.fk.lo{background:#bbf7d0}
+.ftab tr.hi td{background:color-mix(in srgb,#ef4444 12%,var(--surface))}.ftab tr.lo td{background:color-mix(in srgb,#22c55e 10%,var(--surface))}.ftab .tn{text-align:right}
+.fbarh{min-width:90px}.fbarc{min-width:90px}.fbarc i{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,#f59e0b,#ea580c);min-width:2px}
 .ttnext{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.ttnext > b{font-size:.92rem}.ttnext .drop{padding:10px}
 .pickl1{padding:3px 14px;font-size:.78rem;font-weight:800;color:var(--accent);background:var(--bg);border-bottom:1px solid var(--line)}
 .setnow{display:flex;gap:12px;align-items:center;border:2px solid var(--sc2);border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--sc2) 8%,var(--surface));margin-top:8px}
@@ -567,7 +578,7 @@ body.nosc{overflow:hidden}
 <div class="app">
   <header class="top"><div class="topin">
     <div><h1>نظام الإسناد واللجان وأعمال الاختبارات</h1><div class="sub" id="topSub">مدرسة بلاط الشهداء الثانوية</div></div>
-    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span>
+    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><span class="wkchip" id="wkChip" hidden></span><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span>
   </div></header>
   <nav id="nav" aria-label="الأقسام"></nav>
   <main id="main"></main>
@@ -1737,7 +1748,7 @@ function stageDone(k) {
 const svgI = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function updSetChip() { const c = $('#setChip'); if (!c) return; const m = setMeta(ACTIVE); c.textContent = m.n + ' · ' + semShort(m.sem); c.title = `الإسناد الذي تعمل عليه: ${m.n} — الفصل الدراسي ${m.sem} ${m.y}`; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
 function roleFlow() { return FLOW.filter(s => typeof roleAllows !== 'function' || roleAllows(s.k)).map((s, i) => Object.assign({}, s, { n: i + 1 }, (typeof ROLE !== 'undefined' && ROLE === 'agent' && s.k === 'files') ? { t: 'المعلمون', d: 'قائمة معلمي المدرسة — ترفعها من Excel أو Word أو PDF وتنعكس في الإسناد' } : {})); }
-function renderNav() { updSetChip(); if (typeof updRoleChip === 'function') updRoleChip();
+function renderNav() { updSetChip(); if (typeof updWeekChip === 'function') updWeekChip(); if (typeof updRoleChip === 'function') updRoleChip();
   const RF = roleFlow();
   $('#nav').innerHTML = `<div class="steps">${RF.map(s => { const d = stageDone(s.k); return `<button class="step${s.k === TAB ? ' on' : ''}${d === true ? ' done' : ''}" style="--sc:${s.c}" data-tab="${s.k}" type="button" aria-current="${s.k === TAB ? 'page' : 'false'}"><i>${d === true ? '✓' : s.n}</i><span>${s.t}</span></button>`; }).join('<span class="sline" aria-hidden="true"></span>')}</div>
   <div class="utils">${UTILS.filter(u => typeof roleAllows !== 'function' || roleAllows(u.k)).map(u => `<button class="util${u.k === TAB ? ' on' : ''}${u.pin ? ' pin' : ''}" style="--uc:${u.c}" data-tab="${u.k}" type="button" title="${u.t}">${svgI(u.ic, 17)}<span>${u.t}</span></button>`).join('')}</div>`;
@@ -1936,6 +1947,7 @@ function vSchedule() {
   return `
   <section class="card">
     <h2>أيام الاختبار والفترات</h2>
+    ${typeof examCalBox === 'function' ? examCalBox() : ''}
     <p class="hint">أدخل التاريخ بالميلادي من التقويم أو اكتب اليوم/الشهر/السنة بالهجري؛ يتحول الآخر تلقائياً ويُكتب اسم اليوم من التاريخ. خانة «نص يدوي» تتجاوز التحويل إن أردت كتابة التاريخ كما تشاء.</p>
     <div class="acts wrap">
       <label class="inl">تاريخ أول يوم: <input class="in" type="date" id="genStart" value="${S.days[0] ? S.days[0].g : ''}"></label>
@@ -2338,6 +2350,7 @@ function setChooser() {
     <p class="hint">ثلاثة حفظ مستقلة تماماً، لا يتداخل أحدها مع الآخر، وكلها محفوظة على السحابة. اختر الحفظ الذي تعمل عليه على هذا الجهاز؛ <b>الاختبارات والتكليفات والملاحظة تُبنى على الحفظ النشط</b>. يمكنك تعديل الاسم والوصف بالضغط عليهما.</p>
     <div class="setnow" style="--sc2:${SET_DEF[ACTIVE].c}"><span class="setic">${SET_DEF[ACTIVE].ic}</span><div><small>تعمل الآن على</small><b>${esc(setMeta(ACTIVE).n)} — الفصل الدراسي ${esc(setMeta(ACTIVE).sem)} ${esc(setMeta(ACTIVE).y)}</b><span>كشوف الإسناد ونصاب المعلمين تُطبع بهذا الفصل، وقائمة المواد تُقترح من خطته. بقية النظام (الاختبارات والانتظار والمناوبة) يبقى على الفصل ${esc(S.s.sem)}.</span></div></div>
     ${chosen ? '' : `<p class="setcall">هذه أول مرة على هذا الجهاز — اختر الحفظ الذي ستعمل عليه: فهد يعمل على «حفظ فهد»، والوكيل على «حفظ الوكيل». <button class="btn sm" data-act="setUse" data-v="${ACTIVE}" type="button">متابعة على «${esc(setMeta(ACTIVE).n)}»</button></p>`}
+    ${typeof seedBox === 'function' ? seedBox() : ''}
     <div class="setgrid">${TA_SETS.map(id => { const d = secData(id), m = setMeta(id), on = id === ACTIVE, sy = SYNC[id], tc = new Set((d.ta || []).map(x => normName(x.t))).size;
       return `<article class="setc${on ? ' on' : ''}" style="--sc2:${SET_DEF[id].c}">
         <div class="seth"><span class="setic">${SET_DEF[id].ic}</span><div><input class="setn" data-setmeta="${id}" data-f="n" value="${esc(m.n)}" aria-label="اسم الحفظ" maxlength="30"><input class="setd" data-setmeta="${id}" data-f="d" value="${esc(m.d)}" placeholder="وصف، مثل: إسناد الفصل الثاني 1447" aria-label="وصف الحفظ" maxlength="60"></div></div>
@@ -4210,7 +4223,7 @@ function W(iso) { const w = D().wait; w[iso] = w[iso] || { blocks: [] }; return 
 function absentSet(iso) { return new Set(((D().wait[iso] || {}).blocks || []).map(b => normName(b.abs)).filter(Boolean)); }
 function subsAt(iso, p, skip) { const out = {}; ((D().wait[iso] || {}).blocks || []).forEach((b, bi) => { const r = b.rows && b.rows[p]; if (r && r.t && !(skip && skip[0] === bi)) out[normName(r.t)] = (out[normName(r.t)] || 0) + 1; }); return out; }
 function waitLoad(iso) { const m = {}; ((D().wait[iso] || {}).blocks || []).forEach(b => Object.values(b.rows || {}).forEach(r => { if (r && r.t) m[normName(r.t)] = (m[normName(r.t)] || 0) + 1; })); return m; }
-function weekLoad() { const m = {}; Object.values(D().wait).forEach(w => (w.blocks || []).forEach(b => Object.values(b.rows || {}).forEach(r => { if (r && r.t) m[normName(r.t)] = (m[normName(r.t)] || 0) + 1; }))); return m; }
+function weekLoad() { const r = statRange('t'); return loadIn(r[0], r[1]); }
 function subIssue(iso, bi, p, name) {
   if (!name) return ''; const d = wdOf(iso), k = normName(name);
   if (absentSet(iso).has(k)) return 'غائب اليوم';
@@ -4256,9 +4269,9 @@ function dutyOpts(iso) {
 function vDaily() {
   const iso = dIso(), d = wdOf(iso), tt = D().tt;
   const bar = `<section class="card dbar"><div class="dnav"><button class="btn sm" data-act="dDay" data-v="-1" type="button" aria-label="اليوم السابق">→</button>
-    <label class="ddate"><input type="date" class="in" id="dDate" value="${iso}"><b>${dayAr(iso)}</b><span>${hijriOf(iso)} هـ</span></label>
+    <label class="ddate"><input type="date" class="in" id="dDate" value="${iso}"><b>${dayAr(iso)}</b><span>${hijriOf(iso)} هـ${(() => { const w = termWeek(iso); return w ? ' · ' + esc(w.txt) : ''; })()}</span></label>
     <button class="btn sm" data-act="dDay" data-v="1" type="button" aria-label="اليوم التالي">←</button>${iso !== todayIso() ? '<button class="btn sm pri" data-act="dDay" data-v="0" type="button">اليوم</button>' : '<em class="tdy now">اليوم</em>'}</div>
-    ${d < 0 ? '<p class="al warn">هذا اليوم عطلة نهاية الأسبوع.</p>' : ''}${tt ? '' : `<p class="al warn">لم يُرفع الجدول المدرسي العام بعد — ارفعه من «الملفات الأساسية» لتظهر الحصص والمتاحون تلقائياً. <button class="btn sm" data-tab="files" type="button">رفع الجدول</button></p>`}
+    ${d < 0 ? '<p class="al warn">هذا اليوم عطلة نهاية الأسبوع.</p>' : holOf(iso) ? `<p class="al warn">هذا اليوم إجازة رسمية: <b>${esc(holOf(iso))}</b> — لا انتظار ولا مناوبة. <button class="btn sm" data-act="dDay" data-v="1" type="button">أقرب يوم دراسي ←</button></p>` : ''}${tt ? '' : `<p class="al warn">لم يُرفع الجدول المدرسي العام بعد — ارفعه من «الملفات الأساسية» لتظهر الحصص والمتاحون تلقائياً. <button class="btn sm" data-tab="files" type="button">رفع الجدول</button></p>`}
     <div class="dtabs" role="tablist">${[['wait', 'حصص الانتظار'], ['duty', 'الإشراف والمناوبة'], ['tt', 'الجدول المدرسي'], ['log', 'السجل والإحصاء']].map(([k, t]) => `<button type="button" role="tab" class="${DAILY_TAB === k ? 'on' : ''}" data-act="dTab" data-v="${k}" aria-selected="${DAILY_TAB === k}">${t}</button>`).join('')}</div></section>`;
   return bar + ({ wait: vWait, duty: vDuty, tt: vTT, log: vLog })[DAILY_TAB](iso);
 }
@@ -4315,12 +4328,8 @@ function vTT(iso) {
 }
 function vLog() {
   const ws = D().wait, us = D().duty; const dates = [...new Set([...Object.keys(ws).filter(k => (ws[k].blocks || []).length), ...Object.keys(us)])].sort().reverse();
-  const wk = weekLoad(); const top = Object.entries(wk).sort((a, b) => b[1] - a[1]);
-  const nm = k => (ttNames().find(n => normName(n) === k) || k);
   return `<section class="card"><h2>سجل الأيام</h2>${dates.length ? `<div class="tw"><table class="et"><tr><th>اليوم</th><th>التاريخ</th><th>الغائبون</th><th>حصص الانتظار</th><th>المناوبة</th><th></th></tr>${dates.map(k => { const w = ws[k] || { blocks: [] }; return `<tr><td>${dayAr(k)}</td><td>${hijriOf(k)}</td><td>${w.blocks.map(b => esc(b.abs || '')).join('، ') || '—'}</td><td>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</td><td>${us[k] ? '✓' : '—'}</td><td><button class="btn sm" data-act="dOpen" data-v="${k}" type="button">فتح</button></td></tr>`; }).join('')}</table></div>` : '<p class="hint">لا توجد أيام مسجلة بعد.</p>'}</section>
-  <section class="card"><h2>إحصاء حصص الانتظار لكل معلم</h2><p class="hint">لتوزيع عادل للانتظار — الأكثر أولاً.</p>
-    <div class="acts"><button class="btn" data-act="dPrint" data-v="stats" type="button">معاينة وطباعة</button><button class="btn" data-act="dXls" data-v="stats" type="button">Excel</button></div>
-    ${top.length ? `<div class="tw"><table class="et"><tr><th>م</th><th>المعلم</th><th>عدد حصص الانتظار</th></tr>${top.map(([k, v], i) => `<tr><td>${i + 1}</td><td>${esc(nm(k))}</td><td><b>${v}</b></td></tr>`).join('')}</table></div>` : '<p class="hint">لا توجد بيانات.</p>'}</section>`;
+  ${fairHtml()}`;
 }
 
 /* ---------- الطباعة ---------- */
@@ -4354,24 +4363,21 @@ function ttPages(dd) {
   const out = []; const per = 34; for (let i = 0; i < rows.length; i += per) out.push(title((t === D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام') + ' — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
   return out;
 }
-function statsPages() {
-  const wk = weekLoad(); const top = Object.entries(wk).sort((a, b) => b[1] - a[1]); const nm = k => (ttNames().find(n => normName(n) === k) || k);
-  return [title('إحصاء حصص الانتظار', yearLine()) + T([[H('م', { w: '8%' }), H('المعلم'), H('عدد حصص الانتظار', { w: '22%' })], ...top.map(([k, v], i) => [i + 1, { v: esc(nm(k)), al: 'right' }, `<b>${v}</b>`])]) + sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]])];
-}
+function statsPages() { return fairPages(); }
 function dailyGroups(kind) {
   const iso = dIso();
   if (kind === 'wait') return [{ land: false, pages: waitPages(iso), t: 'استمارة حصص الانتظار' }];
   if (kind === 'duty') return [{ land: false, pages: dutyPages(iso), t: 'تقرير الإشراف والمناوبة اليومي' }];
   if (kind === 'tt') return [{ land: false, pages: ttPages(TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY), t: 'الجدول المدرسي' }];
-  return [{ land: false, pages: statsPages(), t: 'إحصاء حصص الانتظار' }];
+  return [{ land: false, pages: statsPages(), t: 'تقرير عدالة توزيع حصص الانتظار' }];
 }
-function dailyName(kind) { const iso = dIso(); return fname(({ wait: 'استمارة حصص الانتظار', duty: 'تقرير الإشراف والمناوبة', tt: 'الجدول المدرسي - ' + TT_DAYS[TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY], stats: 'إحصاء حصص الانتظار' })[kind] + (kind === 'wait' || kind === 'duty' ? ' - ' + dayAr(iso) + ' ' + hijriOf(iso).replace(/\//g, '-') : '')); }
+function dailyName(kind) { const iso = dIso(); return fname(({ wait: 'استمارة حصص الانتظار', duty: 'تقرير الإشراف والمناوبة', tt: 'الجدول المدرسي - ' + TT_DAYS[TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY], stats: 'تقرير عدالة الانتظار - ' + statRange(STAT_P)[2] })[kind] + (kind === 'wait' || kind === 'duty' ? ' - ' + dayAr(iso) + ' ' + hijriOf(iso).replace(/\//g, '-') : '')); }
 
 /* ---------- الأحداث ---------- */
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, iso = dIso();
   if (a === 'dTab') { DAILY_TAB = b.dataset.v; return render(); }
-  if (a === 'dDay') { const v = +b.dataset.v; DAILY_DATE = v === 0 ? todayIso() : dateToIso(new Date(isoToDate(iso).getTime() + v * 864e5)); return render(); }
+  if (a === 'dDay') { const v = +b.dataset.v; if (v === 0) DAILY_DATE = todayIso(); else { let d = iso, k = 0; do { d = addDays(d, v); } while (!isSchoolDay(d) && ++k < 60); DAILY_DATE = d; } return render(); }
   if (a === 'dOpen') { DAILY_DATE = b.dataset.v; DAILY_TAB = 'wait'; return render(); }
   if (a === 'ttDay') { TT_DAY = +b.dataset.v; return render(); }
   if (a === 'ttWhich') { TT_WHICH = b.dataset.v; return render(); }
@@ -4474,7 +4480,7 @@ function calCard(n, noUp) {
   return fileCard('cal', { n, c: '#b45309', t: 'التقويم الدراسي', d: 'مواعيد بداية الفصلين والاختبارات والإجازات — يُذكّرك بموعد الانتقال للفصل الثاني.', has: true, noUp,
     fmt: 'صورة أو PDF أو Word أو Excel', accept: 'image/*,.png,.jpg,.jpeg,.webp,.heic,.pdf,.docx,.doc,.xlsx,.xls,.csv',
     facts: `<b>${esc(c.y)} هـ</b><span>بداية الفصل الثاني</span><em>${calTxt(c.t2)} · ${when}</em>`,
-    out: `${imgs.length || c.html ? '<button class="btn sm" data-tact="calView" type="button">عرض التقويم وطباعته</button>' : ''}<details class="caldates"><summary>التواريخ المعتمدة${noUp ? '' : ' (تعديل)'}</summary><div class="acts wrap">${field('t1', 'بداية الفصل الأول')}${field('ex1a', 'اختبارات الفصل الأول من')}${field('ex1b', 'إلى')}${field('mida', 'إجازة منتصف العام من')}${field('midb', 'إلى')}${field('t2', 'بداية الفصل الثاني')}</div></details>` });
+    out: `${imgs.length || c.html ? '<button class="btn sm" data-tact="calView" type="button">عرض التقويم وطباعته</button>' : ''}<details class="caldates"><summary>التواريخ المعتمدة${noUp ? '' : ' (تعديل)'}</summary><div class="acts wrap">${field('t1', 'بداية الفصل الأول')}${field('ex1a', 'اختبارات الفصل الأول من')}${field('ex1b', 'إلى')}${field('mida', 'إجازة منتصف العام من')}${field('midb', 'إلى')}${field('t2', 'بداية الفصل الثاني')}${field('ex2a', 'اختبارات الفصل الثاني من')}${field('ex2b', 'إلى')}</div>${holEditor(noUp)}</details>` });
 }
 function calView() {
   const c = CAL(), imgs = calImgs();
@@ -4577,6 +4583,145 @@ async function termUndo() {
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
   if (a === 'calView') calView(); else if (a === 't2Check') t2Modal(); else if (a === 'termGo') termGo(); else if (a === 'termUndo') termUndo();
+});
+
+/* ===================== الإجازات وأسابيع الفصل ===================== */
+var HOL_DEF = [
+  { n: 'إجازة اليوم الوطني', a: '2026-09-23', b: '2026-09-24' },
+  { n: 'إجازة إضافية', a: '2026-10-25', b: '2026-10-25' },
+  { n: 'إجازة الخريف', a: '2026-11-20', b: '2026-11-28' }
+];
+function hols() { const c = CAL(); if (!Array.isArray(c.hol)) c.hol = c.y === '1448' ? clone(HOL_DEF) : []; return c.hol; }
+function holOf(iso) {
+  const c = CAL(); if (c.mida && c.midb && iso >= c.mida && iso <= c.midb) return 'إجازة منتصف العام';
+  const h = hols().find(x => x.a && iso >= x.a && iso <= (x.b || x.a)); return h ? (h.n || 'إجازة') : '';
+}
+function isSchoolDay(iso) { return wdOf(iso) >= 0 && !holOf(iso); }
+function addDays(iso, n) { return dateToIso(new Date(isoToDate(iso).getTime() + n * 864e5)); }
+function weekSun(iso) { return addDays(iso, -isoToDate(iso).getUTCDay()); }
+/* رقم الأسبوع الدراسي: تُحسب الأسابيع التي فيها يوم دراسة واحد على الأقل */
+function termWeek(iso) {
+  const c = CAL(); iso = iso || todayIso();
+  if (!c.t1 || iso < weekSun(c.t1)) return null;
+  const t2 = iso >= weekSun(c.t2 || '9999-01-01'), st = t2 ? c.t2 : c.t1, term = t2 ? 'الثاني' : 'الأول';
+  if (!t2 && c.ex1b && iso > c.ex1b) return { txt: holOf(iso) || 'نهاية الفصل الأول', term, n: 0 };
+  let n = 0, cur = weekSun(st); const me = weekSun(iso);
+  while (cur <= me && n < 60) { const days = [0, 1, 2, 3, 4].map(k => addDays(cur, k)).filter(d => d >= st); if (days.some(isSchoolDay)) n++; cur = addDays(cur, 7); }
+  const wkDays = [0, 1, 2, 3, 4].map(k => addDays(me, k)); const allHol = wkDays.every(d => !isSchoolDay(d));
+  if (allHol) { const h = wkDays.map(holOf).find(Boolean); return { txt: h || 'إجازة', term, n: 0, hol: true }; }
+  return { n, term, txt: `الأسبوع ${n} من الفصل ${term}` };
+}
+function updWeekChip() {
+  const el = $('#wkChip'); if (!el) return; let w = null; try { w = termWeek(); } catch (e) { }
+  el.hidden = !w; if (!w) return;
+  el.textContent = w.n ? `الأسبوع ${w.n} · ${semShort(w.term)}` : w.txt; el.title = w.txt + (holOf(todayIso()) ? ` — اليوم: ${holOf(todayIso())}` : '');
+  el.classList.toggle('hol', !w.n);
+}
+function holEditor(ro) {
+  const H = hols();
+  return `<div class="holed"><b>الإجازات الرسمية خلال العام</b><small>لا تظهر هذه الأيام في الانتظار والمناوبة، ولا تُحسب في أسابيع الفصل. إجازة منتصف العام محسوبة من التواريخ أعلاه.</small>
+    ${H.map((h, i) => `<div class="holr"><input class="in" data-k="cal.hol.${i}.n" value="${esc(h.n || '')}" placeholder="اسم الإجازة"${ro ? ' disabled' : ''}><input class="in" type="date" data-k="cal.hol.${i}.a" value="${esc(h.a || '')}"${ro ? ' disabled' : ''}><span>إلى</span><input class="in" type="date" data-k="cal.hol.${i}.b" value="${esc(h.b || '')}"${ro ? ' disabled' : ''}>${ro ? '' : `<button class="x" data-tact="holDel" data-v="${i}" type="button" aria-label="حذف">×</button>`}</div>`).join('') || '<p class="hint">لا توجد إجازات مسجلة.</p>'}
+    ${ro ? '' : '<button class="btn sm ghost" data-tact="holAdd" type="button">+ إضافة إجازة</button>'}</div>`;
+}
+
+/* ===================== اقتراح أيام الاختبار من التقويم ===================== */
+function examRange() { const c = CAL(); return inT2() ? (c.ex2a ? [c.ex2a, c.ex2b || c.ex2a] : null) : (c.ex1a ? [c.ex1a, c.ex1b || c.ex1a] : null); }
+function examDaysFromCal() { const r = examRange(); if (!r) return []; const out = []; for (let d = r[0]; d <= r[1] && out.length < 30; d = addDays(d, 1)) if (isSchoolDay(d)) out.push(d); return out; }
+function examCalBox() {
+  const r = examRange(), days = examDaysFromCal();
+  if (!r) return `<div class="calsug"><span>لم يُسجّل أسبوع اختبارات الفصل ${esc(S.s.sem)} في التقويم.</span><button class="btn sm ghost" data-tab="files" type="button">إضافته من التقويم</button></div>`;
+  const same = S.days.length && S.days.every((d, i) => d.g === days[i]) && S.days.length === days.length;
+  return `<div class="calsug${same ? ' ok' : ''}"><span>📅 أسبوع اختبارات الفصل ${esc(S.s.sem)} في التقويم: <b>${calTxt(r[0])}</b> إلى <b>${calTxt(r[1])}</b> — ${days.length} أيام دراسية.${same ? ' ✓ أيام الجدول مطابقة للتقويم.' : ''}</span>${same || ROLE === 'agent' ? '' : `<button class="btn sm pri" data-tact="examFromCal" type="button">اعتماد هذه التواريخ لأيام الاختبار</button>`}</div>`;
+}
+async function examFromCal() {
+  const days = examDaysFromCal(); if (!days.length) return toast('لا توجد أيام دراسية في أسبوع الاختبارات', true);
+  const n = S.days.length;
+  const msg = !n ? `إنشاء ${days.length} أيام اختبار بتواريخ التقويم؟ ثم تضيف مواد كل يوم.` : n === days.length ? `تعيين تواريخ أيام الاختبار الـ${n} حسب التقويم؟ المواد والفترات تبقى كما هي.` : n < days.length ? `في الجدول ${n} أيام وفي التقويم ${days.length}. تعيين تواريخ أيامك الـ${n} وإضافة ${days.length - n} أيام فارغة؟ المواد الحالية تبقى.` : `في الجدول ${n} أيام وفي أسبوع الاختبارات ${days.length} فقط. تُعيّن تواريخ أول ${days.length} أيام، وتُكمل البقية على أيام الدراسة التالية. المواد تبقى كما هي.`;
+  if (!await confirmBox(msg)) return;
+  let cur = days[days.length - 1];
+  for (let i = 0; i < Math.max(n, days.length); i++) {
+    let g; if (i < days.length) g = days[i]; else { do { cur = addDays(cur, 1); } while (!isSchoolDay(cur)); g = cur; }
+    if (!S.days[i]) { const last = S.days[i - 1]; S.days.push({ g, txt: '', p: [{ n: 'الأولى', t: last && last.p[0] ? last.p[0].t : '', s: { 1: '', 2: '', 3: '' } }] }); }
+    S.days[i].g = g; S.days[i].txt = ''; S.days[i].h = toHijri(g); fixDay(S.days[i]);
+  }
+  save(); render(); toast('اعتُمدت تواريخ أيام الاختبار من التقويم ✓');
+}
+
+/* ===================== نقل معلمي وإسنادات الفصل الأول إلى حفظ الفصل الثاني ===================== */
+function rawMeta(id) { const d = id === ACTIVE ? { meta: S.taMeta } : setStore(id); return (d && d.meta) || {}; }
+function mergeSet(from, to) {
+  const src = secData(from), dst = clone(secData(to)); dst.ta = dst.ta || []; dst.teachers = dst.teachers || [];
+  const key = x => [normName(x.t), normName(x.sub || ''), x.g || '', x.sec || ''].join('|'); const have = new Set(dst.ta.map(key));
+  let a = 0, t = 0; (src.ta || []).forEach(x => { if (!have.has(key(x))) { dst.ta.push(clone(x)); have.add(key(x)); a++; } });
+  const inT = sameTeacher(dst.teachers); (src.teachers || []).forEach(n => { if (!inT(n)) { dst.teachers.push(n); t++; } });
+  applySec(to, dst); save(true); syncSoon(); return { a, t };
+}
+function seedBox() {
+  if (ROLE === 'sup') return ''; const src = secData('ta'), dst = secData('ta-agent'), sm = setMeta('ta'), dm = setMeta('ta-agent');
+  if (!(src.ta || []).length && !(src.teachers || []).length) return '';
+  const rm = rawMeta('ta-agent'), empty = !(dst.ta || []).length && !(dst.teachers || []).length;
+  const info = `${(src.teachers || []).length} معلماً و${(src.ta || []).length} سطر إسناد`;
+  if (empty) return `<div class="seed"><div><b>ابدأ إسناد الفصل ${esc(dm.sem)} من معلمي الفصل ${esc(sm.sem)} وإسناداتهم</b><span>يُنسخ من «${esc(sm.n)}» إلى «${esc(dm.n)}»: ${info}. يبقى الأصل في «${esc(sm.n)}» كما هو تماماً، ولا حاجة لرفع أي ملف. تعدّل بعدها ما يتغير فقط.</span></div><button class="btn pri" data-tact="seedCopy" type="button">نقل المعلمين والإسنادات الآن</button></div>`;
+  return `<details class="seed slim"><summary>${rm.seed ? `✓ نُقل معلمو «${esc(sm.n)}» وإسناداتهم إلى «${esc(dm.n)}» في ${esc(rm.seed)}` : `مزامنة «${esc(dm.n)}» مع معلمي «${esc(sm.n)}» وإسناداتهم`} — خيارات</summary>
+    <p class="hint">«إضافة الناقص فقط» تضيف المعلمين والإسنادات الموجودة في «${esc(sm.n)}» وغير الموجودة في «${esc(dm.n)}»، دون أن تمس أي تعديل أجراه الوكيل. «استبدال الكل» يجعل «${esc(dm.n)}» نسخة مطابقة (يبقى السابق في سجل النسخ).</p>
+    <div class="acts wrap"><button class="btn sm" data-tact="seedMerge" type="button">إضافة الناقص فقط</button><button class="btn sm ghost" data-tact="seedCopy" type="button">استبدال الكل</button></div></details>`;
+}
+async function seedDo(mode) {
+  const sm = setMeta('ta'), dm = setMeta('ta-agent'), dst = secData('ta-agent'), empty = !(dst.ta || []).length && !(dst.teachers || []).length;
+  if (mode === 'copy') {
+    if (!empty && !await confirmBox(`استبدال محتوى «${dm.n}» بنسخة من «${sm.n}»؟ ستُفقد تعديلات «${dm.n}» الحالية (تبقى في سجل النسخ على السحابة).`)) return;
+    copySet('ta', 'ta-agent'); updSetMeta('ta-agent', { seed: stamp(), sem: dm.sem }); render(); toast(`نُقل المعلمون والإسنادات إلى «${dm.n}» ✓ — «${sm.n}» باقٍ كما هو`);
+  } else {
+    const r = mergeSet('ta', 'ta-agent'); updSetMeta('ta-agent', { seed: stamp() }); render();
+    toast(r.a || r.t ? `أُضيف ${r.t} معلماً و${r.a} سطر إسناد إلى «${dm.n}»` : 'لا يوجد ناقص — الحفظان متطابقان في المحتوى المشترك');
+  }
+}
+
+/* ===================== تقرير عدالة الانتظار ===================== */
+var STAT_P = 't';
+function statRange(p) {
+  const t = todayIso(), c = CAL();
+  if (p === 'w') { const s = weekSun(t); return [s, addDays(s, 4), 'هذا الأسبوع']; }
+  if (p === 'm') { const [y, m] = toHijri(t); const s = hijriToIso(y, m, 1), e = addDays(hijriToIso(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, 1), -1); return [s, e, `شهر ${HMONTHS[m - 1] || m} ${y}هـ`]; }
+  if (p === 't') { const t2 = t >= (c.t2 || '9999'); return t2 ? [c.t2, '9999-12-31', 'الفصل الدراسي الثاني'] : [c.t1 || '0000', addDays(c.t2 || '9999-12-31', -1), 'الفصل الدراسي الأول']; }
+  return ['0000', '9999-12-31', 'كل الأيام المسجلة'];
+}
+var HMONTHS = ['محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'];
+function loadIn(a, b) { const m = {}; Object.entries(D().wait).forEach(([k, w]) => { if (k < a || k > b) return; (w.blocks || []).forEach(bl => Object.values(bl.rows || {}).forEach(r => { if (r && r.t) m[normName(r.t)] = (m[normName(r.t)] || 0) + 1; })); }); return m; }
+function fairData(p) {
+  const [a, b, lbl] = statRange(p), m = loadIn(a, b), t = D().tt;
+  const names = new Map(); (t ? t.teachers : []).forEach(x => names.set(normName(x.n), { n: x.n, ld: Object.keys(x.c).length }));
+  Object.keys(m).forEach(k => { if (!names.has(k)) names.set(k, { n: (ttNames().find(n => normName(n) === k) || k), ld: null }); });
+  const rows = [...names.entries()].map(([k, v]) => ({ n: v.n, ld: v.ld, c: m[k] || 0 })).sort((x, y) => y.c - x.c || AR.compare(normName(x.n), normName(y.n)));
+  const tot = rows.reduce((s, r) => s + r.c, 0), avg = rows.length ? tot / rows.length : 0, max = rows.length ? rows[0].c : 0;
+  const days = Object.keys(D().wait).filter(k => k >= a && k <= b && (D().wait[k].blocks || []).length).length;
+  rows.forEach(r => r.cls = max && r.c >= Math.max(2, avg * 1.5) ? 'hi' : r.c === 0 ? 'lo' : '');
+  return { rows, tot, avg, max, lbl, days, a, b };
+}
+function fairHtml() {
+  const F = fairData(STAT_P), zeros = F.rows.filter(r => !r.c).length;
+  const chips = [['w', 'هذا الأسبوع'], ['m', 'هذا الشهر'], ['t', 'هذا الفصل'], ['a', 'الكل']].map(([k, t]) => `<button type="button" class="${STAT_P === k ? 'on' : ''}" data-tact="statP" data-v="${k}">${t}</button>`).join('');
+  return `<section class="card fair"><h2>عدالة توزيع الانتظار — ${esc(F.lbl)}</h2>
+    <div class="semchips" role="group" aria-label="الفترة">${chips}</div>
+    <div class="fsum"><div><b>${F.tot}</b><span>حصة انتظار</span></div><div><b>${F.days}</b><span>يوماً مسجلاً</span></div><div><b>${F.avg.toFixed(1)}</b><span>المتوسط لكل معلم</span></div><div><b>${zeros}</b><span>لم يأخذوا أي حصة</span></div></div>
+    <p class="hint"><span class="fk hi"></span> أعلى من المتوسط بوضوح — يُخفَّف عنه &nbsp; <span class="fk lo"></span> لم يأخذ أي حصة — أولى بالانتظار القادم. التوزيع التلقائي يختار الأقل في هذا الفصل أولاً.</p>
+    <div class="acts"><button class="btn" data-act="dPrint" data-v="stats" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="stats" type="button">PDF</button><button class="btn" data-act="dWord" data-v="stats" type="button">Word</button><button class="btn" data-act="dXls" data-v="stats" type="button">Excel</button></div>
+    ${F.rows.length ? `<div class="tw"><table class="et ftab"><tr><th style="width:40px">م</th><th>المعلم</th><th style="width:70px">نصابه</th><th style="width:80px">الانتظار</th><th class="fbarh"></th></tr>${F.rows.map((r, i) => `<tr class="${r.cls}"><td>${i + 1}</td><td class="tn">${esc(r.n)}</td><td>${r.ld == null ? '—' : r.ld}</td><td><b>${r.c}</b></td><td class="fbarc">${r.c ? `<i style="width:${Math.round(100 * r.c / F.max)}%"></i>` : ''}</td></tr>`).join('')}</table></div>` : '<p class="hint">لا توجد بيانات — ارفع الجدول المدرسي وسجّل حصص الانتظار.</p>'}</section>`;
+}
+function fairPages() {
+  const F = fairData(STAT_P);
+  const rows = [[H('م', { w: '7%' }), H('المعلم'), H('النصاب', { w: '12%' }), H('حصص الانتظار', { w: '16%' }), H('الملاحظة', { w: '22%' })], ...F.rows.map((r, i) => [i + 1, { v: esc(r.n), al: 'right' }, r.ld == null ? '—' : r.ld, `<b>${r.c}</b>`, r.cls === 'hi' ? 'أعلى من المتوسط' : r.cls === 'lo' ? 'لم يُكلَّف' : ''])];
+  const out = []; const per = 32;
+  for (let i = 1; i < rows.length || i === 1; i += per) out.push(title('تقرير عدالة توزيع حصص الانتظار', `${F.lbl} — ${F.tot} حصة في ${F.days} يوماً — المتوسط ${F.avg.toFixed(1)} لكل معلم`) + T([rows[0], ...rows.slice(i, i + per)], { cls: 'dense' }) + (i + per >= rows.length ? sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]) : ''));
+  return out;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'holAdd') { hols().push({ n: '', a: '', b: '' }); save(); render(); }
+  else if (a === 'holDel') { hols().splice(+b.dataset.v, 1); save(); render(); }
+  else if (a === 'examFromCal') examFromCal();
+  else if (a === 'seedCopy') seedDo('copy'); else if (a === 'seedMerge') seedDo('merge');
+  else if (a === 'statP') { STAT_P = b.dataset.v; render(); }
 });
 
 </script>

@@ -84,7 +84,7 @@ function W(iso) { const w = D().wait; w[iso] = w[iso] || { blocks: [] }; return 
 function absentSet(iso) { return new Set(((D().wait[iso] || {}).blocks || []).map(b => normName(b.abs)).filter(Boolean)); }
 function subsAt(iso, p, skip) { const out = {}; ((D().wait[iso] || {}).blocks || []).forEach((b, bi) => { const r = b.rows && b.rows[p]; if (r && r.t && !(skip && skip[0] === bi)) out[normName(r.t)] = (out[normName(r.t)] || 0) + 1; }); return out; }
 function waitLoad(iso) { const m = {}; ((D().wait[iso] || {}).blocks || []).forEach(b => Object.values(b.rows || {}).forEach(r => { if (r && r.t) m[normName(r.t)] = (m[normName(r.t)] || 0) + 1; })); return m; }
-function weekLoad() { const m = {}; Object.values(D().wait).forEach(w => (w.blocks || []).forEach(b => Object.values(b.rows || {}).forEach(r => { if (r && r.t) m[normName(r.t)] = (m[normName(r.t)] || 0) + 1; }))); return m; }
+function weekLoad() { const r = statRange('t'); return loadIn(r[0], r[1]); }
 function subIssue(iso, bi, p, name) {
   if (!name) return ''; const d = wdOf(iso), k = normName(name);
   if (absentSet(iso).has(k)) return 'غائب اليوم';
@@ -130,9 +130,9 @@ function dutyOpts(iso) {
 function vDaily() {
   const iso = dIso(), d = wdOf(iso), tt = D().tt;
   const bar = `<section class="card dbar"><div class="dnav"><button class="btn sm" data-act="dDay" data-v="-1" type="button" aria-label="اليوم السابق">→</button>
-    <label class="ddate"><input type="date" class="in" id="dDate" value="${iso}"><b>${dayAr(iso)}</b><span>${hijriOf(iso)} هـ</span></label>
+    <label class="ddate"><input type="date" class="in" id="dDate" value="${iso}"><b>${dayAr(iso)}</b><span>${hijriOf(iso)} هـ${(() => { const w = termWeek(iso); return w ? ' · ' + esc(w.txt) : ''; })()}</span></label>
     <button class="btn sm" data-act="dDay" data-v="1" type="button" aria-label="اليوم التالي">←</button>${iso !== todayIso() ? '<button class="btn sm pri" data-act="dDay" data-v="0" type="button">اليوم</button>' : '<em class="tdy now">اليوم</em>'}</div>
-    ${d < 0 ? '<p class="al warn">هذا اليوم عطلة نهاية الأسبوع.</p>' : ''}${tt ? '' : `<p class="al warn">لم يُرفع الجدول المدرسي العام بعد — ارفعه من «الملفات الأساسية» لتظهر الحصص والمتاحون تلقائياً. <button class="btn sm" data-tab="files" type="button">رفع الجدول</button></p>`}
+    ${d < 0 ? '<p class="al warn">هذا اليوم عطلة نهاية الأسبوع.</p>' : holOf(iso) ? `<p class="al warn">هذا اليوم إجازة رسمية: <b>${esc(holOf(iso))}</b> — لا انتظار ولا مناوبة. <button class="btn sm" data-act="dDay" data-v="1" type="button">أقرب يوم دراسي ←</button></p>` : ''}${tt ? '' : `<p class="al warn">لم يُرفع الجدول المدرسي العام بعد — ارفعه من «الملفات الأساسية» لتظهر الحصص والمتاحون تلقائياً. <button class="btn sm" data-tab="files" type="button">رفع الجدول</button></p>`}
     <div class="dtabs" role="tablist">${[['wait', 'حصص الانتظار'], ['duty', 'الإشراف والمناوبة'], ['tt', 'الجدول المدرسي'], ['log', 'السجل والإحصاء']].map(([k, t]) => `<button type="button" role="tab" class="${DAILY_TAB === k ? 'on' : ''}" data-act="dTab" data-v="${k}" aria-selected="${DAILY_TAB === k}">${t}</button>`).join('')}</div></section>`;
   return bar + ({ wait: vWait, duty: vDuty, tt: vTT, log: vLog })[DAILY_TAB](iso);
 }
@@ -189,12 +189,8 @@ function vTT(iso) {
 }
 function vLog() {
   const ws = D().wait, us = D().duty; const dates = [...new Set([...Object.keys(ws).filter(k => (ws[k].blocks || []).length), ...Object.keys(us)])].sort().reverse();
-  const wk = weekLoad(); const top = Object.entries(wk).sort((a, b) => b[1] - a[1]);
-  const nm = k => (ttNames().find(n => normName(n) === k) || k);
   return `<section class="card"><h2>سجل الأيام</h2>${dates.length ? `<div class="tw"><table class="et"><tr><th>اليوم</th><th>التاريخ</th><th>الغائبون</th><th>حصص الانتظار</th><th>المناوبة</th><th></th></tr>${dates.map(k => { const w = ws[k] || { blocks: [] }; return `<tr><td>${dayAr(k)}</td><td>${hijriOf(k)}</td><td>${w.blocks.map(b => esc(b.abs || '')).join('، ') || '—'}</td><td>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</td><td>${us[k] ? '✓' : '—'}</td><td><button class="btn sm" data-act="dOpen" data-v="${k}" type="button">فتح</button></td></tr>`; }).join('')}</table></div>` : '<p class="hint">لا توجد أيام مسجلة بعد.</p>'}</section>
-  <section class="card"><h2>إحصاء حصص الانتظار لكل معلم</h2><p class="hint">لتوزيع عادل للانتظار — الأكثر أولاً.</p>
-    <div class="acts"><button class="btn" data-act="dPrint" data-v="stats" type="button">معاينة وطباعة</button><button class="btn" data-act="dXls" data-v="stats" type="button">Excel</button></div>
-    ${top.length ? `<div class="tw"><table class="et"><tr><th>م</th><th>المعلم</th><th>عدد حصص الانتظار</th></tr>${top.map(([k, v], i) => `<tr><td>${i + 1}</td><td>${esc(nm(k))}</td><td><b>${v}</b></td></tr>`).join('')}</table></div>` : '<p class="hint">لا توجد بيانات.</p>'}</section>`;
+  ${fairHtml()}`;
 }
 
 /* ---------- الطباعة ---------- */
@@ -228,24 +224,21 @@ function ttPages(dd) {
   const out = []; const per = 34; for (let i = 0; i < rows.length; i += per) out.push(title((t === D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام') + ' — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
   return out;
 }
-function statsPages() {
-  const wk = weekLoad(); const top = Object.entries(wk).sort((a, b) => b[1] - a[1]); const nm = k => (ttNames().find(n => normName(n) === k) || k);
-  return [title('إحصاء حصص الانتظار', yearLine()) + T([[H('م', { w: '8%' }), H('المعلم'), H('عدد حصص الانتظار', { w: '22%' })], ...top.map(([k, v], i) => [i + 1, { v: esc(nm(k)), al: 'right' }, `<b>${v}</b>`])]) + sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]])];
-}
+function statsPages() { return fairPages(); }
 function dailyGroups(kind) {
   const iso = dIso();
   if (kind === 'wait') return [{ land: false, pages: waitPages(iso), t: 'استمارة حصص الانتظار' }];
   if (kind === 'duty') return [{ land: false, pages: dutyPages(iso), t: 'تقرير الإشراف والمناوبة اليومي' }];
   if (kind === 'tt') return [{ land: false, pages: ttPages(TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY), t: 'الجدول المدرسي' }];
-  return [{ land: false, pages: statsPages(), t: 'إحصاء حصص الانتظار' }];
+  return [{ land: false, pages: statsPages(), t: 'تقرير عدالة توزيع حصص الانتظار' }];
 }
-function dailyName(kind) { const iso = dIso(); return fname(({ wait: 'استمارة حصص الانتظار', duty: 'تقرير الإشراف والمناوبة', tt: 'الجدول المدرسي - ' + TT_DAYS[TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY], stats: 'إحصاء حصص الانتظار' })[kind] + (kind === 'wait' || kind === 'duty' ? ' - ' + dayAr(iso) + ' ' + hijriOf(iso).replace(/\//g, '-') : '')); }
+function dailyName(kind) { const iso = dIso(); return fname(({ wait: 'استمارة حصص الانتظار', duty: 'تقرير الإشراف والمناوبة', tt: 'الجدول المدرسي - ' + TT_DAYS[TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY], stats: 'تقرير عدالة الانتظار - ' + statRange(STAT_P)[2] })[kind] + (kind === 'wait' || kind === 'duty' ? ' - ' + dayAr(iso) + ' ' + hijriOf(iso).replace(/\//g, '-') : '')); }
 
 /* ---------- الأحداث ---------- */
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, iso = dIso();
   if (a === 'dTab') { DAILY_TAB = b.dataset.v; return render(); }
-  if (a === 'dDay') { const v = +b.dataset.v; DAILY_DATE = v === 0 ? todayIso() : dateToIso(new Date(isoToDate(iso).getTime() + v * 864e5)); return render(); }
+  if (a === 'dDay') { const v = +b.dataset.v; if (v === 0) DAILY_DATE = todayIso(); else { let d = iso, k = 0; do { d = addDays(d, v); } while (!isSchoolDay(d) && ++k < 60); DAILY_DATE = d; } return render(); }
   if (a === 'dOpen') { DAILY_DATE = b.dataset.v; DAILY_TAB = 'wait'; return render(); }
   if (a === 'ttDay') { TT_DAY = +b.dataset.v; return render(); }
   if (a === 'ttWhich') { TT_WHICH = b.dataset.v; return render(); }
