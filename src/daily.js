@@ -12,7 +12,7 @@ var DUTY_DEF = {
 function D() { S.daily = S.daily || {}; const d = S.daily; d.wait = d.wait || {}; d.duty = d.duty || {}; d.week = d.week || {}; d.cfg = d.cfg || clone(DUTY_DEF); if (!d.cfg.b) d.cfg = clone(DUTY_DEF); return d; }
 function dIso() { if (!DAILY_DATE) DAILY_DATE = todayIso(); return DAILY_DATE; }
 function wdOf(iso) { const w = isoToDate(iso).getUTCDay(); return w <= 4 ? w : -1; }
-function hijriOf(iso) { const [y, m, d] = toHijri(iso); return `${d}/${m}/${y}`; }
+function hijriOf(iso) { const [y, m, d] = toHijri(iso); return `${d} / ${m} / ${y}`; }
 function dayAr(iso) { return DAYS_AR[isoToDate(iso).getUTCDay()]; }
 const secGrade = s => { s = +s; return s >= 21 ? 3 : s >= 11 ? 2 : s >= 1 ? 1 : 0; };
 /* الصفوف التي يدرّسها كل معلم حسب الجدول (لأولوية الانتظار) */

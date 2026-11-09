@@ -92,8 +92,8 @@ function dateTxt(day, sep = '<br>') {
 }
 function dateShort(day) {
   if (day.txt && day.txt.trim()) return esc(day.txt);
-  if (S.s.dateMode === 'g') { const d = isoToDate(day.g); return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`; }
-  const h = toHijri(day.g); return `${h[2]}/${h[1]}`;
+  if (S.s.dateMode === 'g') { const d = isoToDate(day.g); return `${d.getUTCDate()} / ${d.getUTCMonth() + 1} / ${d.getUTCFullYear()}`; }
+  const h = toHijri(day.g); return `${h[2]} / ${h[1]} / ${h[0]}`;
 }
 
 /* ===================== حسابات مشتركة ===================== */

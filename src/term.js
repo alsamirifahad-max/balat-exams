@@ -719,3 +719,8 @@ setTimeout(checkVersion, 4000);
 function gymFrom() { const v = S.s.gymFrom; return v === '' || v === 0 || v === '0' ? 0 : (+v || 25); }
 function bldOf(c) { if (c.bld) return c.bld; if (OUTSIDE.test((c.fl || '') + ' ' + (c.rm || ''))) return (c.fl || c.rm || '').trim(); const k = gymFrom(); return k && +c.no >= k ? 'الصالة الرياضية' : 'المبنى'; }
 function bldCtl() { return `<div class="comcnt"><span>المقر:</span><b style="font-size:.95rem">المبنى</b><span>من اللجنة 1 — و</span><b style="font-size:.95rem">الصالة الرياضية</b><span>من اللجنة</span><input class="in" type="number" min="0" data-k="s.gymFrom" data-num="1" value="${gymFrom()}" style="width:4.5rem"><small class="hint">يظهر في كشوف الملاحظين وتوزيع الطلاب ولوحة الاختبار. اكتب 0 إن لم تُستخدم الصالة.</small></div>`; }
+
+/* ===== العمل بدون إنترنت ===== */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }); }); }
+window.addEventListener('online', () => { try { toast('عاد الاتصال — تتم المزامنة'); if (typeof syncNow === 'function') syncNow(); } catch (e) { } });
+window.addEventListener('offline', () => { try { toast('لا يوجد اتصال — تعمل بدون إنترنت، وتُحفظ تعديلاتك على الجهاز وتُرفع عند عودة الاتصال'); } catch (e) { } });

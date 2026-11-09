@@ -931,8 +931,8 @@ function dateTxt(day, sep = '<br>') {
 }
 function dateShort(day) {
   if (day.txt && day.txt.trim()) return esc(day.txt);
-  if (S.s.dateMode === 'g') { const d = isoToDate(day.g); return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`; }
-  const h = toHijri(day.g); return `${h[2]}/${h[1]}`;
+  if (S.s.dateMode === 'g') { const d = isoToDate(day.g); return `${d.getUTCDate()} / ${d.getUTCMonth() + 1} / ${d.getUTCFullYear()}`; }
+  const h = toHijri(day.g); return `${h[2]} / ${h[1]} / ${h[0]}`;
 }
 
 /* ===================== حسابات مشتركة ===================== */
@@ -4283,7 +4283,7 @@ var DUTY_DEF = {
 function D() { S.daily = S.daily || {}; const d = S.daily; d.wait = d.wait || {}; d.duty = d.duty || {}; d.week = d.week || {}; d.cfg = d.cfg || clone(DUTY_DEF); if (!d.cfg.b) d.cfg = clone(DUTY_DEF); return d; }
 function dIso() { if (!DAILY_DATE) DAILY_DATE = todayIso(); return DAILY_DATE; }
 function wdOf(iso) { const w = isoToDate(iso).getUTCDay(); return w <= 4 ? w : -1; }
-function hijriOf(iso) { const [y, m, d] = toHijri(iso); return `${d}/${m}/${y}`; }
+function hijriOf(iso) { const [y, m, d] = toHijri(iso); return `${d} / ${m} / ${y}`; }
 function dayAr(iso) { return DAYS_AR[isoToDate(iso).getUTCDay()]; }
 const secGrade = s => { s = +s; return s >= 21 ? 3 : s >= 11 ? 2 : s >= 1 ? 1 : 0; };
 /* الصفوف التي يدرّسها كل معلم حسب الجدول (لأولوية الانتظار) */
@@ -5378,7 +5378,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794240972';
+var BUILD_ID = '1794252759';
 async function checkVersion() {
   try { const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; const v = (await r.text()).trim(); if (!v || v === BUILD_ID || BUILD_ID.startsWith('__')) return;
     if ($('#newVer')) return; const d = document.createElement('div'); d.id = 'newVer'; d.className = 'newver'; d.innerHTML = '<span>✨ تحديث جديد للموقع متاح</span><button class="btn sm pri" type="button">تحديث الآن</button>'; d.querySelector('button').onclick = () => location.reload(); document.body.appendChild(d);
@@ -5392,6 +5392,11 @@ setTimeout(checkVersion, 4000);
 function gymFrom() { const v = S.s.gymFrom; return v === '' || v === 0 || v === '0' ? 0 : (+v || 25); }
 function bldOf(c) { if (c.bld) return c.bld; if (OUTSIDE.test((c.fl || '') + ' ' + (c.rm || ''))) return (c.fl || c.rm || '').trim(); const k = gymFrom(); return k && +c.no >= k ? 'الصالة الرياضية' : 'المبنى'; }
 function bldCtl() { return `<div class="comcnt"><span>المقر:</span><b style="font-size:.95rem">المبنى</b><span>من اللجنة 1 — و</span><b style="font-size:.95rem">الصالة الرياضية</b><span>من اللجنة</span><input class="in" type="number" min="0" data-k="s.gymFrom" data-num="1" value="${gymFrom()}" style="width:4.5rem"><small class="hint">يظهر في كشوف الملاحظين وتوزيع الطلاب ولوحة الاختبار. اكتب 0 إن لم تُستخدم الصالة.</small></div>`; }
+
+/* ===== العمل بدون إنترنت ===== */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }); }); }
+window.addEventListener('online', () => { try { toast('عاد الاتصال — تتم المزامنة'); if (typeof syncNow === 'function') syncNow(); } catch (e) { } });
+window.addEventListener('offline', () => { try { toast('لا يوجد اتصال — تعمل بدون إنترنت، وتُحفظ تعديلاتك على الجهاز وتُرفع عند عودة الاتصال'); } catch (e) { } });
 
 </script>
 </body>

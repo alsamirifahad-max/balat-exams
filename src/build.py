@@ -45,3 +45,10 @@ i = one.rindex('</body>'); one = one[:i] + '<script type="text/plain" id="pdfwor
 out1 = d.parent/'single'; out1.mkdir(exist_ok=True)
 (out1/'index.html').write_text(one, encoding='utf-8')
 print('single', len(one))
+
+# عامل الخدمة للعمل بدون إنترنت
+import json as _j
+_site = d.parent / 'site'
+_assets = ['./'] + sorted(p.name for p in _site.iterdir() if p.is_file() and p.name not in ('sw.js', 'version.txt', 'robots.txt', 'index.html') and not p.name.startswith('.'))
+_fonts = sorted('fonts/' + p.name for p in (_site / 'fonts').iterdir()) if (_site / 'fonts').is_dir() else []
+(_site / 'sw.js').write_text((d / 'sw.js').read_text(encoding='utf-8').replace('__BUILD__', BUILD).replace('__ASSETS__', _j.dumps(_assets + _fonts, ensure_ascii=False)), encoding='utf-8')
