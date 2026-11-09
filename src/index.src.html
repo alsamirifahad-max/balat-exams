@@ -398,6 +398,21 @@ main#main{--accent:var(--sc,#1f9d66)}
  .strows td:nth-child(5)::before{content:"درجة الاختبار";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
  .strows td:nth-child(4)::before{content:"معلمو المادة: ";color:var(--muted)}
 }
+.pwrap{position:relative;display:block;min-width:0}.pwrap .psel{pointer-events:none}.pov{position:absolute;inset:0;width:100%;background:transparent;border:0;cursor:pointer;padding:0}
+.ob .pwrap{display:inline-block;min-width:10rem;vertical-align:middle}
+.pickm{position:fixed;inset:0;background:rgba(5,20,24,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px}
+.pickbox{background:var(--surface);color:var(--ink);width:min(440px,100%);max-height:min(640px,86vh);border-radius:14px;display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.pickh{display:flex;align-items:center;justify-content:space-between}.pickh b{font-size:1.02rem}
+.pickq{font-size:1rem;padding:10px 12px}
+.pickl{overflow:auto;flex:1;min-height:120px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.pickg{position:sticky;top:0;background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--ink);font-size:.76rem;font-weight:800;padding:5px 12px;z-index:1}
+.picki{display:block;width:100%;text-align:start;font:inherit;font-size:.95rem;background:transparent;border:0;border-bottom:1px solid var(--line);padding:11px 14px;color:var(--ink);cursor:pointer}
+.picki:hover,.picki:focus{background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.picki.on{background:var(--accent);color:#fff;font-weight:700}
+.pickn{padding:14px}
+.pickf{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+body.nosc{overflow:hidden}
+@media (max-width:600px){.pickm{align-items:flex-end;padding:0}.pickbox{width:100%;max-height:82vh;border-radius:16px 16px 0 0;padding-bottom:max(14px,env(safe-area-inset-bottom))}}
 </style>
 </head>
 <body>

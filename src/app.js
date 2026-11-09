@@ -1098,15 +1098,48 @@ function pickSel(path, val, groups, o = {}) {
     const opts = it.map(x => { const sel = !found && same(x); if (sel) found = true; return `<option value="${esc(x)}"${sel ? ' selected' : ''}>${esc(x)}</option>`; }).join('');
     return it.length ? (g.label ? `<optgroup label="${esc(g.label)}">${opts}</optgroup>` : opts) : ''; }).join('');
   const extra = val && !found ? `<option value="${esc(val)}" selected>${esc(val)}</option>` : '';
-  return `<select class="in psel${val ? '' : ' empty'}" data-k="${path}" data-pick="${o.kind || 't'}" id="ps_${path.replace(/[^\w]/g, '_')}"${o.title ? ` title="${esc(o.title)}"` : ''}><option value="">${o.ph || '— اختر —'}</option>${extra}${grp}<option value="__other">✎ ${o.other || 'كتابة اسم آخر…'}</option></select>`;
+  return `<span class="pwrap"><select class="in psel${val ? '' : ' empty'}" data-k="${path}" data-pick="${o.kind || 't'}" id="ps_${path.replace(/[^\w]/g, '_')}"${o.title ? ` title="${esc(o.title)}"` : ''}><option value="">${o.ph || '— اختر —'}</option>${extra}${grp}<option value="__other">✎ ${o.other || 'كتابة اسم آخر…'}</option></select><button type="button" class="pov" data-act="pickOpen" tabindex="-1" aria-hidden="true"></button></span>`;
 }
 /* قائمة المعلمين للاختيار: قائمة المدرسة أولاً، ثم من في الإسناد غير الموجود فيها (بلا تكرار الاسم المختصر والكامل) */
 function tchAll() { const out = [...S.teachers]; const has = sameTeacher(out); allTeachers().forEach(n => { if (!has(n)) { out.push(n); } }); const seen = new Set(); return arSort(out.filter(n => { const k = personKey(n); if (seen.has(k)) return false; seen.add(k); return true; })); }
 function tchOpts(first, firstLabel) { const all = tchAll(); return first && first.length ? [{ label: firstLabel, items: first }, { label: 'جميع المعلمين', items: all }] : [{ items: all }]; }
 function subOpts(g) { const sched = []; S.days.forEach(d => d.p.forEach(p => { const s = (p.s[g] || '').trim(); if (s) sched.push(s); })); const ta = S.ta.filter(x => +x.g === +g).map(x => x.sub); return [{ label: 'الخطة الدراسية', items: currList(g) }, { label: 'من الإسناد والجدول', items: [...ta, ...sched] }]; }
+/* نافذة اختيار مع بحث (تفتح بدل القائمة الأصلية) */
+function openPicker(sel) {
+  const groups = []; let cur = { label: '', items: [] }; groups.push(cur);
+  Array.from(sel.children).forEach(n => {
+    if (n.tagName === 'OPTGROUP') { cur = { label: n.label, items: Array.from(n.children).map(o => o.value) }; groups.push(cur); cur = { label: '', items: [] }; groups.push(cur); }
+    else if (n.value && n.value !== '__other') cur.items.push(n.value);
+  });
+  const isSub = sel.dataset.pick === 's', ph = (sel.options[0] && sel.options[0].textContent || '').replace(/[—\-]/g, '').trim() || 'اختر';
+  let m = $('#pickModal'); if (!m) { m = document.createElement('div'); m.id = 'pickModal'; m.className = 'pickm'; document.body.appendChild(m); }
+  m.innerHTML = `<div class="pickbox" role="dialog" aria-label="${esc(ph)}"><div class="pickh"><b>${esc(ph)}</b><button type="button" class="x" data-pk="close" aria-label="إغلاق">×</button></div>
+    <input class="in pickq" type="search" placeholder="${isSub ? 'ابحث عن مادة…' : 'ابحث بالاسم… مثل: فهد أو المالكي'}" autocomplete="off">
+    <div class="pickl"></div>
+    <div class="pickf"><button type="button" class="btn sm ghost" data-pk="clear">${isSub ? 'بدون مادة' : 'بدون اسم'}</button><button type="button" class="btn sm" data-pk="other">✎ ${isSub ? 'كتابة مادة أخرى' : 'كتابة اسم آخر'}</button></div></div>`;
+  const q = $('.pickq', m), list = $('.pickl', m), curV = sel.value;
+  const draw = () => {
+    const words = normName(q.value).split(' ').filter(Boolean), seen = new Set(); let html = '', n = 0;
+    groups.forEach(g => { const it = g.items.filter(v => { const k = normName(v); if (seen.has(k) && !g.label) return false; return words.every(w => k.includes(w)); }); if (!it.length) return;
+      it.forEach(v => seen.add(normName(v)));
+      html += (g.label ? `<div class="pickg">${esc(g.label)}</div>` : '') + it.map(v => { n++; return `<button type="button" class="picki${v === curV ? ' on' : ''}" data-v="${esc(v)}">${esc(v)}</button>`; }).join(''); });
+    list.innerHTML = html || `<p class="hint pickn">لا توجد نتيجة${q.value.trim() ? ` — اضغط «${isSub ? 'كتابة مادة أخرى' : 'كتابة اسم آخر'}» لإضافة «${esc(q.value.trim())}»` : ''}</p>`;
+  };
+  const sc = getComputedStyle($('#main')).getPropertyValue('--sc').trim(); if (sc) m.style.setProperty('--accent', sc);
+  draw(); m.hidden = false; document.body.classList.add('nosc');
+  setTimeout(() => { const on = $('.picki.on', list); if (on) on.scrollIntoView({ block: 'center' }); if (!/Mobi|iPhone|Android/i.test(navigator.userAgent)) q.focus(); }, 30);
+  const close = () => { m.hidden = true; m.innerHTML = ''; document.body.classList.remove('nosc'); };
+  const choose = v => { if (v && !Array.from(sel.options).some(o => o.value === v)) { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.insertBefore(o, sel.lastElementChild); } sel.value = v; close(); sel.dispatchEvent(new Event('change', { bubbles: true })); };
+  q.oninput = draw;
+  q.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const f = $('.picki', list); if (f) choose(f.dataset.v); else if (q.value.trim()) choose(q.value.trim()); } if (e.key === 'Escape') close(); };
+  m.onclick = e => { if (e.target === m) return close(); const b = e.target.closest('[data-v],[data-pk]'); if (!b) return;
+    if (b.dataset.v != null) return choose(b.dataset.v);
+    if (b.dataset.pk === 'close') return close(); if (b.dataset.pk === 'clear') return choose('');
+    if (b.dataset.pk === 'other') { if (q.value.trim()) return choose(q.value.trim()); close(); pickOther(sel); } };
+}
 function pickOther(el) {
   const i = document.createElement('input'); i.className = 'in'; i.dataset.k = el.dataset.k; i.id = el.id; i.placeholder = el.dataset.pick === 's' ? 'اكتب اسم المادة' : 'اكتب الاسم';
-  const prev = getPath(el.dataset.k); i.value = prev && prev !== '__other' ? prev : ''; el.replaceWith(i); i.focus();
+  const prev = getPath(el.dataset.k); i.value = prev && prev !== '__other' ? prev : ''; (el.closest('.pwrap') || el).replaceWith(i); i.focus();
 }
 function teacherDatalist() {
   return `<datalist id="tlist">${allTeachers().map(n => `<option value="${esc(n)}"></option>`).join('')}</datalist>`;
@@ -2665,6 +2698,7 @@ document.addEventListener('click', async e => {
     case 'palette': return openPalette();
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
     case 'tchTpl': tchTemplate(); return;
+    case 'pickOpen': { const s = b.parentElement.querySelector('select'); if (s) openPicker(s); return; }
     case 'sortTeachers': S.teachers = arSort(S.teachers); toast('رُتبت القائمة هجائياً'); return re();
     case 'mergeTeachers': { const have = new Set(S.teachers.map(normName)); let n = 0; allTeachers().forEach(t => { if (!have.has(normName(t))) { S.teachers.push(t); n++; } }); S.teachers = arSort(S.teachers); toast(n ? `أضيف ${n} معلماً` : 'القائمة مكتملة'); return re(); }
     case 'qprint': return printPages(groupsOf(b.dataset.form, qopts(b)));
