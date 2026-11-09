@@ -15,6 +15,12 @@ function wdOf(iso) { const w = isoToDate(iso).getUTCDay(); return w <= 4 ? w : -
 function hijriOf(iso) { const [y, m, d] = toHijri(iso); return `${d}/${m}/${y}`; }
 function dayAr(iso) { return DAYS_AR[isoToDate(iso).getUTCDay()]; }
 const secGrade = s => { s = +s; return s >= 21 ? 3 : s >= 11 ? 2 : s >= 1 ? 1 : 0; };
+/* الصفوف التي يدرّسها كل معلم حسب الجدول (لأولوية الانتظار) */
+let TG_CACHE = null;
+function tGrades() { const t = D().tt; if (TG_CACHE && TG_CACHE.t === t) return TG_CACHE.m; const m = new Map(); (t ? t.teachers : []).forEach(x => { const g = new Set(); Object.values(x.c).forEach(v => String(v).split(/[^0-9]+/).filter(Boolean).forEach(n => { const k = secGrade(n); if (k) g.add(k); })); m.set(normName(x.n), g); }); TG_CACHE = { t, m }; return m; }
+function teachesGrade(n, g) { const s = tGrades().get(normName(n)); return !!(g && s && s.has(g)); }
+function gradeOfText(t) { t = String(t || ''); return /ثالث|3/.test(t) ? 3 : /ثان|2/.test(t) ? 2 : /أول|اول|1/.test(t) ? 1 : 0; }
+function rowGrade(iso, b, p) { const d = wdOf(iso), sc = b && b.abs && d >= 0 ? ttSecs(b.abs, d, p) : []; if (sc.length) return secGrade(sc[0]); const r = (b && b.rows || {})[p] || {}; return gradeOfText(r.g) || (r.s ? secGrade(r.s) : 0); }
 
 /* ---------- الجدول المدرسي ---------- */
 function ttNames() { const t = D().tt; return t ? arSort(t.teachers.map(x => x.n)) : tchAll(); }
@@ -101,7 +107,7 @@ function subOptsFor(iso, bi, p) {
 function autoFill(iso) {
   const w = W(iso), d = wdOf(iso); let n = 0;
   w.blocks.forEach((b, bi) => { for (let p = 1; p <= 7; p++) { if (!(d >= 0 && ttCell(b.abs, d, p))) continue; b.rows = b.rows || {}; const r = b.rows[p] = b.rows[p] || {}; if (r.t) continue;
-    const ld = waitLoad(iso), wk = weekLoad(); const g = subOptsFor(iso, bi, p)[0].items.slice().sort((a, b) => (ld[normName(a)] || 0) - (ld[normName(b)] || 0) || (wk[normName(a)] || 0) - (wk[normName(b)] || 0) || AR.compare(normName(a), normName(b))); if (g.length) { r.t = g[0]; n++; } } });
+    const ld = waitLoad(iso), wk = weekLoad(); const gr = rowGrade(iso, b, p); const g = subOptsFor(iso, bi, p)[0].items.slice().sort((a, b) => (teachesGrade(b, gr) - teachesGrade(a, gr)) || (ld[normName(a)] || 0) - (ld[normName(b)] || 0) || (wk[normName(a)] || 0) - (wk[normName(b)] || 0) || AR.compare(normName(a), normName(b))); if (g.length) { r.t = g[0]; n++; } } });
   return n;
 }
 
@@ -152,7 +158,7 @@ function vWait(iso) {
   const issues = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => subIssue(iso, bi, p, ((b.rows || {})[p] || {}).t)).length, 0);
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">أضف المعلم الغائب فتظهر حصصه وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b> — الأسماء مرتبة هجائياً، والمميَّزة بنجمة هي الأقل انتظاراً. تُطبع الاستمارة في ورقة واحدة لكل الغائبين.</p>
+    <p class="hint">أضف المعلم الغائب فتظهر حصصه وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b>: يظهر أولاً معلمو الصف نفسه (أول/ثاني/ثالث)، ثم بقية المتاحين — هجائياً، والمميَّز بنجمة هو الأقل انتظاراً. تُطبع الاستمارة مقسّمة حسب الصف في ورقة واحدة.</p>
     <div class="acts wrap">${pickSel(`daily.ui.addAbs`, '', [{ items: ttNames().filter(n => !absentSet(iso).has(normName(n))) }], { ph: '+ إضافة معلم غائب' })}
       ${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
@@ -164,11 +170,14 @@ function tt0() { return !!D().tt; }
 function waitChips(iso, bi, p, r) {
   const path = `daily.wait.${iso}.blocks.${bi}.rows.${p}.t`;
   if (r.t) return `<div class="wpick done"><span class="wname">${esc(r.t)}</span><button class="btn sm ghost" data-act="wClr" data-bi="${bi}" data-p="${p}" type="button">تغيير</button></div>`;
-  const g = subOptsFor(iso, bi, p), free = g[0].items.slice().sort((a, b) => AR.compare(normName(a), normName(b)));
+  const g = subOptsFor(iso, bi, p), all = g[0].items.slice().sort((a, b) => AR.compare(normName(a), normName(b)));
   if (!tt0()) return pickSel(path, '', g, { ph: '— اختر المنتظر —' });
+  const gr = rowGrade(iso, D().wait[iso].blocks[bi], p), same = gr ? all.filter(n => teachesGrade(n, gr)) : [], rest = all.filter(n => !same.includes(n));
   const ld = waitLoad(iso), wk = weekLoad(), sc = n => (ld[normName(n)] || 0) * 100 + (wk[normName(n)] || 0);
-  const sug = new Set(free.slice().sort((a, b) => sc(a) - sc(b) || AR.compare(normName(a), normName(b))).slice(0, 3));
-  return `<div class="wpick"><small>المتاحون في الحصة ${p} (${free.length}) — اضغط الاسم:</small><div class="wchips">${free.map(n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}"${sug.has(n) ? ' title="الأقل انتظاراً"' : ''}>${esc(n)}</button>`).join('') || '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}</div>
+  const pool = same.length ? same : all, sug = new Set(pool.slice().sort((a, b) => sc(a) - sc(b) || AR.compare(normName(a), normName(b))).slice(0, 3));
+  const chip = n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}${same.includes(n) ? ' sg g' + gr : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}"${sug.has(n) ? ' title="الأقل انتظاراً"' : ''}>${esc(n)}</button>`;
+  return `<div class="wpick">${all.length ? `${same.length ? `<small class="wgl g${gr}">① معلمو ${GSHORT[gr]} ثانوي المتاحون (${same.length})</small><div class="wchips">${same.map(chip).join('')}</div>` : ''}
+    ${rest.length ? `<small class="wgl">${same.length ? '② بقية المتاحين' : `المتاحون في الحصة ${p}`} (${rest.length})</small><div class="wchips">${rest.map(chip).join('')}</div>` : ''}` : '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}
     <details class="wother"><summary>اسم آخر…</summary>${pickSel(path, '', g, { ph: '— كل المعلمين —' })}</details></div>`;
 }
 function vDuty(iso) {
@@ -208,18 +217,25 @@ function vLog() {
 function waitRows(iso) {
   const d = wdOf(iso), out = [];
   (D().wait[iso] || { blocks: [] }).blocks.forEach(b => { if (!b.abs) return; for (let p = 1; p <= 7; p++) { const sc = d >= 0 ? ttSecs(b.abs, d, p) : [], r = (b.rows || {})[p] || {}; if (!sc.length && !r.t && !r.g && !r.s) continue;
-    const cls = sc.length ? `${[...new Set(sc.map(x => GSHORT[secGrade(x)] || ''))].join('/')} / ${sc.join('، ')}` : [r.g, r.s].filter(Boolean).join(' / '); out.push({ p, cls, abs: b.abs, t: r.t || '', note: r.note || '' }); } });
-  return out.sort((a, b) => a.p - b.p);
+    out.push({ p, g: rowGrade(iso, b, p), sec: sc.length ? sc.join('، ') : (r.s || ''), abs: b.abs, t: r.t || '', note: r.note || '' }); } });
+  return out.sort((a, b) => a.p - b.p || AR.compare(normName(a.abs), normName(b.abs)));
 }
+const ORD = ['أولاً', 'ثانياً', 'ثالثاً', 'رابعاً'];
 function waitPages(iso) {
-  const bl = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs), names = bl.map(b => b.abs), rows = waitRows(iso);
-  const many = names.length > 1;
-  const intro = `<p class="wl">إخواني المعلمين / نظراً لغياب ${many ? 'الزملاء' : 'الزميل'}: <b>${names.length ? names.map(esc).join('، ') : '..................................................'}</b></p><p class="wl">هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد ${many ? 'حصصهم' : 'حصصه'} حسب الجدول الموضح والتوقيع بالعلم، ولكم جزيل الشكر.</p>`;
-  const hd = [H('الحصة', { w: '8%' }), H('الفصل / الشعبة', { w: '15%' }), H('المعلم الغائب', { w: '19%' }), H('المعلم المنتظر', { w: '21%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
-  const body = rows.length ? rows.map(r => [`<b>${r.p}</b>`, esc(r.cls), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), '']) : Array.from({ length: 14 }, () => ['', '', '', '', '', '']);
-  const pages = [], per = 22;
-  for (let i = 0; i < body.length; i += per) { const last = i + per >= body.length;
-    pages.push(title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`) + (i ? `<p class="ds">تابع — ${names.map(esc).join('، ')}</p>` : intro) + T([hd, ...body.slice(i, i + per)], { cls: 'dense' }) + (last ? sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]]) : '')); }
+  const rows = waitRows(iso), all = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs).map(b => b.abs);
+  const intro = `<p class="wl">إخواني المعلمين / نظراً لغياب ${all.length > 1 ? 'الزملاء' : 'الزميل'} هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد الحصص حسب الجدول الموضح لكل صف والتوقيع بالعلم، ولكم جزيل الشكر.</p>`;
+  const hd = [H('الحصة', { w: '8%' }), H('الشعبة', { w: '9%' }), H('المعلم الغائب', { w: '20%' }), H('المعلم المنتظر', { w: '22%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
+  const secs = [1, 2, 3, 0].map(g => ({ g, rows: rows.filter(r => r.g === g) })).filter(x => x.rows.length);
+  const head = (x, k, cont) => { const ab = [...new Set(x.rows.map(r => r.abs))]; return [{ v: `<b>${ORD[k] || ''}: ${x.g ? GNAME[x.g] : 'حصص أخرى'}${cont ? ' (تابع)' : ''}</b> &nbsp;—&nbsp; نظراً لغياب ${ab.length > 1 ? 'الزملاء' : 'الزميل'}: <b>${ab.map(esc).join('، ')}</b>`, cs: 6, al: 'right', bg: GCOL[x.g] || '#eeeeee' }]; };
+  const line = r => [`<b>${r.p}</b>`, esc(r.sec), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), ''];
+  const ttl = () => title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`);
+  if (!secs.length) return [ttl() + intro + T([hd, ...Array.from({ length: 14 }, () => ['', '', '', '', '', ''])], { cls: 'dense' }) + sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]])];
+  const CAP = 24, pages = []; let top = ttl() + intro, body = '', used = 2;
+  const flush = () => { pages.push(top + `<div>${body}</div>`); top = ttl(); body = ''; used = 0; };
+  secs.forEach((x, k) => { let i = 0, cont = false;
+    while (i < x.rows.length) { if (used + 3 > CAP) flush();
+      const n = Math.min(x.rows.length - i, CAP - used - 2); body += T([head(x, k, cont), hd, ...x.rows.slice(i, i + n).map(line)], { cls: 'dense nogrow', st: 'margin-bottom:10px' }); used += n + 2; i += n; cont = true; } });
+  pages.push(top + `<div>${body}</div>` + sp(8) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]]));
   return pages;
 }
 function dutyPages(iso) {
