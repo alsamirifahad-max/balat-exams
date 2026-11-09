@@ -588,3 +588,9 @@ function morningCard() {
     <div class="mgrid">${canDaily ? tile(wt, `data-tact="mGo" data-v="wait" data-d="${iso}"`, 'الانتظار') + tile(dy, `data-tact="mGo" data-v="duty" data-d="${iso}"`, 'المناوبة') : ''}${canEx ? tile(ex, `data-tab="${ex.go}"`, ex.go === 'today' ? 'لوحة الاختبار' : 'الجدول') : ''}</div></section>`;
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-tact="mGo"]'); if (!b) return; DAILY_DATE = b.dataset.d; DAILY_TAB = b.dataset.v; go('daily'); });
+
+/* ===== المظهر: تلقائي / فاتح / ليلي ===== */
+function themeNow() { try { return localStorage.getItem('balat-theme') || ''; } catch (e) { return ''; } }
+function themeApply(t) { const r = document.documentElement; if (t) r.setAttribute('data-theme', t); else r.removeAttribute('data-theme'); const b = document.getElementById('themeBtn'); if (b) { b.textContent = t === 'dark' ? '☾' : t === 'light' ? '☀︎' : '◐'; b.title = 'المظهر: ' + (t === 'dark' ? 'ليلي' : t === 'light' ? 'فاتح' : 'تلقائي حسب الجهاز') + ' — اضغط للتغيير'; } const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = '#0e3a46'; }
+document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('#themeBtn')) return; const order = ['', 'light', 'dark'], t = order[(order.indexOf(themeNow()) + 1) % 3]; try { if (t) localStorage.setItem('balat-theme', t); else localStorage.removeItem('balat-theme'); } catch (er) { } themeApply(t); toast('المظهر: ' + (t === 'dark' ? 'ليلي' : t === 'light' ? 'فاتح' : 'تلقائي حسب إعداد الجهاز')); });
+setTimeout(() => themeApply(themeNow()), 0);

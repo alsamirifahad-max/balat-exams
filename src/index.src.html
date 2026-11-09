@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<script>try{var __t=localStorage.getItem("balat-theme");if(__t)document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>نظام الإسناد واللجان وأعمال الاختبارات</title>
 <meta name="description" content="نظام إعداد وطباعة أعمال الاختبارات – مدرسة بلاط الشهداء الثانوية">
@@ -27,13 +28,14 @@
 /* التخطيط: شريط علوي بهوية الوزارة، تبويبات أفقية، ومحتوى في بطاقات؛ صفحة النماذج: قائمة جانبية + معاينة ورق A4 */
 :root{
   --navy:#0b3a46; --navy2:#12505f; --accent:#1f9d66; --accent-ink:#ffffff;
-  --bg:#f2f5f5; --surface:#ffffff; --ink:#15262b; --muted:#5d7178; --line:#d6e0e2; --soft:#e8f0f0;
+  --bg:#edf2f3; --surface:#ffffff; --surface2:#f5f9fa; --ink:#10232a; --muted:#4c666e; --line:#d0dde0; --soft:#e6eff0;
+  --info:#0a6a82; --info-bg:#e3f2f6; --info-line:#8cc8d8; --shadow:0 1px 2px rgba(12,40,48,.06),0 6px 18px rgba(12,40,48,.05);
   --warn:#b4541a; --bad:#b3193f; --ok:#16794e;
   --ui:'Tajawal',Tahoma,Arial,sans-serif; --doc:'Tajawal','Sakkal Majalla',Arial,sans-serif;
   color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0e1a1d;--surface:#15252a;--ink:#e3ecee;--muted:#93a8ae;--line:#284047;--soft:#1b3036;--accent:#2fb67a;--warn:#e39256;--bad:#ef6d8d;--ok:#4fcf93;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0e1a1d;--surface:#15252a;--ink:#e3ecee;--muted:#93a8ae;--line:#284047;--soft:#1b3036;--accent:#2fb67a;--warn:#e39256;--bad:#ef6d8d;--ok:#4fcf93;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b1518;--surface:#132229;--surface2:#192c34;--ink:#eef4f5;--muted:#aec2c7;--line:#2f4a52;--soft:#1d343c;--accent:#36c48c;--info:#8fd3e6;--info-bg:#12303a;--info-line:#2f6c7c;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1518;--surface:#132229;--surface2:#192c34;--ink:#eef4f5;--muted:#aec2c7;--line:#2f4a52;--soft:#1d343c;--accent:#36c48c;--info:#8fd3e6;--info-bg:#12303a;--info-line:#2f6c7c;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -337,7 +339,7 @@ nav#nav .steps{display:flex;align-items:center;gap:2px;flex:1 0 auto}
 .step i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.78rem;font-weight:800;border:2px solid color-mix(in srgb,var(--sc) 70%,#fff);color:#fff;background:transparent;flex:none}
 .step:hover{background:rgba(255,255,255,.08);color:#fff}
 .step.done i{background:var(--sc);border-color:var(--sc)}
-.step.on{background:#fff;color:var(--sc)}
+.step.on{background:#fff;color:var(--sct,var(--sc))}
 .step.on i{background:var(--sc);border-color:var(--sc);color:#fff}
 .sline{width:14px;height:2px;background:rgba(255,255,255,.18);flex:none;border-radius:2px}
 nav#nav .utils{display:flex;gap:4px;flex:none;border-inline-start:1px solid rgba(255,255,255,.15);padding-inline-start:10px}
@@ -350,7 +352,7 @@ main#main{--accent:var(--sc,#1f9d66)}
 .shero{display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:14px;border:1px solid color-mix(in srgb,var(--sc) 28%,var(--line));background:linear-gradient(120deg,color-mix(in srgb,var(--sc) 15%,var(--surface)),var(--surface) 70%);position:relative;overflow:hidden}
 .shero::after{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:var(--sc)}
 .shero .sico{width:56px;height:56px;border-radius:14px;background:var(--sc);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 6px 18px color-mix(in srgb,var(--sc) 35%,transparent)}
-.shero small{color:var(--sc);font-weight:800;font-size:.78rem;letter-spacing:.2px}
+.shero small{color:var(--sct,var(--sc));font-weight:800;font-size:.78rem;letter-spacing:.2px}
 .shero h2{margin:2px 0 4px;font-size:1.45rem;color:var(--ink)}
 .shero p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.6}
 .sbody{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -486,7 +488,7 @@ body.nosc{overflow:hidden}
 .tal .al.warn{background:color-mix(in srgb,#f59e0b 11%,var(--surface));border:1px solid color-mix(in srgb,#f59e0b 35%,var(--line))}
 .flash{animation:flash 1.3s ease}@keyframes flash{0%,60%{box-shadow:0 0 0 4px color-mix(in srgb,var(--sc) 45%,transparent)}100%{box-shadow:none}}
 /* ===== المساعدة ===== */
-.hlp{font:inherit;font-size:.75rem;font-weight:800;width:22px;height:22px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--sc) 55%,var(--line));background:var(--surface);color:var(--sc);cursor:pointer;margin-inline-start:8px;vertical-align:2px;padding:0}
+.hlp{font:inherit;font-size:.75rem;font-weight:800;width:22px;height:22px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--sc) 55%,var(--line));background:var(--surface);color:var(--sct,var(--sc));cursor:pointer;margin-inline-start:8px;vertical-align:2px;padding:0}
 .hlppop{position:absolute;z-index:80;background:var(--ink);color:var(--surface);border-radius:10px;padding:10px 12px;font-size:.86rem;line-height:1.7;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 /* ===== الجولة ===== */
 #tour{position:fixed;inset:0;z-index:90}
@@ -501,8 +503,8 @@ body.nosc{overflow:hidden}
 .dchip small{color:var(--muted)}.dchip.today{border-color:#dc2626}.dchip.today::after{content:"اليوم";font-size:.68rem;font-weight:800;color:#dc2626}
 .dchip.on{background:var(--sc);border-color:var(--sc);color:#fff}.dchip.on small,.dchip.on::after{color:#fff}
 .tmain{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
-.tmain small{color:var(--sc);font-weight:800}.tday{margin:2px 0;font-size:1.7rem}.tdate{margin:0;color:var(--muted)}
-.tdy{font-style:normal;font-size:.8rem;font-weight:800;border-radius:999px;padding:3px 10px;background:color-mix(in srgb,var(--sc) 14%,var(--surface));color:var(--sc);vertical-align:middle}
+.tmain small{color:var(--sct,var(--sc));font-weight:800}.tday{margin:2px 0;font-size:1.7rem}.tdate{margin:0;color:var(--muted)}
+.tdy{font-style:normal;font-size:.8rem;font-weight:800;border-radius:999px;padding:3px 10px;background:color-mix(in srgb,var(--sc) 14%,var(--surface));color:var(--sct,var(--sc));vertical-align:middle}
 .tdy.now{background:#dc2626;color:#fff}.tdy.past{background:var(--line);color:var(--muted)}
 .tbag{display:flex;gap:8px;flex-wrap:wrap}.btn.big{font-size:1.05rem;padding:13px 22px;border-radius:12px}
 .tpers{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
@@ -523,7 +525,7 @@ body.nosc{overflow:hidden}
 .dbar{display:flex;flex-direction:column;gap:10px}
 .dnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ddate{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1.5px solid color-mix(in srgb,var(--sc) 40%,var(--line));border-radius:12px;padding:6px 12px;background:color-mix(in srgb,var(--sc) 6%,var(--surface))}
-.ddate input{width:auto;border:0;background:transparent;font-weight:700}.ddate b{font-size:1.1rem;color:var(--sc)}.ddate span{color:var(--muted);font-weight:700}
+.ddate input{width:auto;border:0;background:transparent;font-weight:700}.ddate b{font-size:1.1rem;color:var(--sct,var(--sc))}.ddate span{color:var(--muted);font-weight:700}
 .dtabs{display:flex;gap:4px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px}
 .dtabs button{font:inherit;font-weight:700;font-size:.9rem;border:0;background:transparent;color:var(--ink);border-radius:9px;padding:8px 14px;cursor:pointer;flex:1;white-space:nowrap}
 .dtabs button.on{background:var(--sc);color:#fff}.dtabs.sm button{padding:5px 10px;font-size:.82rem;flex:none}
@@ -534,7 +536,7 @@ body.nosc{overflow:hidden}
 .wblk header .x{margin-inline-start:auto;font:inherit;font-size:1.2rem;border:0;background:transparent;color:var(--muted);cursor:pointer}
 .dblk header .inl{margin-inline-start:auto}.dblk header small{color:var(--muted)}
 .wblk .tw,.dblk .tw{margin:0;border:0;border-radius:0}
-.wtab td.pn{font-weight:800;text-align:center;color:var(--sc)}
+.wtab td.pn{font-weight:800;text-align:center;color:var(--sct,var(--sc))}
 .wtab tr.nocls td{color:var(--muted);background:var(--bg)}
 .wtab tr.bad td{background:color-mix(in srgb,#dc2626 7%,var(--surface))}
 .cf{display:block;margin-top:4px;color:#dc2626;font-size:.78rem;font-weight:800}
@@ -581,7 +583,7 @@ body.nosc{overflow:hidden}
 .semst{flex:none;font-size:.78rem;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--soft);color:var(--muted)}.semcard.on .semst{background:var(--sx);color:#fff}
 .setadv{margin:0 0 12px}.setadv > summary{cursor:pointer;font-weight:700;color:var(--muted);font-size:.88rem;padding:6px 4px}
 .box.wide{max-width:min(860px,96vw)}.dft td{vertical-align:top;font-size:.85rem}.dft .tn small{display:block;font-size:.72rem;color:var(--muted)}.dft tr.d-new td{background:color-mix(in srgb,#22c55e 10%,var(--surface))}.dft tr.d-gone td{background:color-mix(in srgb,#ef4444 9%,var(--surface))}.dft tr.d-chg td{background:color-mix(in srgb,#f59e0b 11%,var(--surface))}
-.wpick{display:flex;flex-direction:column;gap:6px}.wpick small{color:var(--muted);font-size:.78rem}.wpick.done{flex-direction:row;align-items:center;gap:8px}.wname{font-weight:800;color:var(--sc,#0e7490);background:color-mix(in srgb,#0e7490 10%,var(--surface));padding:5px 12px;border-radius:999px}
+.wpick{display:flex;flex-direction:column;gap:6px}.wpick small{color:var(--muted);font-size:.78rem}.wpick.done{flex-direction:row;align-items:center;gap:8px}.wname{font-weight:800;color:var(--sct,var(--sc,#0e7490));background:color-mix(in srgb,#0e7490 10%,var(--surface));padding:5px 12px;border-radius:999px}
 .wchips{display:flex;flex-wrap:wrap;gap:5px}.wchip{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer;min-height:32px}.wchip:hover,.wchip:active{border-color:#0e7490;background:color-mix(in srgb,#0e7490 10%,var(--surface))}
 .wchip.sug{border-color:#16a34a;background:color-mix(in srgb,#16a34a 10%,var(--surface));font-weight:700}.wchip.sug::before{content:"★ ";color:#16a34a}
 .wother summary{cursor:pointer;font-size:.78rem;color:var(--muted)}
@@ -599,7 +601,7 @@ body.nosc{overflow:hidden}
 .obpick td{background:color-mix(in srgb,#0e7490 6%,var(--surface))!important}.wchip i.ld{font-style:normal;font-size:.68rem;margin-inline-start:5px;color:var(--muted)}
 @media (max-width:700px){table.obs,table.obs tbody{display:block}table.obs tr:first-child{display:none}
  table.obs tr{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 10px;align-items:center;padding:10px 8px;border-bottom:1px solid var(--line)}table.obs td{display:block;border:0;padding:0}
- table.obs td:nth-child(1) b{font-size:1.25rem;color:var(--sc)}table.obs td:nth-child(2){font-size:.8rem}table.obs td:nth-child(3)::after{content:" طالباً";font-size:.72rem;color:var(--muted)}
+ table.obs td:nth-child(1) b{font-size:1.25rem;color:var(--sct,var(--sc))}table.obs td:nth-child(2){font-size:.8rem}table.obs td:nth-child(3)::after{content:" طالباً";font-size:.72rem;color:var(--muted)}
  table.obs td:nth-child(5){grid-column:1/-1}table.obs tr.obpick{display:block;padding:8px 6px}table.obs tr.obpick td{display:block}}
 .ob .obn{white-space:nowrap}
 .wrest > summary{cursor:pointer;font-size:.8rem;font-weight:700;color:#0e7490;padding:4px 0}.wrest[open] > summary{color:var(--muted)}
@@ -611,7 +613,7 @@ body.nosc{overflow:hidden}
 .bcount{display:flex;flex-direction:column;align-items:center;min-width:120px;padding:8px 14px;border-radius:14px;background:var(--soft)}.bcount b{font-size:2rem;line-height:1;color:#16a34a}.bcount span{font-size:.8rem;color:var(--muted)}.bcount i{display:block;width:100%;height:6px;border-radius:4px;margin-top:6px;background:linear-gradient(90deg,#16a34a var(--p),color-mix(in srgb,var(--muted) 25%,transparent) var(--p))}
 .bbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;font-size:.86rem}.bbar .bad{color:#dc2626;font-weight:700}
 .bgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}@media (max-width:420px){.bgrid2{grid-template-columns:1fr 1fr}}
-.bcard{border:2px solid var(--line);border-radius:12px;padding:8px;background:var(--surface);display:flex;flex-direction:column;gap:6px}.bcard header{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.bcard header b{font-size:1.35rem;color:var(--sc,#0e7490)}.bcard header span{font-size:.78rem;font-weight:700}.bcard header small{font-size:.72rem;color:var(--muted);margin-inline-start:auto}
+.bcard{border:2px solid var(--line);border-radius:12px;padding:8px;background:var(--surface);display:flex;flex-direction:column;gap:6px}.bcard header{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.bcard header b{font-size:1.35rem;color:var(--sct,var(--sc,#0e7490))}.bcard header span{font-size:.78rem;font-weight:700}.bcard header small{font-size:.72rem;color:var(--muted);margin-inline-start:auto}
 .bcard.ok{border-color:#16a34a;background:color-mix(in srgb,#16a34a 9%,var(--surface))}.bcard.part{border-color:#f59e0b}.bcard.wait{border-color:color-mix(in srgb,#f59e0b 55%,var(--line))}.bcard.none{border-color:#dc2626;border-style:dashed}
 .bob{display:flex;align-items:center;gap:4px}.bname{flex:1;font:inherit;font-size:.82rem;text-align:right;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);padding:6px 8px;cursor:pointer;min-height:40px;line-height:1.3}.bname small{display:block;font-size:.68rem;opacity:.8}
 .bob.on .bname{background:#16a34a;border-color:#16a34a;color:#fff;font-weight:700}.bob.empty{font-size:.78rem;color:#dc2626;flex-wrap:wrap}
@@ -627,13 +629,49 @@ body.nosc{overflow:hidden}
 .semchips button{font:inherit;font-size:.8rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer}
 .semchips button.on{background:var(--sc2);border-color:var(--sc2);color:#fff}
 .semchips .sy{width:6.5rem;padding:4px 8px;font-size:.8rem}
+
+/* ===== طبقة التصميم: وضوح وتدرج مريح في الوضعين ===== */
+body{background:radial-gradient(1200px 500px at 100% -10%,color-mix(in srgb,var(--info) 7%,transparent),transparent 60%),var(--bg);background-attachment:fixed}
+.card{border-radius:14px;background:linear-gradient(180deg,var(--surface2),var(--surface) 110px);box-shadow:var(--shadow);border-color:var(--line)}
+.card h2{font-size:1.1rem;font-weight:800;line-height:1.5}
+p.hint{color:var(--info);background:linear-gradient(to left,var(--info-bg),color-mix(in srgb,var(--info-bg) 30%,transparent) 92%);border-inline-start:3px solid var(--info-line);padding:8px 12px;border-radius:10px;line-height:1.8;font-size:.87rem;margin:8px 0}
+p.hint b,p.hint strong{color:var(--ink);font-weight:800}
+span.hint,small.hint,em.hint,.hint:not(p){color:var(--muted)}
+.card > p.hint:first-of-type{margin-top:4px}
+.in{background:var(--surface2);border-color:var(--line);color:var(--ink)}.in:focus{background:var(--surface)}
+.in::placeholder{color:color-mix(in srgb,var(--muted) 80%,transparent)}
+.btn{background:var(--soft);border-color:var(--line)}.btn.ghost{background:transparent}
+table.et th{background:linear-gradient(180deg,var(--soft),color-mix(in srgb,var(--soft) 55%,var(--surface)));color:var(--ink)}
+table.et td{border-bottom-color:color-mix(in srgb,var(--line) 75%,transparent)}
+.chip,.wchip,.achip,.obe{background:var(--surface2);border-color:color-mix(in srgb,var(--line) 85%,var(--muted));color:var(--ink)}
+.wchip:hover,.achip:hover,.chip:hover{border-color:var(--info);background:color-mix(in srgb,var(--info) 12%,var(--surface2))}
+.achip i{background:color-mix(in srgb,var(--info) 20%,transparent);color:var(--info)}
+.achip.zero{opacity:.5}
+.achip.on{background:#dc2626;border-color:#dc2626;color:#fff}.achip.on i{background:rgba(255,255,255,.28);color:#fff}
+.wgl{color:var(--info);font-size:.8rem}.wgl.g1,.wgl.g2,.wgl.g3{color:var(--ink)}
+.wchip.sug{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface2));color:var(--ink)}.wchip.sug::before{color:var(--ok)}
+.wchip.sg.g1{background:color-mix(in srgb,#86c46a 16%,var(--surface2))}.wchip.sg.g2{background:color-mix(in srgb,#e9c548 16%,var(--surface2))}.wchip.sg.g3{background:color-mix(in srgb,#ec9a6b 16%,var(--surface2))}
+.wchip.sug.sg{border-color:var(--ok)}
+.absg{background:linear-gradient(180deg,color-mix(in srgb,#dc2626 6%,var(--surface2)),var(--surface2));border-color:color-mix(in srgb,#dc2626 22%,var(--line))}
+.absg > summary b{color:var(--ink)}
+.wname{background:color-mix(in srgb,var(--info) 16%,var(--surface2));color:var(--ink)}
+.mtile,.bcard,.semcard,.fcard{background:var(--surface2)}
+.mtile span,.bcard header small{color:var(--muted)}
+.wkchip{background:color-mix(in srgb,#f59e0b 16%,var(--surface2));color:color-mix(in srgb,#b45309 70%,var(--ink));border-color:color-mix(in srgb,#f59e0b 40%,transparent)}
+.themebtn{font-size:1.05rem}
+:root[data-theme="dark"] .wkchip.hol{background:color-mix(in srgb,#16a34a 22%,var(--surface2));color:var(--ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wkchip.hol{background:color-mix(in srgb,#16a34a 22%,var(--surface2));color:var(--ink)}}
+
+main#main{--sct:var(--sc)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) main#main{--sct:color-mix(in srgb,var(--sc) 45%,#e6f2f4)}}
+:root[data-theme="dark"] main#main{--sct:color-mix(in srgb,var(--sc) 45%,#e6f2f4)}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top"><div class="topin">
     <div><h1>نظام الإسناد واللجان وأعمال الاختبارات</h1><div class="sub" id="topSub">مدرسة بلاط الشهداء الثانوية</div></div>
-    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><span class="wkchip" id="wkChip" hidden></span><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span>
+    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><span class="wkchip" id="wkChip" hidden></span><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn themebtn" id="themeBtn" title="المظهر: تلقائي / فاتح / ليلي" aria-label="تغيير المظهر">◐</button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span>
   </div></header>
   <nav id="nav" aria-label="الأقسام"></nav>
   <main id="main"></main>
