@@ -2728,6 +2728,7 @@ async function syncNow(opts = {}) {
     }
     if (changed) { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) { } window.__thumbs = {}; await drawBrand(); renderNav(); render(); }
     syncOnline = true; SYNC_ST = { state: 'ok' };
+    if (typeof autoSeed === 'function') autoSeed(meta);
   } catch (e) {
     syncOnline = false; SYNC_ST = { state: e.code === 401 ? 'auth' : 'off' };
   } finally { syncBusy = false; syncBadge(); }
@@ -3019,6 +3020,7 @@ window.addEventListener('hashchange', () => { const h = location.hash.slice(1); 
   await drawBrand();
   TABS = ALL_TABS.filter(x => roleAllows(x[0])); if (!location.hash.slice(1) || !TABS.some(x => x[0] === TAB)) TAB = PEOPLE[ROLE || 'admin'].home;
   renderNav(); render();
+  if (!SYNC_CODE && typeof autoSeed === 'function') autoSeed(null);
   syncStart();
   if (!ROLE) roleModal(true);
 })();

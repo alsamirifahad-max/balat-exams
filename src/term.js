@@ -368,3 +368,16 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
   if (a === 'semPick') semPick(b.dataset.v); else if (a === 'semDiff') semDiff();
 });
+
+/* تعبئة إسناد الفصل الثاني تلقائياً بمعلمي الفصل الأول وتخصصاتهم وإسناداتهم — مرة واحدة، وفقط إن كان فارغاً على هذا الجهاز وعلى السحابة */
+function autoSeed(meta) {
+  try {
+    if (ROLE === 'sup') return; const [s1, s2] = semSets(); const src = secData(s1), dst = secData(s2), rm = rawMeta(s2);
+    if (rm.seed || rm.noSeed) return;
+    if (!(src.ta || []).length && !(src.teachers || []).length) return;
+    if ((dst.ta || []).length || (dst.teachers || []).length) return;
+    if (meta) { const cm = meta[s2], lm = SYNC[s2] || {}; if (cm && cm.at !== lm.at) return; if (PENDING[s2]) return; }
+    copySet(s1, s2); updSetMeta(s2, { seed: stamp(), sem: setMeta(s2).sem });
+    renderNav(); render(); toast(`جُهّز إسناد الفصل ${setMeta(s2).sem} بمعلمي الفصل ${setMeta(s1).sem} وتخصصاتهم وإسناداتهم — عدّل ما يتغير فقط`);
+  } catch (e) { }
+}
