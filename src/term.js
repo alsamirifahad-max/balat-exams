@@ -526,3 +526,40 @@ document.addEventListener('click', async e => {
   else if (a === 'exDel') { const k = b.dataset.v; exAll()[k] = (exAll()[k] || []).filter(n => normName(n) !== normName(b.dataset.n)); save(); render(); }
   else if (a === 'repUndo') repUndo(b.dataset.v, +b.dataset.i);
 });
+
+/* ===================== لوحة يوم الاختبار: حضور الملاحظين على اللجان ===================== */
+var BOARD_PI = 0;
+function attOf(sk) { const d = D(); d.att = d.att || {}; return d.att[sk] = d.att[sk] || {}; }
+function boardHtml(di) {
+  const day = S.days[di]; if (!day || !S.com.length) return '';
+  if (BOARD_PI >= day.p.length) BOARD_PI = 0;
+  const sk = `${di}_${BOARD_PI}`, att = attOf(sk), canEdit = !exReadOnly();
+  const res = obsList(`${sk}_R`).filter(Boolean);
+  let tot = 0, here = 0, emptyC = 0;
+  const cards = comsOrdered().map(c => {
+    const key = `${sk}_${c.no}`, L = obsList(key), n = Math.max(L.length, obsNeed(c.no)); let ok = 0, cnt = 0;
+    const people = Array.from({ length: n }, (_, i) => { const nm = L[i]; if (!nm) { emptyC++; return `<div class="bob empty"><span>— لا يوجد ملاحظ —</span>${canEdit ? `<button type="button" class="btn sm" data-tact="bFill" data-k="${key}" data-i="${i}">من الاحتياط</button>` : ''}</div>`; }
+      cnt++; tot++; const a = att[`${c.no}_${i}`]; if (a && a.n === nm) { ok++; here++; }
+      const on = a && a.n === nm;
+      return `<div class="bob${on ? ' on' : ''}"><button type="button" class="bname" data-tact="bAtt" data-s="${sk}" data-c="${c.no}" data-i="${i}" data-n="${esc(nm)}" aria-pressed="${!!on}">${on ? '✓ ' : ''}${esc(nm)}${on ? `<small>${esc(a.at)}</small>` : ''}</button>${!on && canEdit ? `<button type="button" class="ic rep" data-tact="bRep" data-k="${key}" data-i="${i}" title="غائب ← استبدال من الاحتياط">↺</button>` : ''}</div>`; });
+    const st = !cnt ? 'none' : ok === cnt ? 'ok' : ok ? 'part' : 'wait';
+    return `<article class="bcard ${st}"><header><b>${c.no}</b><span>${esc((c.fl || c.rm || '').trim())}</span><small>${comSum(c)} طالباً</small></header>${people.join('')}</article>`;
+  }).join('');
+  const pct = tot ? Math.round(100 * here / tot) : 0;
+  return `<section class="card board"><div class="bhead"><div><h2>لوحة الملاحظين — ${dayName(day)} ${dateShort(day)}</h2><p class="hint">المس اسم الملاحظ عند حضوره فيصبح أخضر. ↺ يستبدل الغائب بأول اسم في الاحتياط. التحديث يظهر على أجهزة الجميع.</p></div>
+    <div class="bcount"><b>${here}</b><span>من ${tot} حضروا</span><i style="--p:${pct}%"></i></div></div>
+    ${day.p.length > 1 ? `<div class="semchips" role="group">${day.p.map((p, i) => `<button type="button" class="${i === BOARD_PI ? 'on' : ''}" data-tact="bPer" data-v="${i}">الفترة ${esc(p.n || i + 1)}</button>`).join('')}</div>` : ''}
+    <div class="bbar"><span>الاحتياط المتاح: <b>${res.length}</b>${res.length ? ` — ${res.slice(0, 4).map(esc).join('، ')}${res.length > 4 ? '…' : ''}` : ''}</span>${emptyC ? `<span class="bad">${emptyC} لجنة بلا ملاحظ</span>` : ''}
+      <span class="sp1"></span><button class="btn sm" data-tact="bAll" data-s="${sk}" type="button">تأشير الكل حاضر</button><button class="btn sm ghost" data-tact="bClr" data-s="${sk}" type="button">مسح التأشير</button><button class="btn sm pri" data-tact="bPrint" data-s="${sk}" type="button">طباعة كشف الملاحظين</button></div>
+    <div class="bgrid2">${cards}</div></section>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'bAtt') { const att = attOf(b.dataset.s), k = `${b.dataset.c}_${b.dataset.i}`; if (att[k] && att[k].n === b.dataset.n) delete att[k]; else att[k] = { n: b.dataset.n, at: stamp().split(' ')[1] }; save(); render(); }
+  else if (a === 'bRep') { const n = obsList(b.dataset.k)[+b.dataset.i]; if (await confirmBox(`${n} لم يحضر؟ يحل محله أول اسم في الاحتياط.`)) obsReplace(b.dataset.k, +b.dataset.i); }
+  else if (a === 'bFill') { const k = b.dataset.k, i = +b.dataset.i, sk = k.slice(0, k.lastIndexOf('_')), R = obsList(`${sk}_R`).slice(); if (!R.length) return toast('لا يوجد احتياط لهذه الفترة', true); const L = obsList(k).slice(); while (L.length <= i) L.push(''); L[i] = R.shift(); S.obs[k] = L; S.obs[`${sk}_R`] = R; obsLog(sk).push({ com: k.slice(k.lastIndexOf('_') + 1), out: '—', inn: L[i], at: stamp(), i }); save(); render(); }
+  else if (a === 'bAll') { const sk = b.dataset.s, att = attOf(sk); S.com.forEach(c => obsList(`${sk}_${c.no}`).forEach((n, i) => { if (n) att[`${c.no}_${i}`] = att[`${c.no}_${i}`] && att[`${c.no}_${i}`].n === n ? att[`${c.no}_${i}`] : { n, at: stamp().split(' ')[1] }; })); save(); render(); }
+  else if (a === 'bClr') { if (await confirmBox('مسح تأشير الحضور لهذه الفترة؟')) { D().att[b.dataset.s] = {}; save(); render(); } }
+  else if (a === 'bPer') { BOARD_PI = +b.dataset.v; render(); }
+  else if (a === 'bPrint') { const f = FORMS.find(x => x.id === 'obsNames'); openPreview([{ land: false, pages: buildForm(f, { ses: b.dataset.s }), t: 'أسماء الملاحظين على اللجان' }], fname('أسماء الملاحظين على اللجان')); }
+});

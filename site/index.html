@@ -607,6 +607,14 @@ body.nosc{overflow:hidden}
 .comcnt{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0 10px}.comcnt b{font-size:1.25rem;min-width:2.2rem;text-align:center}.comcnt .btn{min-width:38px;font-size:1.1rem}
 .ic.rep{color:#0e7490;font-weight:800}.exn{display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,#dc2626 10%,var(--surface));border:1px solid color-mix(in srgb,#dc2626 35%,var(--line));border-radius:999px;padding:3px 4px 3px 10px;font-size:.82rem;font-weight:700}.exn button{border:0;background:none;color:#dc2626;font-size:1.1rem;cursor:pointer;padding:0 4px}
 .obex{background:color-mix(in srgb,#dc2626 4%,var(--surface))}
+.board .bhead{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:flex-start}.board h2{margin:0}
+.bcount{display:flex;flex-direction:column;align-items:center;min-width:120px;padding:8px 14px;border-radius:14px;background:var(--soft)}.bcount b{font-size:2rem;line-height:1;color:#16a34a}.bcount span{font-size:.8rem;color:var(--muted)}.bcount i{display:block;width:100%;height:6px;border-radius:4px;margin-top:6px;background:linear-gradient(90deg,#16a34a var(--p),color-mix(in srgb,var(--muted) 25%,transparent) var(--p))}
+.bbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;font-size:.86rem}.bbar .bad{color:#dc2626;font-weight:700}
+.bgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}@media (max-width:420px){.bgrid2{grid-template-columns:1fr 1fr}}
+.bcard{border:2px solid var(--line);border-radius:12px;padding:8px;background:var(--surface);display:flex;flex-direction:column;gap:6px}.bcard header{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.bcard header b{font-size:1.35rem;color:var(--sc,#0e7490)}.bcard header span{font-size:.78rem;font-weight:700}.bcard header small{font-size:.72rem;color:var(--muted);margin-inline-start:auto}
+.bcard.ok{border-color:#16a34a;background:color-mix(in srgb,#16a34a 9%,var(--surface))}.bcard.part{border-color:#f59e0b}.bcard.wait{border-color:color-mix(in srgb,#f59e0b 55%,var(--line))}.bcard.none{border-color:#dc2626;border-style:dashed}
+.bob{display:flex;align-items:center;gap:4px}.bname{flex:1;font:inherit;font-size:.82rem;text-align:right;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);padding:6px 8px;cursor:pointer;min-height:40px;line-height:1.3}.bname small{display:block;font-size:.68rem;opacity:.8}
+.bob.on .bname{background:#16a34a;border-color:#16a34a;color:#fff;font-weight:700}.bob.empty{font-size:.78rem;color:#dc2626;flex-wrap:wrap}
 .ttnext{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.ttnext > b{font-size:.92rem}.ttnext .drop{padding:10px}
 .pickl1{padding:3px 14px;font-size:.78rem;font-weight:800;color:var(--accent);background:var(--bg);border-bottom:1px solid var(--line)}
 .setnow{display:flex;gap:12px;align-items:center;border:2px solid var(--sc2);border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--sc2) 8%,var(--surface));margin-top:8px}
@@ -4070,6 +4078,7 @@ function vToday() {
       <div class="tbag"><button class="btn big pri" data-act="bag" data-op="pv" data-kind="day" data-arg="${di}" type="button">🧳 حقيبة اليوم كاملة</button><button class="btn" data-act="bag" data-op="pdf" data-kind="day" data-arg="${di}" type="button">PDF للحقيبة</button></div></div>
     <div class="tpers">${pers}</div>
   </section>
+  ${typeof boardHtml === 'function' ? boardHtml(di) : ''}
   <section class="card"><h2>أوراق هذا اليوم</h2><div class="ttiles">${dayTiles}</div></section>
   <section class="card"><h2>نماذج تحتاجها أثناء الاختبار</h2><div class="ttiles">${TODAY_ONE.map(x => tile(x.id, x.t, x.ic, x.d)).join('')}</div></section>`;
 }
@@ -5070,6 +5079,43 @@ document.addEventListener('click', async e => {
   else if (a === 'exAdd') exAddName(b.dataset.v, b.dataset.n, EX_DAY);
   else if (a === 'exDel') { const k = b.dataset.v; exAll()[k] = (exAll()[k] || []).filter(n => normName(n) !== normName(b.dataset.n)); save(); render(); }
   else if (a === 'repUndo') repUndo(b.dataset.v, +b.dataset.i);
+});
+
+/* ===================== لوحة يوم الاختبار: حضور الملاحظين على اللجان ===================== */
+var BOARD_PI = 0;
+function attOf(sk) { const d = D(); d.att = d.att || {}; return d.att[sk] = d.att[sk] || {}; }
+function boardHtml(di) {
+  const day = S.days[di]; if (!day || !S.com.length) return '';
+  if (BOARD_PI >= day.p.length) BOARD_PI = 0;
+  const sk = `${di}_${BOARD_PI}`, att = attOf(sk), canEdit = !exReadOnly();
+  const res = obsList(`${sk}_R`).filter(Boolean);
+  let tot = 0, here = 0, emptyC = 0;
+  const cards = comsOrdered().map(c => {
+    const key = `${sk}_${c.no}`, L = obsList(key), n = Math.max(L.length, obsNeed(c.no)); let ok = 0, cnt = 0;
+    const people = Array.from({ length: n }, (_, i) => { const nm = L[i]; if (!nm) { emptyC++; return `<div class="bob empty"><span>— لا يوجد ملاحظ —</span>${canEdit ? `<button type="button" class="btn sm" data-tact="bFill" data-k="${key}" data-i="${i}">من الاحتياط</button>` : ''}</div>`; }
+      cnt++; tot++; const a = att[`${c.no}_${i}`]; if (a && a.n === nm) { ok++; here++; }
+      const on = a && a.n === nm;
+      return `<div class="bob${on ? ' on' : ''}"><button type="button" class="bname" data-tact="bAtt" data-s="${sk}" data-c="${c.no}" data-i="${i}" data-n="${esc(nm)}" aria-pressed="${!!on}">${on ? '✓ ' : ''}${esc(nm)}${on ? `<small>${esc(a.at)}</small>` : ''}</button>${!on && canEdit ? `<button type="button" class="ic rep" data-tact="bRep" data-k="${key}" data-i="${i}" title="غائب ← استبدال من الاحتياط">↺</button>` : ''}</div>`; });
+    const st = !cnt ? 'none' : ok === cnt ? 'ok' : ok ? 'part' : 'wait';
+    return `<article class="bcard ${st}"><header><b>${c.no}</b><span>${esc((c.fl || c.rm || '').trim())}</span><small>${comSum(c)} طالباً</small></header>${people.join('')}</article>`;
+  }).join('');
+  const pct = tot ? Math.round(100 * here / tot) : 0;
+  return `<section class="card board"><div class="bhead"><div><h2>لوحة الملاحظين — ${dayName(day)} ${dateShort(day)}</h2><p class="hint">المس اسم الملاحظ عند حضوره فيصبح أخضر. ↺ يستبدل الغائب بأول اسم في الاحتياط. التحديث يظهر على أجهزة الجميع.</p></div>
+    <div class="bcount"><b>${here}</b><span>من ${tot} حضروا</span><i style="--p:${pct}%"></i></div></div>
+    ${day.p.length > 1 ? `<div class="semchips" role="group">${day.p.map((p, i) => `<button type="button" class="${i === BOARD_PI ? 'on' : ''}" data-tact="bPer" data-v="${i}">الفترة ${esc(p.n || i + 1)}</button>`).join('')}</div>` : ''}
+    <div class="bbar"><span>الاحتياط المتاح: <b>${res.length}</b>${res.length ? ` — ${res.slice(0, 4).map(esc).join('، ')}${res.length > 4 ? '…' : ''}` : ''}</span>${emptyC ? `<span class="bad">${emptyC} لجنة بلا ملاحظ</span>` : ''}
+      <span class="sp1"></span><button class="btn sm" data-tact="bAll" data-s="${sk}" type="button">تأشير الكل حاضر</button><button class="btn sm ghost" data-tact="bClr" data-s="${sk}" type="button">مسح التأشير</button><button class="btn sm pri" data-tact="bPrint" data-s="${sk}" type="button">طباعة كشف الملاحظين</button></div>
+    <div class="bgrid2">${cards}</div></section>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'bAtt') { const att = attOf(b.dataset.s), k = `${b.dataset.c}_${b.dataset.i}`; if (att[k] && att[k].n === b.dataset.n) delete att[k]; else att[k] = { n: b.dataset.n, at: stamp().split(' ')[1] }; save(); render(); }
+  else if (a === 'bRep') { const n = obsList(b.dataset.k)[+b.dataset.i]; if (await confirmBox(`${n} لم يحضر؟ يحل محله أول اسم في الاحتياط.`)) obsReplace(b.dataset.k, +b.dataset.i); }
+  else if (a === 'bFill') { const k = b.dataset.k, i = +b.dataset.i, sk = k.slice(0, k.lastIndexOf('_')), R = obsList(`${sk}_R`).slice(); if (!R.length) return toast('لا يوجد احتياط لهذه الفترة', true); const L = obsList(k).slice(); while (L.length <= i) L.push(''); L[i] = R.shift(); S.obs[k] = L; S.obs[`${sk}_R`] = R; obsLog(sk).push({ com: k.slice(k.lastIndexOf('_') + 1), out: '—', inn: L[i], at: stamp(), i }); save(); render(); }
+  else if (a === 'bAll') { const sk = b.dataset.s, att = attOf(sk); S.com.forEach(c => obsList(`${sk}_${c.no}`).forEach((n, i) => { if (n) att[`${c.no}_${i}`] = att[`${c.no}_${i}`] && att[`${c.no}_${i}`].n === n ? att[`${c.no}_${i}`] : { n, at: stamp().split(' ')[1] }; })); save(); render(); }
+  else if (a === 'bClr') { if (await confirmBox('مسح تأشير الحضور لهذه الفترة؟')) { D().att[b.dataset.s] = {}; save(); render(); } }
+  else if (a === 'bPer') { BOARD_PI = +b.dataset.v; render(); }
+  else if (a === 'bPrint') { const f = FORMS.find(x => x.id === 'obsNames'); openPreview([{ land: false, pages: buildForm(f, { ses: b.dataset.s }), t: 'أسماء الملاحظين على اللجان' }], fname('أسماء الملاحظين على اللجان')); }
 });
 
 </script>

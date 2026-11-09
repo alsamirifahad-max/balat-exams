@@ -284,6 +284,7 @@ function vToday() {
       <div class="tbag"><button class="btn big pri" data-act="bag" data-op="pv" data-kind="day" data-arg="${di}" type="button">🧳 حقيبة اليوم كاملة</button><button class="btn" data-act="bag" data-op="pdf" data-kind="day" data-arg="${di}" type="button">PDF للحقيبة</button></div></div>
     <div class="tpers">${pers}</div>
   </section>
+  ${typeof boardHtml === 'function' ? boardHtml(di) : ''}
   <section class="card"><h2>أوراق هذا اليوم</h2><div class="ttiles">${dayTiles}</div></section>
   <section class="card"><h2>نماذج تحتاجها أثناء الاختبار</h2><div class="ttiles">${TODAY_ONE.map(x => tile(x.id, x.t, x.ic, x.d)).join('')}</div></section>`;
 }
