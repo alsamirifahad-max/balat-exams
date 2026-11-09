@@ -208,7 +208,7 @@ function termWeek(iso) {
 function updWeekChip() {
   const el = $('#wkChip'); if (!el) return; let w = null; try { w = termWeek(); } catch (e) { }
   el.hidden = !w; if (!w) return;
-  el.textContent = w.n ? `الأسبوع ${w.n} · ${semShort(w.term)}` : w.txt; el.title = w.txt + (holOf(todayIso()) ? ` — اليوم: ${holOf(todayIso())}` : '');
+  el.textContent = w.n ? `الأسبوع ${w.n} — الفصل ${w.term}` : w.txt; el.title = w.txt + (holOf(todayIso()) ? ` — اليوم: ${holOf(todayIso())}` : '');
   el.classList.toggle('hol', !w.n);
 }
 function holEditor(ro) {

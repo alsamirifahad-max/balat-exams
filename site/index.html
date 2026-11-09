@@ -1840,7 +1840,7 @@ function stageDone(k) {
   return { files: S.students.length > 0 && S.teachers.length > 0, assign: S.ta.length > 0, schedule: S.days.length > 0 && S.days.some(d => d.p.some(p => G.some(g => (p.s[g] || '').trim()))), committees: !!S.distributed, staff: Object.values(S.obs || {}).some(l => (l || []).some(Boolean)), forms: null }[k];
 }
 const svgI = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-function updSetChip() { const c = $('#setChip'); if (!c) return; const m = setMeta(ACTIVE); c.textContent = m.n + ' · ' + semShort(m.sem); c.title = `الإسناد الذي تعمل عليه: ${m.n} — الفصل الدراسي ${m.sem} ${m.y}`; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
+function updSetChip() { const c = $('#setChip'); if (!c) return; const m = setMeta(ACTIVE); c.textContent = 'الفصل ' + m.sem + (ROLE === 'agent' || ACTIVE !== 'ta' ? '' : ''); c.title = `الإسناد الذي تعمل عليه: ${m.n} — الفصل الدراسي ${m.sem} ${m.y}`; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
 function roleFlow() { return FLOW.filter(s => typeof roleAllows !== 'function' || roleAllows(s.k)).map((s, i) => Object.assign({}, s, { n: i + 1 }, (typeof ROLE !== 'undefined' && ROLE === 'agent' && s.k === 'files') ? { t: 'المعلمون', d: 'قائمة معلمي المدرسة — ترفعها من Excel أو Word أو PDF وتنعكس في الإسناد' } : {})); }
 function renderNav() { updSetChip(); if (typeof updWeekChip === 'function') updWeekChip(); if (typeof updRoleChip === 'function') updRoleChip();
   const RF = roleFlow();
@@ -4806,7 +4806,7 @@ function termWeek(iso) {
 function updWeekChip() {
   const el = $('#wkChip'); if (!el) return; let w = null; try { w = termWeek(); } catch (e) { }
   el.hidden = !w; if (!w) return;
-  el.textContent = w.n ? `الأسبوع ${w.n} · ${semShort(w.term)}` : w.txt; el.title = w.txt + (holOf(todayIso()) ? ` — اليوم: ${holOf(todayIso())}` : '');
+  el.textContent = w.n ? `الأسبوع ${w.n} — الفصل ${w.term}` : w.txt; el.title = w.txt + (holOf(todayIso()) ? ` — اليوم: ${holOf(todayIso())}` : '');
   el.classList.toggle('hol', !w.n);
 }
 function holEditor(ro) {
