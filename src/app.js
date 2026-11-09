@@ -1071,7 +1071,8 @@ function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
-  m.innerHTML = '<div id="pendBox"></div>' + roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && p.k === 'assign';
+  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
     j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
@@ -1664,8 +1665,8 @@ function vAssign() {
   const tcount = new Set(S.ta.map(x => x.t)).size;
   const taByG = g => S.ta.map((x, i) => [x, i]).filter(([x]) => +x.g === g);
   return `${teacherDatalist()}${G.map(g => `<datalist id="curr${g}">${currList(g).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>`).join('')}
-  ${typeof semSwitch === 'function' ? semSwitch() : ''}
-  <details class="setadv"><summary>خيارات متقدمة للحفظ: الأسماء والفصل والنسخ والحفظ المشترك</summary>${setChooser()}</details>
+  ${ROLE === 'agent' && typeof agentBar === 'function' ? agentBar() : (typeof semSwitch === 'function' ? semSwitch() : '')}
+  <details class="setadv"${ROLE === 'agent' ? ' hidden' : ''}><summary>خيارات متقدمة للحفظ: الأسماء والفصل والنسخ والحفظ المشترك</summary>${setChooser()}</details>
   <section class="card">
     <h2>ملف الإسناد</h2>
     <p class="hint">الإسناد هو الأساس الذي تُبنى عليه: تكليفات وضع الأسئلة، بيان استلام الأسئلة، محضر فتح المظاريف، محضر اتفاقية التصحيح، إقرار إنهاء المقرر، وتوزيع التصحيح. يقبل الموقع ملف PDF أو Word (‎.docx و‎.doc) أو Excel، وتُتجاوز تلقائياً إسنادات العوق البصري والتربية الفكرية وحصص النشاط.</p>
@@ -2949,7 +2950,7 @@ document.addEventListener('click', async e => {
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
     case 'tchTpl': tchTemplate(); return;
     case 'setUse': return setActive(b.dataset.v);
-    case 'setSem': updSetMeta(b.dataset.v, { sem: b.dataset.s }); renderNav(); render(); return toast(`«${setMeta(b.dataset.v).n}» على الفصل الدراسي ${b.dataset.s}`);
+    case 'setSem': updSetMeta(b.dataset.v, { sem: b.dataset.s, semSet: 1 }); renderNav(); render(); return toast(`«${setMeta(b.dataset.v).n}» على الفصل الدراسي ${b.dataset.s}`);
     case 'ttOpen': DAILY_TAB = 'tt'; return go('daily');
     case 'todayDay': TODAY_DI = +b.dataset.v; return render();
     case 'todayForm': { const g = todayGroups(b.dataset.f); if (!g.length) return toast('لا توجد صفحات لهذا النموذج — تحقق من البيانات', true); const nm = fname(g[0].t + ' - ' + dayName(S.days[TODAY_DI]) + ' ' + dateShort(S.days[TODAY_DI]).replace(/\//g, '-')); return b.dataset.op === 'pdf' ? downloadPdf(g, nm) : openPreview(g, nm); }

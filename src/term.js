@@ -125,7 +125,7 @@ function termBanner(tab) {
   const dd = daysTo(c.t2), R = t2Check(), exDone = todayIso() > c.ex1b, near = exDone && dd <= 14;
   if (!R.ta.length && !R.tt && dd > 45) return '';
   const col = R.pct >= 90 ? 'g' : R.pct >= 60 ? 'w' : 'b';
-  return `<div class="tbar${near ? ' near' : ''}"><div class="tbi">٢</div><div><b>${dd > 0 ? `الفصل الدراسي الثاني يبدأ بعد ${dd} يوماً` : dd === 0 ? 'الفصل الدراسي الثاني يبدأ اليوم' : `بدأ الفصل الدراسي الثاني منذ ${-dd} يوماً`}</b><span>${calTxt(c.t2)} · «${esc(setMeta('ta-agent').n)}» جاهز بنسبة <em class="tp ${col}">${R.pct}%</em>${R.issues.length ? ` · ${R.issues.length} ملاحظات` : ''}</span></div>
+  return `<div class="tbar${near ? ' near' : ''}"><div class="tbi">2</div><div><b>${dd > 0 ? `الفصل الدراسي الثاني يبدأ بعد ${dd} يوماً` : dd === 0 ? 'الفصل الدراسي الثاني يبدأ اليوم' : `بدأ الفصل الدراسي الثاني منذ ${-dd} يوماً`}</b><span>${calTxt(c.t2)} · «${esc(setMeta('ta-agent').n)}» جاهز بنسبة <em class="tp ${col}">${R.pct}%</em>${R.issues.length ? ` · ${R.issues.length} ملاحظات` : ''}</span></div>
     <div class="tba"><button class="btn sm" data-tact="t2Check" type="button">تفاصيل الجاهزية</button>${isAdmin() ? `<button class="btn sm ${near ? 'pri' : 'ghost'}" data-tact="termGo" type="button">بدء الفصل الثاني</button>` : ''}</div></div>`;
 }
 function htmlBox(title, html, yes, no) {
@@ -594,3 +594,13 @@ function themeNow() { try { return localStorage.getItem('balat-theme') || ''; } 
 function themeApply(t) { const r = document.documentElement; if (t) r.setAttribute('data-theme', t); else r.removeAttribute('data-theme'); const b = document.getElementById('themeBtn'); if (b) { b.textContent = t === 'dark' ? '☾' : t === 'light' ? '☀︎' : '◐'; b.title = 'المظهر: ' + (t === 'dark' ? 'ليلي' : t === 'light' ? 'فاتح' : 'تلقائي حسب الجهاز') + ' — اضغط للتغيير'; } const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = '#0e3a46'; }
 document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('#themeBtn')) return; const order = ['', 'light', 'dark'], t = order[(order.indexOf(themeNow()) + 1) % 3]; try { if (t) localStorage.setItem('balat-theme', t); else localStorage.removeItem('balat-theme'); } catch (er) { } themeApply(t); toast('المظهر: ' + (t === 'dark' ? 'ليلي' : t === 'light' ? 'فاتح' : 'تلقائي حسب إعداد الجهاز')); });
 setTimeout(() => themeApply(themeNow()), 0);
+
+/* ===== وضع التركيز للوكيل في الإسناد: مباشرة إلى إسناد الفصل الثاني ===== */
+function agentBar() {
+  if (ACTIVE !== 'ta-agent') { setTimeout(() => setActive('ta-agent'), 0); }
+  const m = setMeta('ta-agent'), d = secData('ta-agent'), tc = new Set((d.ta || []).map(x => normName(x.t))).size;
+  return `<section class="card agbar"><div class="agh"><span class="semn" style="--sx:#ea580c">2</span><div><h2>إسناد الفصل الدراسي ${esc(m.sem)} ${esc(m.y)}</h2><small>${esc(m.n)} · ${(d.ta || []).length} سطراً · ${tc} معلماً — تعديلاتك هنا لا تمس الاختبارات ولا الانتظار</small></div></div>
+    <div class="acts wrap" style="margin-top:8px"><button class="btn sm" data-tact="semDiff" type="button">⇄ ماذا تغيّر عن الفصل الأول؟</button><button class="btn sm ghost" data-act="setView" data-v="ta" type="button">عرض إسناد الفصل الأول</button></div>${seedBox()}</section>`;
+}
+/* إصلاح: حفظ الوكيل كان قد يُخزَّن بالفصل الأول من نسخة قديمة — يُعاد للثاني ما لم يختره المستخدم صراحة */
+setTimeout(() => { try { const done = localStorage.getItem(LS_KEY + '-semFixV1'); if (done) return; const rm = rawMeta('ta-agent'); if (rm.sem === S.s.sem && !rm.semSet && !inT2()) { updSetMeta('ta-agent', { sem: 'الثاني' }); renderNav(); render(); } localStorage.setItem(LS_KEY + '-semFixV1', '1'); } catch (e) { } }, 1500);
