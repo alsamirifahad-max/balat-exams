@@ -8,7 +8,7 @@ const DEFAULT_STATE = {
     l3: 'الإدارة العامة للتعليم بمحافظة جدة',
     l4: '',
     yearTxt: '1448 هـ',
-    sem: 'الثاني',
+    sem: 'الأول',
     round: 'الأول',
     dateMode: 'h',
     footColor: 'doc',

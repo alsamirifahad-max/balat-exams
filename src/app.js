@@ -24,6 +24,7 @@ function normState() {
   S.days.forEach(fixDay);
   if (!S.m2) { if (S.s.footColor === 'green') S.s.footColor = 'doc'; S.m2 = true; }
   S.guide = S.guide || []; S.uploads = S.uploads || {}; S.obsN = S.obsN || {};
+  if (!S.s.semV1) { S.s.sem = 'الأول'; S.s.semV1 = true; } /* الفصل الدراسي الأول */
   if (S.s.gs && !S.s.gs.sepV1) { S.s.gs.include = false; S.s.gs.sepV1 = true; } /* البيان مستقل عن خطاب التكليف */
   if (!S.taMeta && typeof SET_DEF !== 'undefined') S.taMeta = { n: SET_DEF[ACTIVE].n, d: SET_DEF[ACTIVE].d };
   (S.ta || []).forEach(x => x.sub = spaceNum(x.sub));
