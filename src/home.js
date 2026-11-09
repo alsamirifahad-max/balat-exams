@@ -76,11 +76,11 @@ function alerts() {
   if (!S.students.length) add('warn', 'لم يُرفع ملف نور بعد؛ الأعداد مأخوذة من الإدخال اليدوي.', 'students');
   const mis = G.filter(g => gt[g] !== ct[g]); if (mis.length) add('bad', `أعداد اللجان لا تطابق أعداد الطلاب في: ${mis.map(g => `${GSHORT[g]} (لجان ${ct[g]} / طلاب ${gt[g]})`).join('، ')}.`, 'committees');
   if (S.students.length && !S.distributed) add('warn', 'لم يُوزّع الطلاب بالأسماء على اللجان؛ كشوف المناداة وأرقام الجلوس غير جاهزة.', 'committees');
-  if (!S.ta.length) add('warn', 'لا يوجد إسناد للمعلمين.', 'staff');
+  if (!S.ta.length) add('warn', 'لا يوجد إسناد للمعلمين.', 'assign');
   const sched = []; S.days.forEach(d => d.p.forEach(p => G.forEach(g => { const sb = (p.s[g] || '').trim(); if (sb && !sched.some(x => x.g === g && x.sub === sb)) sched.push({ g, sub: sb }); })));
   const noT = sched.filter(x => { const r = S.st.find(y => +y.g === x.g && y.sub.trim() === x.sub); return !r || !String(r.t || '').trim(); });
   if (noT.length) add('bad', `مواد في الجدول بلا معلم مكلف بالأسئلة: ${noT.map(x => x.sub).join('، ')}.`, 'staff');
-  if (S.ta.length) { const noTa = sched.filter(x => !teachersOfSubject(x.sub, x.g).length); if (noTa.length) add('warn', `مواد في الجدول لا يوجد لها إسناد: ${noTa.map(x => x.sub).join('، ')} — تحقق من الفصل الدراسي أو أسماء المواد.`, 'staff'); }
+  if (S.ta.length) { const noTa = sched.filter(x => !teachersOfSubject(x.sub, x.g).length); if (noTa.length) add('warn', `مواد في الجدول لا يوجد لها إسناد: ${noTa.map(x => x.sub).join('، ')} — تحقق من الفصل الدراسي أو أسماء المواد.`, 'assign'); }
   S.days.forEach((d, di) => { const wd = isoToDate(d.g).getUTCDay(); if (wd === 5 || wd === 6) add('warn', `يوم ${dayName(d)} ${dateShort(d)} في الجدول يوافق عطلة نهاية الأسبوع.`, 'schedule'); if (!d.p.some(p => G.some(g => (p.s[g] || '').trim()))) add('warn', `يوم ${dayName(d)} ${dateShort(d)} بلا مواد.`, 'schedule'); });
   const dupDates = S.days.map(d => d.g).filter((g, i, a) => a.indexOf(g) !== i); if (dupDates.length) add('bad', 'يوجد تاريخ مكرر في جدول الاختبارات.', 'schedule');
   let missing = 0, dups = 0, busy = 0; const anyObs = Object.keys(S.obs).some(k => obsList(k).some(Boolean));
@@ -103,7 +103,7 @@ function vHome() {
   const cards = [
     { tab: 'students', t: 'الطلاب', v: S.students.length || gt[1] + gt[2] + gt[3], s: `أول ${gt[1]} · ثاني ${gt[2]} · ثالث ${gt[3]}`, ok: S.students.length > 0 },
     { tab: 'committees', t: 'اللجان', v: S.com.length, s: G.every(g => gt[g] === ct[g]) ? (S.distributed ? 'مطابقة وموزعة بالأسماء' : 'الأعداد مطابقة') : 'الأعداد غير مطابقة', ok: G.every(g => gt[g] === ct[g]) && (S.distributed || !S.students.length) },
-    { tab: 'staff', t: 'الإسناد', v: S.ta.length, s: `${new Set(S.ta.map(x => x.t)).size} معلماً`, ok: S.ta.length > 0 },
+    { tab: 'assign', t: 'الإسناد', v: S.ta.length, s: `${new Set(S.ta.map(x => x.t)).size} معلماً`, ok: S.ta.length > 0 },
     { tab: 'staff', t: 'المواد المختبرة', v: sched.size, s: noT ? `${noT} بلا معلم` : 'كل المواد لها معلم', ok: !noT && sched.size > 0 },
     { tab: 'schedule', t: 'أيام الاختبار', v: S.days.length, s: S.days.length ? `${dateShort(S.days[0])} ← ${dateShort(S.days[S.days.length - 1])}` : 'لم يُدخل الجدول', ok: S.days.length > 0 },
     { tab: 'staff', t: 'الملاحظون', v: need ? Math.round(filled / need * 100) + '%' : '—', s: `${filled} من ${need} موضع`, ok: need > 0 && filled >= need }
@@ -178,7 +178,7 @@ function palItems(q) {
   ].filter(x => m(x.t + ' ' + x.kw)));
   FORMS.forEach(f => { if (m(f.t + ' ' + (KW[f.id] || '') + ' ' + f.grp)) out.push({ ic: '▤', t: f.t, s: 'معاينة قبل الطباعة · ' + f.grp, run: () => openPreview(groupsOf(f.id, {}), fname(f.t)) }); });
   if (q.length >= 2) {
-    allTeachers().filter(m).slice(0, 6).forEach(n => { const subs = S.ta.filter(x => normName(x.t) === normName(n)).map(x => `${x.sub} (${GSHORT[x.g]})`); out.push({ ic: '◉', t: n, s: subs.length ? 'معلم · ' + [...new Set(subs)].join('، ') : 'معلم', run: () => go('staff') }); });
+    allTeachers().filter(m).slice(0, 6).forEach(n => { const subs = S.ta.filter(x => normName(x.t) === normName(n)).map(x => `${x.sub} (${GSHORT[x.g]})`); out.push({ ic: '◉', t: n, s: subs.length ? 'معلم · ' + [...new Set(subs)].join('، ') : 'معلم', run: () => go('assign') }); });
     S.students.filter(x => m(x.n)).slice(0, 6).forEach(x => out.push({ ic: '◌', t: x.n, s: `طالب · ${GSHORT[x.g]} ش ${x.sec}${x.seat ? ' · جلوس ' + x.seat + ' · لجنة ' + x.com : ''}`, run: () => { SF.q = x.n; SF.g = 'all'; SF.sec = 'all'; SF.src = 'noor'; saveSF(); go('students'); } }));
   }
   return out.slice(0, 14);

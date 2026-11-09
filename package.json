@@ -1,0 +1,9 @@
+{
+  "name": "balat-exams",
+  "private": true,
+  "type": "module",
+  "description": "دوال Netlify للمزامنة — الواجهة في site/ ولا تحتاج بناء",
+  "dependencies": {
+    "@netlify/blobs": "11.1.5"
+  }
+}
