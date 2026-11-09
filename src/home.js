@@ -215,3 +215,185 @@ async function runBag(op, kind, arg) {
   if (op === 'word') return wordDoc(groups, name);
   if (op === 'pdf') { const n = bagPages(groups); if (n > 60) toast(`ملف من ${n} صفحة — قد يستغرق التجهيز بضع دقائق`); return downloadPdf(groups, name); }
 }
+
+/* =====================================================================
+   الأدوار: كل شخص يرى ما يخصه، بلونه
+   ===================================================================== */
+var PEOPLE = {
+  admin: { n: 'مسؤول الاختبارات', who: 'فهد', c: '#2563eb', d: 'كل مراحل العمل: الملفات والإسناد والجدول واللجان والتكليفات والمطبوعات', ic: 'ف', set: 'ta', home: 'files' },
+  agent: { n: 'وكيل المعلمين', who: 'الوكيل', c: '#ea580c', d: 'قائمة المعلمين والإسناد فقط — بحفظه الخاص دون المساس بالاختبارات', ic: 'و', set: 'ta-agent', home: 'assign' },
+  sup: { n: 'مشرف دور / لجنة', who: 'المشرف', c: '#ca8a04', d: 'شاشة «يوم الاختبار» ومطبوعات اليوم بضغطة واحدة — للاطلاع والطباعة', ic: 'م', set: 'ta', home: 'today' }
+};
+var BOTH_C = '#059669';
+var ROLE = (() => { try { const r = localStorage.getItem(LS_KEY + '-role'); return PEOPLE[r] ? r : ''; } catch (e) { return ''; } })();
+var ROLE_TABS = { admin: null, agent: ['files', 'assign', 'backup', 'settings'], sup: ['today', 'forms', 'backup'] };
+function roleAllows(k) { if (!ROLE_TABS) return true; const r = ROLE_TABS[ROLE || 'admin']; return !r || r.includes(k); }
+function exReadOnly() { return (!!ROLE && ROLE !== 'admin') || ACTIVE === 'ta-agent'; }
+function setRole(r) {
+  ROLE = r; try { localStorage.setItem(LS_KEY + '-role', r); } catch (e) { }
+  const want = PEOPLE[r].set; if (want !== ACTIVE && r !== 'sup') { try { localStorage.setItem(LS_KEY + '-taset', want); } catch (e) { } setActive(want); }
+  TABS = ALL_TABS.filter(x => roleAllows(x[0]));
+  go(PEOPLE[r].home);
+}
+function roleModal(first) {
+  let m = $('#roleModal'); if (!m) { m = document.createElement('div'); m.id = 'roleModal'; m.className = 'modal'; document.body.appendChild(m); }
+  m.innerHTML = `<div class="box rolebox" role="dialog" aria-label="اختيار الدور">
+    <h3>${first ? 'أهلاً بك — من أنت؟' : 'تغيير الدور على هذا الجهاز'}</h3>
+    <p class="hint">اختر دورك ليعرض لك النظام ما يخصك فقط. يمكنك تغييره لاحقاً من الشارة الملوّنة أعلى الصفحة.</p>
+    <div class="rolegrid">${Object.entries(PEOPLE).map(([k, p]) => `<button type="button" class="rolec${k === ROLE ? ' on' : ''}" style="--rc:${p.c}" data-role="${k}"><span class="ric">${p.ic}</span><b>${p.n}</b><small>${p.d}</small></button>`).join('')}</div>
+    <p class="hint rolelegend"><span style="--rc:${PEOPLE.admin.c}">فهد</span><span style="--rc:${PEOPLE.agent.c}">الوكيل</span><span style="--rc:${BOTH_C}">كلاهما (المشاركة)</span><span style="--rc:${PEOPLE.sup.c}">المشرف</span> — هذه الألوان تميّز عمل كل شخص في كل مكان.</p>
+    ${first ? '' : '<div class="acts"><button class="btn ghost" data-rclose="1" type="button">إلغاء</button></div>'}</div>`;
+  m.hidden = false;
+  m.onclick = e => {
+    const b = e.target.closest('[data-role]'); if (b) { m.hidden = true; const fresh = !ROLE; setRole(b.dataset.role); if (fresh) setTimeout(() => startTour(), 450); return; }
+    if (e.target.closest('[data-rclose]') || (e.target === m && !first)) m.hidden = true;
+  };
+}
+function updRoleChip() { if (!PEOPLE) return;
+  const c = $('#roleChip'); if (!c) return; const p = PEOPLE[ROLE || 'admin'];
+  c.innerHTML = `<i>${p.ic}</i>${p.n}`; c.style.setProperty('--rc', p.c);
+}
+function personColor(by) { const r = String(by || '').split('%7C')[0].split('|')[0]; return (PEOPLE[r] || {}).c || '#64748b'; }
+
+/* =====================================================================
+   يوم الاختبار: شاشة بأزرار كبيرة لأي إداري أو مشرف
+   ===================================================================== */
+var TODAY_DI = null;
+var TODAY_ONE = [
+  { id: 'callSheet', t: 'كشوف المناداة', ic: '📋', d: 'لكل لجنة: أسماء الطلاب وتسليم الأوراق' },
+  { id: 'sticker', t: 'ملصقات أبواب اللجان', ic: '🚪', d: 'كروكي ورقم كل لجنة' },
+  { id: 'cheat', t: 'محضر حالة غش', ic: '⚠️', d: 'نموذج فارغ جاهز' },
+  { id: 'absence', t: 'محضر غياب طالب', ic: '🚫', d: 'نموذج فارغ جاهز' },
+  { id: 'late15', t: 'تعهد تأخر طالب', ic: '⏱', d: 'لا يتجاوز 15 دقيقة' },
+  { id: 'violation', t: 'محضر مخالفة', ic: '📝', d: 'مخالفة الأنظمة والتعليمات' }
+];
+function vToday() {
+  if (!S.days.length) return `<section class="card empty"><h2>لا يوجد جدول اختبارات بعد</h2><p class="hint">أدخل أيام الاختبار في «جدول الاختبارات» لتظهر هنا أوراق كل يوم.</p>${roleAllows('schedule') ? '<button class="btn pri" data-tab="schedule" type="button">فتح جدول الاختبارات</button>' : ''}</section>`;
+  if (TODAY_DI == null || !S.days[TODAY_DI]) TODAY_DI = pickDay().i;
+  const pd = pickDay(), d = S.days[TODAY_DI], di = TODAY_DI, t = todayIso();
+  const diff = Math.round((isoToDate(d.g) - isoToDate(t)) / 864e5);
+  const when = diff === 0 ? '<em class="tdy now">اليوم</em>' : diff === 1 ? '<em class="tdy">غداً</em>' : diff > 1 ? `<em class="tdy">بعد ${diff} أيام</em>` : '<em class="tdy past">انتهى</em>';
+  const chips = S.days.map((x, i) => `<button type="button" class="dchip${i === di ? ' on' : ''}${x.g === t ? ' today' : ''}" data-act="todayDay" data-v="${i}"><b>${dayName(x)}</b><small>${dateShort(x)}</small></button>`).join('');
+  const pers = d.p.map((p, pi) => `<div class="tper"><div class="tph"><b>الفترة ${esc(p.n || pi + 1)}</b><span>${esc(p.t || '')}</span></div><div class="tsubs">${G.map(g => (p.s[g] || '').trim() ? `<span class="tsub" style="--gc:${GCOL[g]}"><small>${GSHORT[g]}</small>${esc(p.s[g])}</span>` : '').join('') || '<span class="hint">لا مواد</span>'}</div></div>`).join('');
+  const tile = (id, ttl, ic, sub, extra = '') => `<article class="ttile"><div class="tti">${ic}</div><div class="ttx"><b>${ttl}</b><small>${sub}</small></div><div class="tta"><button class="btn sm pri" data-act="todayForm" data-op="pv" data-f="${id}"${extra} type="button">معاينة وطباعة</button><button class="btn sm" data-act="todayForm" data-op="pdf" data-f="${id}"${extra} type="button">PDF</button></div></article>`;
+  const dayTiles = DAY_ITEMS.map(it => tile(it.k, it.t, it.per === 'day' ? '📅' : '🕘', it.per === 'day' ? 'لهذا اليوم' : (d.p.length > 1 ? `لكل فترة (${d.p.length})` : 'لفترة اليوم'))).join('');
+  return `<section class="card todayhero">
+    <div class="tdays" role="tablist" aria-label="أيام الاختبار">${chips}</div>
+    <div class="tmain"><div><small>${pd.today && di === pd.i ? 'اختبارات اليوم' : 'يوم الاختبار المختار'}</small><h2 class="tday">${dayName(d)} ${when}</h2><p class="tdate">${dateTxt(d, ' — ')}</p></div>
+      <div class="tbag"><button class="btn big pri" data-act="bag" data-op="pv" data-kind="day" data-arg="${di}" type="button">🧳 حقيبة اليوم كاملة</button><button class="btn" data-act="bag" data-op="pdf" data-kind="day" data-arg="${di}" type="button">PDF للحقيبة</button></div></div>
+    <div class="tpers">${pers}</div>
+  </section>
+  <section class="card"><h2>أوراق هذا اليوم</h2><div class="ttiles">${dayTiles}</div></section>
+  <section class="card"><h2>نماذج تحتاجها أثناء الاختبار</h2><div class="ttiles">${TODAY_ONE.map(x => tile(x.id, x.t, x.ic, x.d)).join('')}</div></section>`;
+}
+function todayGroups(fid) {
+  const d = S.days[TODAY_DI], f = fById(fid); if (!d || !f) return [];
+  const it = DAY_ITEMS.find(x => x.k === fid);
+  if (!it) { const pages = buildForm(f, {}); return pages.length ? [{ land: f.land, pages, t: f.t }] : []; }
+  if (it.per === 'day') { const pages = buildForm(f, { ses: TODAY_DI + '_0' }); return pages.length ? [{ land: f.land, pages, t: it.t }] : []; }
+  return d.p.map((p, pi) => ({ land: f.land, pages: buildForm(f, { ses: `${TODAY_DI}_${pi}` }), t: `${it.t} – الفترة ${p.n}` })).filter(g => g.pages.length);
+}
+
+/* =====================================================================
+   مهام المرحلة + تنبيهات المرحلة
+   ===================================================================== */
+function stageTasks(k) {
+  const tx = s => String(s || '').trim();
+  const sched = []; S.days.forEach(d => d.p.forEach(p => G.forEach(g => { const sb = tx(p.s[g]); if (sb) sched.push({ g, sub: sb }); })));
+  let chosen = false; try { chosen = !!localStorage.getItem(LS_KEY + '-taset'); } catch (e) { }
+  const gt = gradeTotals(), ct = comTotals(); const ses = sessions();
+  let need = 0, filled = 0; ses.forEach(se => S.com.forEach(c => { need += obsNeed(c.no); filled += Math.min(obsNeed(c.no), obsList(`${se.key}_${c.no}`).filter(Boolean).length); }));
+  const T = {
+    files: ROLE === 'agent' ? [['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch']] : [
+      ['رفع ملف نور', S.students.length > 0, 'fc_noor'], ['رفع ملف الإرشاد الطلابي', S.guide.length > 0, 'fc_guide'], ['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch']],
+    assign: [['اختيار الحفظ الذي تعمل عليه', chosen, 'setsCard'], ['إدخال الإسناد (رفع ملف أو تعديل)', S.ta.length > 0, 'h:ملف الإسناد'], ['لكل سطر معلم', S.ta.length > 0 && S.ta.every(x => tx(x.t)), 'h:تعديل الإسناد']],
+    schedule: [['إدخال أيام الاختبار وتواريخها', S.days.length > 0, 'first'], ['إدخال مواد كل صف', sched.length > 0, 'first']],
+    committees: [['أعداد اللجان تطابق الطلاب', G.every(g => gt[g] === ct[g]), 'first'], ['توزيع الطلاب بالأسماء وأرقام الجلوس', !!S.distributed, 'first']],
+    staff: [['معلم لكل مادة مختبرة', sched.length > 0 && sched.every(x => { const r = S.st.find(y => +y.g === x.g && tx(y.sub) === x.sub); return r && tx(r.t); }), 'h:معلمو المواد'], ['توزيع الملاحظين على كل اللجان', need > 0 && filled >= need, 'h:توزيع الملاحظين']]
+  };
+  return (T[k] || []).map(([t, ok, go]) => ({ t, ok, go }));
+}
+var TAB_ALIAS_AL = { students: 'files' };
+function stageAlerts(k) { return alerts().filter(a => (TAB_ALIAS_AL[a.tab] || a.tab) === k); }
+function tasksHtml(k) {
+  const ts = stageTasks(k), al = stageAlerts(k); if (!ts.length && !al.length) return '';
+  const done = ts.filter(x => x.ok).length;
+  return `<section class="tasks" aria-label="مهام المرحلة">${ts.length ? `<div class="tkh"><b>مهام هذه المرحلة</b><span class="tkp"><i style="width:${Math.round(done / ts.length * 100)}%"></i></span><small>${done} من ${ts.length}${done === ts.length ? ' — مكتملة ✓' : ''}</small></div>
+    <div class="tkl">${ts.map(x => `<button type="button" class="tk${x.ok ? ' ok' : ''}" data-tgo="${esc(x.go)}"><i>${x.ok ? '✓' : ''}</i>${esc(x.t)}</button>`).join('')}</div>` : ''}
+    ${al.length ? `<div class="tal">${al.map(a => `<div class="al ${a.lvl}">${a.lvl === 'bad' ? '⛔' : '⚠️'} ${esc(a.t)}</div>`).join('')}</div>` : ''}</section>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-tgo]'); if (!b) return;
+  const g = b.dataset.tgo; let el = null;
+  if (g === 'first') el = $('.sbody > section.card'); else if (g.startsWith('h:')) el = $$('.sbody > section.card > h2').find(h => h.textContent.trim().startsWith(g.slice(2))); else el = document.getElementById(g);
+  if (el) { const card = el.closest('section,article') || el; scrollTo({ top: card.getBoundingClientRect().top + scrollY - 80, behavior: 'smooth' }); card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 1400); }
+});
+
+/* =====================================================================
+   مساعدة «؟» بجانب كل قسم
+   ===================================================================== */
+var HELP = {
+  'أي إسناد تعمل عليه': 'ثلاثة حفظ مستقلة للإسناد. «حفظ فهد» تُبنى عليه الاختبارات، و«حفظ الوكيل» للفصل القادم، و«المشاركة معاً» للعمل المشترك. الحفظ النشط هو الذي تعدّله الآن.',
+  'ملف الإسناد': 'ارفع ملف إسناد المعلمين (Excel أو Word أو PDF) فيُقرأ تلقائياً: المادة والشعب والمعلم وعدد الحصص. ثم اطبع كشف الإسناد بأي صف.',
+  'تعديل الإسناد': 'عدّل أي سطر مباشرة: اختر المادة والمعلم من القوائم، وحدد الشعب والحصص. التعديل يُحفظ فوراً.',
+  'قائمة المعلمين': 'معلمو المدرسة لهذا الحفظ. تظهر أسماؤهم في كل قوائم الاختيار وكشوف التوقيع والملاحظة.',
+  'حصر أعداد الطلاب': 'أعداد الطلاب في كل صف وشعبة من ملف نور، وعليها تُبنى اللجان.',
+  'كشوف الطلاب': 'اطبع أو حمّل كشوف الطلاب بأي ترتيب: حسب الصف أو الشعبة، مع الجوالات أو أرقام الجلوس.',
+  'معلمو المواد': 'لكل مادة في الجدول معلم يكلّف بوضع أسئلتها. يُقترح تلقائياً من الإسناد ويمكنك تغييره.',
+  'بيان توزيع الدرجات': 'بيان مستقل يُطبع وحده. يمكنك رفع بيان جديد (Word أو PDF) ليحل محل البيان المعتمد.',
+  'توزيع الملاحظين': 'ملاحظ أو أكثر لكل لجنة في كل فترة. التوزيع التلقائي يتجنب معلم المادة المختبرة في فترتها، ويمكنك الإحلال والتبديل.',
+  'القوائم الخاصة': 'طلاب الانتساب والعوق البصري الذين يُختبرون في لجان خاصة.',
+  'الحفظ والمزامنة': 'فعّل المزامنة بالرمز لتُحفظ بياناتك على السحابة وتظهر على أي جهاز. لكل قسم سجل آخر 20 نسخة.',
+  'أوراق هذا اليوم': 'كل أوراق يوم الاختبار المختار. «حقيبة اليوم كاملة» تجمعها كلها في ملف واحد بغلاف وفهرس.',
+  'نماذج تحتاجها أثناء الاختبار': 'محاضر ونماذج فارغة جاهزة للطباعة عند الحاجة أثناء الاختبار.'
+};
+function injectHelp(root) {
+  $$('.sbody > section.card > h2', root).forEach(h => {
+    const k = Object.keys(HELP).find(x => h.textContent.trim().startsWith(x)); if (!k || h.querySelector('.hlp')) return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'hlp'; b.textContent = '؟'; b.setAttribute('aria-label', 'شرح: ' + k); b.dataset.help = HELP[k]; h.appendChild(b);
+  });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.hlp'); const old = $('#hlpPop');
+  if (!b) { if (old && !e.target.closest('#hlpPop')) old.remove(); return; }
+  if (old) old.remove();
+  const p = document.createElement('div'); p.id = 'hlpPop'; p.className = 'hlppop'; p.textContent = b.dataset.help; document.body.appendChild(p);
+  const r = b.getBoundingClientRect(); const w = Math.min(320, innerWidth - 24);
+  p.style.width = w + 'px'; p.style.top = (r.bottom + scrollY + 8) + 'px'; p.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + 'px';
+});
+
+/* =====================================================================
+   جولة تعريفية
+   ===================================================================== */
+function tourSteps() {
+  const s = [];
+  s.push({ sel: '#roleChip', t: 'دورك على هذا الجهاز', d: 'الشارة الملوّنة تبيّن من أنت: الأزرق فهد، والبرتقالي الوكيل، والذهبي المشرف. اضغطها لتغيير الدور.' });
+  if (ROLE !== 'sup') s.push({ sel: '#nav .steps', t: 'مراحل العمل بالترتيب', d: 'كل مرحلة برقم ولون. ابدأ من الأولى، وتتحول إلى ✓ عند اكتمالها.' });
+  if (ROLE !== 'sup') s.push({ sel: '.tasks', t: 'مهام المرحلة', d: 'ما المطلوب في هذه الصفحة، وما أُنجز منه. اضغط أي مهمة لتنتقل لمكانها. والتنبيهات الحمراء أخطاء يجب إصلاحها.' });
+  if (ROLE === 'sup') s.push({ sel: '.tdays', t: 'أيام الاختبار', d: 'اختر اليوم، ويُختار يوم اليوم تلقائياً.' }, { sel: '.tbag', t: 'حقيبة اليوم', d: 'كل أوراق اليوم في ملف واحد بضغطة.' });
+  if (ROLE !== 'sup') s.push({ sel: '#setChip', t: 'الإسناد الذي تعمل عليه', d: 'كل شخص يعمل على حفظه: «حفظ فهد» أو «حفظ الوكيل» أو «المشاركة معاً» — فلا يتداخل العمل.' });
+  s.push({ sel: '#saveState', t: 'الحفظ والمزامنة', d: 'كل تعديل يُحفظ تلقائياً. فعّل المزامنة بالرمز لتظهر بياناتك على أي جهاز.' });
+  s.push({ sel: '#helpBtn', t: 'المساعدة', d: 'أعد هذه الجولة متى شئت من هنا، وزر «؟» بجانب كل قسم يشرحه بسطر واحد.' });
+  return s.filter(x => document.querySelector(x.sel));
+}
+function startTour() {
+  const steps = tourSteps(); if (!steps.length) return; let i = 0;
+  let o = $('#tour'); if (!o) { o = document.createElement('div'); o.id = 'tour'; document.body.appendChild(o); }
+  const show = () => {
+    const st = steps[i], el = document.querySelector(st.sel); if (!el) { i++; return i < steps.length ? show() : end(); }
+    el.scrollIntoView({ block: 'center', behavior: 'instant' in document.documentElement.style ? 'instant' : 'auto' });
+    const r = el.getBoundingClientRect(), pad = 6;
+    o.innerHTML = `<div class="thole" style="top:${r.top - pad}px;left:${r.left - pad}px;width:${r.width + pad * 2}px;height:${r.height + pad * 2}px"></div>
+      <div class="tcard" role="dialog" aria-live="polite"><small>${i + 1} من ${steps.length}</small><b>${st.t}</b><p>${st.d}</p><div class="tbtns"><button class="btn sm ghost" data-tour="end" type="button">إنهاء</button>${i ? '<button class="btn sm" data-tour="prev" type="button">السابق</button>' : ''}<button class="btn sm pri" data-tour="next" type="button">${i === steps.length - 1 ? 'تم ✓' : 'التالي'}</button></div></div>`;
+    const c = $('.tcard', o), cw = Math.min(330, innerWidth - 24); c.style.width = cw + 'px';
+    const below = r.bottom + 14 + 170 < innerHeight; c.style.top = (below ? r.bottom + 14 : Math.max(10, r.top - 14 - c.offsetHeight)) + 'px';
+    c.style.left = Math.max(12, Math.min(innerWidth - cw - 12, r.left + r.width / 2 - cw / 2)) + 'px';
+  };
+  const end = () => { o.remove(); try { localStorage.setItem(LS_KEY + '-tour', '1'); } catch (e) { } };
+  o.onclick = e => { const b = e.target.closest('[data-tour]'); if (!b) return; if (b.dataset.tour === 'end') return end(); if (b.dataset.tour === 'prev') i--; else i++; if (i >= steps.length) return end(); show(); };
+  show();
+}
+document.addEventListener('click', e => {
+  if (e.target.closest && e.target.closest('#roleChip')) return roleModal(false);
+  if (e.target.closest && e.target.closest('#helpBtn')) return startTour();
+});

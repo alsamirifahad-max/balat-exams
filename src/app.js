@@ -1025,6 +1025,7 @@ const FLOW = [
   { k: 'forms', n: 6, t: 'المطبوعات', d: 'كل النماذج والكشوف والمحاضر — طباعة وPDF وWord', c: '#4338ca', ic: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>' }
 ];
 const UTILS = [
+  { k: 'today', t: 'يوم الاختبار', d: 'كل أوراق يوم الاختبار بضغطة واحدة: الحقيبة وكشوف المناداة والمحاضر', c: '#dc2626', ic: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>' },
   { k: 'home', t: 'لوحة المتابعة', d: 'الحالة العامة والتنبيهات وحقائب الطباعة الجاهزة', c: '#0b3a46', ic: '<path d="M3 12h4l3 7 4-14 3 7h4"/>' },
   { k: 'settings', t: 'الإعدادات', d: 'الكليشة والتواقيع والصفوف والتاريخ والتعليمات', c: '#475569', ic: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>' },
   { k: 'backup', t: 'الحفظ والنسخ', d: 'المزامنة بين الأجهزة والنسخ الاحتياطية', c: '#475569', ic: '<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 8a4 4 0 0 1 0 8"/><path d="M12 12v8M9 17l3 3 3-3"/>' }
@@ -1040,21 +1041,23 @@ function stageDone(k) {
 }
 const svgI = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function updSetChip() { const c = $('#setChip'); if (!c) return; c.textContent = setMeta(ACTIVE).n; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
-function renderNav() { updSetChip();
-  $('#nav').innerHTML = `<div class="steps">${FLOW.map(s => { const d = stageDone(s.k); return `<button class="step${s.k === TAB ? ' on' : ''}${d === true ? ' done' : ''}" style="--sc:${s.c}" data-tab="${s.k}" type="button" aria-current="${s.k === TAB ? 'page' : 'false'}"><i>${d === true ? '✓' : s.n}</i><span>${s.t}</span></button>`; }).join('<span class="sline" aria-hidden="true"></span>')}</div>
-  <div class="utils">${UTILS.map(u => `<button class="util${u.k === TAB ? ' on' : ''}" data-tab="${u.k}" type="button" title="${u.t}">${svgI(u.ic, 17)}<span>${u.t}</span></button>`).join('')}</div>`;
+function roleFlow() { return FLOW.filter(s => typeof roleAllows !== 'function' || roleAllows(s.k)).map((s, i) => Object.assign({}, s, { n: i + 1 }, (typeof ROLE !== 'undefined' && ROLE === 'agent' && s.k === 'files') ? { t: 'المعلمون', d: 'قائمة معلمي المدرسة — ترفعها من Excel أو Word أو PDF وتنعكس في الإسناد' } : {})); }
+function renderNav() { updSetChip(); if (typeof updRoleChip === 'function') updRoleChip();
+  const RF = roleFlow();
+  $('#nav').innerHTML = `<div class="steps">${RF.map(s => { const d = stageDone(s.k); return `<button class="step${s.k === TAB ? ' on' : ''}${d === true ? ' done' : ''}" style="--sc:${s.c}" data-tab="${s.k}" type="button" aria-current="${s.k === TAB ? 'page' : 'false'}"><i>${d === true ? '✓' : s.n}</i><span>${s.t}</span></button>`; }).join('<span class="sline" aria-hidden="true"></span>')}</div>
+  <div class="utils">${UTILS.filter(u => typeof roleAllows !== 'function' || roleAllows(u.k)).map(u => `<button class="util${u.k === TAB ? ' on' : ''}" data-tab="${u.k}" type="button" title="${u.t}">${svgI(u.ic, 17)}<span>${u.t}</span></button>`).join('')}</div>`;
   const on = $('#nav .step.on, #nav .util.on'); if (on && on.scrollIntoView) try { on.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { }
 }
 function stageHero(p) {
-  const st = FLOW.find(s => s.k === p.k);
-  return `<header class="shero" style="--sc:${p.c}"><div class="sico">${svgI(p.ic, 26)}</div><div class="stx">${st ? `<small>المرحلة ${st.n} من ${FLOW.length}</small>` : '<small>أدوات</small>'}<h2>${p.t}</h2><p>${p.d}</p></div></header>`;
+  const RF = roleFlow(), st = RF.find(s => s.k === p.k); if (st) p = Object.assign({}, p, { t: st.t, d: st.d });
+  return `<header class="shero" style="--sc:${p.c}"><div class="sico">${svgI(p.ic, 26)}</div><div class="stx">${st ? `<small>المرحلة ${st.n} من ${RF.length}</small>` : '<small>أدوات</small>'}<h2>${p.t}</h2><p>${p.d}</p></div></header>`;
 }
 function stageNext(p) {
-  const i = FLOW.findIndex(s => s.k === p.k); if (i < 0) return '';
-  const prev = FLOW[i - 1], next = FLOW[i + 1];
+  const RF = roleFlow(), i = RF.findIndex(s => s.k === p.k); if (i < 0) return '';
+  const prev = RF[i - 1], next = RF[i + 1];
   return `<nav class="snext" aria-label="التنقل بين المراحل">${prev ? `<button type="button" class="btn ghost" data-tab="${prev.k}">→ ${prev.t}</button>` : '<span></span>'}${next ? `<button type="button" class="btn nx" style="--sc:${next.c}" data-tab="${next.k}">التالي: ${next.t} ←</button>` : ''}</nav>`;
 }
-function go(tab) { tab = ALIAS[tab] || tab; if (!TABS.some(x => x[0] === tab)) tab = 'files'; TAB = tab; try { localStorage.setItem(LS_KEY + '-tab', tab); } catch (e) { } renderNav(); render(); window.scrollTo({ top: 0 }); if (location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab); }
+function go(tab) { tab = ALIAS[tab] || tab; if (!TABS.some(x => x[0] === tab)) tab = TABS[0] ? TABS[0][0] : 'files'; TAB = tab; try { localStorage.setItem(LS_KEY + '-tab', tab); } catch (e) { } renderNav(); render(); window.scrollTo({ top: 0 }); if (location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab); }
 function flowBar() {
   const st = [
     ['settings', 'الإعدادات', !!S.s.yearTxt], ['schedule', 'الجدول', S.days.length > 0], ['students', 'ملف نور', S.students.length > 0],
@@ -1065,14 +1068,15 @@ function flowBar() {
 function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
-  const roNote = ACTIVE === 'ta-agent' && !['assign', 'backup', 'settings'].includes(p.k) ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
-  m.innerHTML = '<div id="pendBox"></div>' + roNote + stageHero(p) + `<div class="sbody">${({ home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
+  m.innerHTML = '<div id="pendBox"></div>' + roNote + stageHero(p) + `<div class="sbody">${tasksHtml(p.k)}${({ today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
     j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
-    $('.sbody', m).prepend(j); }
+    const tk = $('.sbody > .tasks', m); if (tk) tk.after(j); else $('.sbody', m).prepend(j); }
   $$('.brand-hdr').forEach(i => i.src = HDR); $$('.brand-ftr').forEach(i => i.src = FTR);
-  pendShow();
+  pendShow(); injectHelp(m); { const hp = $('#hlpPop'); if (hp) hp.remove(); }
+  { const sc = $('#setChip'); if (sc) sc.hidden = ROLE === 'sup'; }
   if (TAB === 'forms') renderPreview();
   if (TAB === 'files') renderStuTable();
   if (TAB === 'home') setTimeout(renderThumbs, 30);
@@ -1320,7 +1324,7 @@ function filteredStudents() {
 }
 function fileCard(slot, o) {
   const u = S.uploads[slot];
-  return `<article class="fcard${u || o.has ? ' done' : ''}" style="--fc:${o.c}">
+  return `<article id="fc_${slot}" class="fcard${u || o.has ? ' done' : ''}" style="--fc:${o.c}">
     <div class="fhead"><span class="fnum">${o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div></div>
     <div class="ffacts">${o.facts}</div>
     ${dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
@@ -1329,6 +1333,7 @@ function fileCard(slot, o) {
 }
 function vFiles() {
   const t = stuTotals(), n = S.students.length, gm = S.guide.filter(x => x.g).length;
+  const agentOnly = ROLE === 'agent';
   const cards = `<div class="fcards">
     ${fileCard('noor', { n: 1, c: '#2563eb', t: 'ملف نور', d: 'قائمة الطلاب بالصف والشعبة — يُبنى عليها الحصر واللجان وأرقام الجلوس.', has: n > 0, fmt: 'Excel من نظام نور (‎.xls/.xlsx)', accept: '.xls,.xlsx,.csv',
       facts: n ? `<b>${n}</b><span>طالباً</span><em>أول ${t[1]} · ثاني ${t[2]} · ثالث ${t[3]}</em>` : '<span class="fnone">لم يُرفع بعد</span>',
@@ -1348,6 +1353,7 @@ function vFiles() {
     <div class="acts"><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
     <details${S.teachers.length ? '' : ' open'}><summary>عرض القائمة وتعديلها (${S.teachers.length})</summary><textarea class="in ta" data-k="teachers" data-lines="1" rows="12" id="f_teachers">${esc(S.teachers.join('\n'))}</textarea></details>
   </section>`;
+  if (agentOnly) return `<div class="fcards one">${fileCard('tch', { n: 1, c: PEOPLE.agent.c, t: 'قائمة المعلمين', d: 'معلمو المدرسة لحفظك — تنعكس في الإسناد. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt', facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span>` : '<span class="fnone">القائمة فارغة</span>', out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button>` })}</div><div id="upMsg_tch"></div>` + tlist;
   return cards + vStudents(true) + tlist;
 }
 function vStudents(noUpload) {
@@ -1605,8 +1611,8 @@ function setChooser() {
         <div class="seth"><span class="setic">${SET_DEF[id].ic}</span><div><input class="setn" data-setmeta="${id}" data-f="n" value="${esc(m.n)}" aria-label="اسم الحفظ" maxlength="30"><input class="setd" data-setmeta="${id}" data-f="d" value="${esc(m.d)}" placeholder="وصف، مثل: إسناد الفصل الثاني 1447" aria-label="وصف الحفظ" maxlength="60"></div></div>
         <div class="setst"><b>${(d.ta || []).length}</b> سطراً · <b>${tc}</b> معلماً في الإسناد · ${(d.teachers || []).length} في القائمة</div>
         <small>${sy && sy.at ? 'آخر حفظ على السحابة: ' + esc(fmtAt(sy.at)) : SYNC_CODE ? 'بانتظار أول حفظ' : 'محفوظ على هذا الجهاز فقط — فعّل المزامنة'}</small>
-        ${on ? '<span class="setbadge">✓ تعمل عليه الآن</span>' : `<button class="btn pri" data-act="setUse" data-v="${id}" type="button">العمل على هذا الحفظ</button>`}
-        <details class="setmore"><summary>نسخ المحتوى…</summary>${TA_SETS.filter(o => o !== id).map(o => `<button class="btn sm ghost" data-act="setCopy" data-from="${id}" data-to="${o}" type="button">نسخه إلى «${esc(setMeta(o).n)}»</button>`).join('')}</details>
+        ${on ? '<span class="setbadge">✓ تعمل عليه الآن</span>' : (ROLE === 'agent' && id === 'ta') ? `<button class="btn" data-act="setView" data-v="${id}" type="button">عرض كشف الإسناد (اطلاع فقط)</button>` : `<button class="btn pri" data-act="setUse" data-v="${id}" type="button">العمل على هذا الحفظ</button><button class="btn sm ghost" data-act="setView" data-v="${id}" type="button">عرض الكشف</button>`}
+        <details class="setmore"><summary>نسخ المحتوى…</summary>${TA_SETS.filter(o => o !== id && !(ROLE === 'agent' && o === 'ta')).map(o => `<button class="btn sm ghost" data-act="setCopy" data-from="${id}" data-to="${o}" type="button">نسخه إلى «${esc(setMeta(o).n)}»</button>`).join('')}</details>
       </article>`; }).join('')}</div>
   </section>`;
 }
@@ -2576,6 +2582,11 @@ async function setActive(id) {
   syncNow({ silent: true });
 }
 function buildStFromTaSafe() { try { if (S.ta.length && typeof buildStFromTa === 'function') buildStFromTa(); } catch (e) { } }
+function previewSet(id) {
+  const keep = { ta: S.ta, teachers: S.teachers }; const d = secData(id);
+  try { S.ta = d.ta || []; S.teachers = d.teachers || []; const pages = buildForm(FORMS.find(x => x.id === 'taSheet'), {}); openPreview([{ land: false, pages, t: 'كشف الإسناد' }], fname('كشف الإسناد - ' + setMeta(id).n)); }
+  finally { S.ta = keep.ta; S.teachers = keep.teachers; }
+}
 function copySet(from, to) {
   const d = clone(secData(from)); d.meta = clone(secData(to).meta || { n: SET_DEF[to].n, d: SET_DEF[to].d });
   applySec(to, d); save(true); syncSoon();
@@ -2597,8 +2608,8 @@ function pristine(sec) { if (isSet(sec) && sec !== 'ta') { const d = secData(sec
 function syncDirty(sec) { const s = SYNC[sec] || {}; return hashStr(JSON.stringify(secData(sec))) !== s.h; }
 function syncSoon() { if (!SYNC_CODE) return; clearTimeout(syncT); syncT = setTimeout(syncNow, 1800); syncBadge(); }
 function devName() { try { const n = localStorage.getItem(LS_KEY + '-dev'); if (n) return n; } catch (e) { } return /Mobi|iPhone|Android/i.test(navigator.userAgent) ? 'جوال' : 'كمبيوتر'; }
-function whoAmI() { return encodeURIComponent(devName().slice(0, 24)); }
-function byLabel(b) { b = String(b || ''); if (!b) return ''; if (/^(ta|ex)-[md]$/.test(b)) return b.endsWith('m') ? 'جوال' : 'كمبيوتر'; try { return decodeURIComponent(b); } catch (e) { return b; } }
+function whoAmI() { return encodeURIComponent((ROLE || 'admin') + '|' + devName().slice(0, 24)); }
+function byLabel(b) { b = String(b || ''); if (!b) return ''; if (/^(ta|ex)-[md]$/.test(b)) return b.endsWith('m') ? 'جوال' : 'كمبيوتر'; try { const v = decodeURIComponent(b); if (v.includes('|')) { const [r, n] = v.split('|'); return (PEOPLE[r] ? PEOPLE[r].who + ' — ' : '') + n; } return v; } catch (e) { return b; } }
 async function api(method, q, opt = {}) {
   const r = await fetch(API + q, { method, cache: 'no-store', headers: Object.assign({ 'x-code': SYNC_CODE, 'x-by': whoAmI() }, opt.headers || {}), body: opt.body });
   if (r.status === 401) { SYNC_CODE = ''; try { localStorage.removeItem(LS_KEY + '-code'); } catch (e) { } throw Object.assign(new Error('auth'), { code: 401 }); }
@@ -2608,7 +2619,7 @@ async function pullSec(sec) {
   const r = await api('GET', '?sec=' + sec); if (r.headers.get('content-type').includes('json')) return null;
   const at = r.headers.get('x-at'), enc = r.headers.get('x-enc') || 'gzip';
   const txt = await ungz(new Uint8Array(await r.arrayBuffer()), enc);
-  return { at, data: JSON.parse(txt), by: byLabel(r.headers.get('x-by')) };
+  return { at, data: JSON.parse(txt), by: byLabel(r.headers.get('x-by')), byRaw: r.headers.get('x-by') || '' };
 }
 async function pushSec(sec, force) {
   let d = secData(sec), str = JSON.stringify(d), note = '';
@@ -2628,7 +2639,7 @@ async function syncNow(opts = {}) {
     for (const sec of ALL_SECS) {
       const rm = meta[sec], lm = SYNC[sec] || {}, dirty = syncDirty(sec);
       /* جهاز يعمل على «حفظ الوكيل»: قسم الاختبارات للقراءة فقط، فلا يمس عمله بيانات الاختبارات */
-      if (sec === 'ex' && ACTIVE === 'ta-agent') { if (rm && (rm.at !== lm.at || dirty)) { const p = await pullSec('ex'); if (p) { applySec('ex', p.data); SYNC.ex = { at: p.at, h: hashStr(JSON.stringify(secData('ex'))), t: Date.now() }; syncSave(); changed = true; } } continue; }
+      if (sec === 'ex' && exReadOnly()) { if (rm && (rm.at !== lm.at || dirty)) { const p = await pullSec('ex'); if (p) { applySec('ex', p.data); SYNC.ex = { at: p.at, h: hashStr(JSON.stringify(secData('ex'))), t: Date.now() }; syncSave(); changed = true; } } continue; }
       if (PENDING[sec] && rm && rm.at === lm.at) { delete PENDING[sec]; pendShow(); }
       if (rm && rm.at !== lm.at) {
         /* يوجد إصدار أحدث من جهاز آخر */
@@ -2637,7 +2648,7 @@ async function syncNow(opts = {}) {
           if (!useCloud) { await pushSec(sec, true); continue; }
         } else if (lm.at && syncMode(sec) === 'ask') {
           /* وضع «اسألني»: لا يُطبَّق التعديل حتى توافق */
-          if (!PENDING[sec] || PENDING[sec].at !== rm.at) { const p = await pullSec(sec); if (p) { PENDING[sec] = { at: p.at, by: p.by, data: p.data, diff: secDiff(sec, secData(sec), p.data) }; pendShow(); } }
+          if (!PENDING[sec] || PENDING[sec].at !== rm.at) { const p = await pullSec(sec); if (p) { PENDING[sec] = { at: p.at, by: p.by, byRaw: p.byRaw, data: p.data, diff: secDiff(sec, secData(sec), p.data) }; pendShow(); } }
           continue;
         } else if (dirty && lm.at) { localStorage.setItem(LS_KEY + '-conflict-' + sec, JSON.stringify({ at: new Date().toISOString(), data: secData(sec) })); toast(`حُدّث «${SYNC_SECS[sec]}» من جهاز آخر — حُفظت تعديلاتك غير المتزامنة كنسخة في «النسخ الاحتياطي»`); }
         else if (busyTyping()) continue;
@@ -2686,7 +2697,7 @@ function secDiff(sec, A, B) {
 }
 function pendShow() {
   const box = $('#pendBox'); if (!box) return;
-  box.innerHTML = Object.entries(PENDING).map(([sec, p]) => `<div class="pend" role="alert"><div class="pdt"><b>تحديث لـ«${SYNC_SECS[sec]}» من ${esc(p.by || 'جهاز آخر')}</b><span>${esc(fmtAt(p.at))} — ${esc(p.diff.short)}</span></div>
+  box.innerHTML = Object.entries(PENDING).map(([sec, p]) => `<div class="pend" role="alert" style="--pc:${personColor(p.byRaw)}"><div class="pdt"><b>تحديث لـ«${SYNC_SECS[sec]}» من ${esc(p.by || 'جهاز آخر')}</b><span>${esc(fmtAt(p.at))} — ${esc(p.diff.short)}</span></div>
     <div class="pda"><button class="btn sm ghost" data-act="pendView" data-v="${sec}" type="button">عرض التغييرات</button><button class="btn sm pri" data-act="pendApply" data-v="${sec}" type="button">اعتماد تعديله</button><button class="btn sm" data-act="pendKeep" data-v="${sec}" type="button">الإبقاء على نسختي</button></div></div>`).join('');
   syncBadge();
 }
@@ -2864,6 +2875,9 @@ document.addEventListener('click', async e => {
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
     case 'tchTpl': tchTemplate(); return;
     case 'setUse': return setActive(b.dataset.v);
+    case 'todayDay': TODAY_DI = +b.dataset.v; return render();
+    case 'todayForm': { const g = todayGroups(b.dataset.f); if (!g.length) return toast('لا توجد صفحات لهذا النموذج — تحقق من البيانات', true); const nm = fname(g[0].t + ' - ' + dayName(S.days[TODAY_DI]) + ' ' + dateShort(S.days[TODAY_DI]).replace(/\//g, '-')); return b.dataset.op === 'pdf' ? downloadPdf(g, nm) : openPreview(g, nm); }
+    case 'setView': return previewSet(b.dataset.v);
     case 'setCopy': { const f = b.dataset.from, to = b.dataset.to; if (await confirmBox(`نسخ محتوى «${setMeta(f).n}» إلى «${setMeta(to).n}»؟ سيحل محل ما فيه الآن، ويبقى المحتوى السابق في «سجل النسخ».`)) { copySet(f, to); render(); toast(`نُسخ إلى «${setMeta(to).n}»`); } return; }
     case 'pendApply': return pendApply(b.dataset.v);
     case 'pendKeep': return pendKeep(b.dataset.v);
@@ -2932,8 +2946,10 @@ window.addEventListener('hashchange', () => { const h = location.hash.slice(1); 
   renderNav(); setSaved(true);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
   await drawBrand();
-  render();
+  TABS = ALL_TABS.filter(x => roleAllows(x[0])); if (!TABS.some(x => x[0] === TAB)) TAB = PEOPLE[ROLE || 'admin'].home;
+  renderNav(); render();
   syncStart();
+  if (!ROLE) roleModal(true);
 })();
 document.addEventListener('click', e => { const j = e.target.closest && e.target.closest('[data-jump]'); if (!j) return; const el = document.getElementById(j.dataset.jump); if (el) { const y = el.getBoundingClientRect().top + scrollY - 70; scrollTo({ top: y, behavior: 'smooth' }); } });
 document.addEventListener('click', async e => {
