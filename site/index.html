@@ -4520,7 +4520,7 @@ function t2Modal() {
 
 /* ----- شريط الانتقال ----- */
 function termBanner(tab) {
-  if (!['home', 'assign', 'daily', 'settings', 'files'].includes(tab)) return '';
+  if (ROLE === 'sup' || !['home', 'assign', 'daily', 'settings', 'files'].includes(tab)) return '';
   const c = CAL(); let arc = null; try { arc = JSON.parse(localStorage.getItem(LS_KEY + '-termArc') || 'null'); } catch (e) { }
   if (inT2()) {
     if (!arc || !isAdmin() || daysTo(arc.day) < -30) return '';
