@@ -542,6 +542,17 @@ body.nosc{overflow:hidden}
  table.wtab td:nth-child(1){grid-row:1/3;font-size:1.3rem;align-self:center;padding:0 6px}table.wtab td:nth-child(4),table.wtab td:nth-child(5){grid-column:2/-1}
  table.wtab tr.nocls{display:none}
  .wblk header .pwrap{max-width:none}}
+.tbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(90deg,#fff7ed,#fffbeb);border:1px solid #fcd9a8;border-inline-start:5px solid #ea580c;border-radius:14px;padding:10px 14px;margin:0 0 12px}
+.tbar.near{background:linear-gradient(90deg,#ffedd5,#fef3c7);border-color:#f59e0b;box-shadow:0 2px 10px rgba(234,88,12,.12)}
+.tbar.done{border-inline-start-color:#16a34a;background:#f0fdf4;border-color:#bbf7d0}
+.tbar > div:nth-last-child(2){flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}.tbar b{font-size:.98rem}.tbar span{font-size:.85rem;color:#57534e}
+.tbi{width:38px;height:38px;border-radius:50%;background:#ea580c;color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.15rem;flex:none}
+.tba{display:flex;gap:6px;flex-wrap:wrap}.tp{font-style:normal;font-weight:800;padding:0 6px;border-radius:8px}.tp.g{background:#dcfce7;color:#166534}.tp.w{background:#fef3c7;color:#92400e}.tp.b{background:#fee2e2;color:#991b1b}
+.tsteps{margin:6px 0 10px;padding-inline-start:20px;line-height:1.9}.tsteps .bad{color:#b91c1c}
+.upnote.warn{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.caldates{width:100%;margin-top:4px}.caldates summary{cursor:pointer;font-weight:700;font-size:.88rem;color:#b45309}.caldates .acts{margin:6px 0 0}.caldates input[type=date]{min-width:9.5rem}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tbar{background:color-mix(in srgb,#ea580c 14%,var(--surface));border-color:color-mix(in srgb,#ea580c 40%,var(--line))}:root:not([data-theme="light"]) .tbar span{color:var(--muted)}:root:not([data-theme="light"]) .tbar.done{background:color-mix(in srgb,#16a34a 12%,var(--surface))}}
+:root[data-theme="dark"] .tbar{background:color-mix(in srgb,#ea580c 14%,var(--surface));border-color:color-mix(in srgb,#ea580c 40%,var(--line))}:root[data-theme="dark"] .tbar span{color:var(--muted)}
 .ttnext{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.ttnext > b{font-size:.92rem}.ttnext .drop{padding:10px}
 .pickl1{padding:3px 14px;font-size:.78rem;font-weight:800;color:var(--accent);background:var(--bg);border-bottom:1px solid var(--line)}
 .setnow{display:flex;gap:12px;align-items:center;border:2px solid var(--sc2);border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--sc2) 8%,var(--surface));margin-top:8px}
@@ -1753,7 +1764,7 @@ function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
-  m.innerHTML = '<div id="pendBox"></div>' + roNote + stageHero(p) + `<div class="sbody">${tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p) + `<div class="sbody">${tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
     j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
@@ -2017,7 +2028,7 @@ function fileCard(slot, o) {
   return `<article id="fc_${slot}" class="fcard${u || o.has ? ' done' : ''}" style="--fc:${o.c}">
     <div class="fhead"><span class="fnum">${o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div></div>
     <div class="ffacts">${o.facts}</div>
-    ${dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
+    ${o.noUp ? '' : dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
     ${o.out ? `<div class="fout"><span>تحميل:</span>${o.out}</div>` : ''}
   </article>`;
 }
@@ -2047,7 +2058,8 @@ function vFiles() {
       facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span><em>${S.ta.length ? (() => { const inTa = sameTeacher(S.ta.map(x => x.t)); const k = S.teachers.filter(inTa).length; return `${k} منهم في الإسناد${S.teachers.length - k ? ` · ${S.teachers.length - k} بلا إسناد` : ''}`; })() : 'لم يُرفع الإسناد بعد'}</em>` : '<span class="fnone">القائمة فارغة</span>',
       out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button><button class="btn sm" data-act="qopen" data-form="tList" type="button">معاينة وطباعة</button>` })}
     ${ttCard(4)}
-  </div><div id="upMsg"></div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>`;
+    ${calCard(5)}
+  </div><div id="upMsg"></div><div id="upMsg_tch"></div><div id="upMsg_tt"></div><div id="upMsg_cal"></div>`;
   const tlist = `<section class="card" id="tchCard">
     <h2>قائمة المعلمين — تعديل يدوي</h2>
     <p class="hint">اسم في كل سطر. تُضاف أسماء معلمي الإسناد تلقائياً، وكل قوائم اختيار المعلمين في الموقع مرتبة هجائياً.</p>
@@ -2056,7 +2068,7 @@ function vFiles() {
     <div class="acts"><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
     <details${S.teachers.length ? '' : ' open'}><summary>عرض القائمة وتعديلها (${S.teachers.length})</summary><textarea class="in ta" data-k="teachers" data-lines="1" rows="12" id="f_teachers">${esc(S.teachers.join('\n'))}</textarea></details>
   </section>`;
-  if (agentOnly) return `<div class="fcards">${ttCard(2)}${fileCard('tch', { n: 1, c: PEOPLE.agent.c, t: 'قائمة المعلمين', d: 'معلمو المدرسة لحفظك — تنعكس في الإسناد. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt', facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span>` : '<span class="fnone">القائمة فارغة</span>', out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button>` })}</div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>` + tlist;
+  if (agentOnly) return `<div class="fcards">${ttCard(2)}${calCard(3, true)}${fileCard('tch', { n: 1, c: PEOPLE.agent.c, t: 'قائمة المعلمين', d: 'معلمو المدرسة لحفظك — تنعكس في الإسناد. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt', facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span>` : '<span class="fnone">القائمة فارغة</span>', out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button>` })}</div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>` + tlist;
   return cards + vStudents(true) + tlist;
 }
 function vStudents(noUpload) {
@@ -2157,6 +2169,8 @@ async function processSlot(slot, file) {
         S.uploads.tt = { name: file.name, at: stamp(), info: `${list.length} معلماً` };
         msg = `اعتُمد الجدول المدرسي العام: ${list.length} معلماً و${tot} حصة. تظهر الآن الحصص والمتاحون في «الانتظار والمناوبة».`;
       }
+    } else if (slot === 'cal') {
+      msg = await calUpload(file);
     } else if (slot === 'tch') {
       const found = await readTeacherFile(file);
       if (!found.length) throw new Error('لم يُعثر على أسماء معلمين في الملف. اجعل الأسماء في عمود عنوانه «اسم المعلم» أو اسماً في كل سطر، أو نزّل القالب واملأه.');
@@ -3504,7 +3518,7 @@ function choiceBox(msg, yes, no) {
     const fin = v => { m.hidden = true; Y.textContent = oy; N.textContent = on; Y.className = 'btn danger'; res(v); };
     Y.onclick = () => fin(true); N.onclick = () => fin(false); });
 }
-const SLOT_NAMES = { ttn: 'جدول الفصل القادم', tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
+const SLOT_NAMES = { cal: 'التقويم الدراسي', ttn: 'جدول الفصل القادم', tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
 /* يُطلب الرمز مرة واحدة في الجلسة؛ اختيار الملف يتم أولاً بلمسة مباشرة (متطلب سفاري في الآيفون) ثم التحقق */
 let UNLOCKED = (() => { try { return sessionStorage.getItem('balat-unlock') === '1' || !!localStorage.getItem('balat-exams-v1-code'); } catch (e) { return false; } })();
 async function unlock(reason) {
@@ -4386,6 +4400,182 @@ function xlsFromGroups(groups, nm) {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'dDate' && el.value) { DAILY_DATE = el.value; return render(); }
+});
+
+/* ===================== التقويم الدراسي والانتقال بين الفصلين ===================== */
+var CAL_DEF = { y: '1448', t1: '2026-08-30', ex1a: '2027-01-03', ex1b: '2027-01-07', mida: '2027-01-08', midb: '2027-01-16', t2: '2027-01-17' };
+var CAL_IMG = 'cal-1448.webp';
+function CAL() { S.cal = S.cal || {}; Object.keys(CAL_DEF).forEach(k => { if (!S.cal[k]) S.cal[k] = CAL_DEF[k]; }); return S.cal; }
+function calImgs() { const c = CAL(); return c.imgs && c.imgs.length ? c.imgs : (c.y === '1448' ? [{ src: CAL_IMG, w: 481, h: 681 }] : []); }
+function daysTo(iso) { return Math.round((isoToDate(iso) - isoToDate(todayIso())) / 864e5); }
+const WDN = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+function calTxt(iso) { if (!iso) return '—'; const d = isoToDate(iso); return `${WDN[d.getUTCDay()]} ${hijriOf(iso)}هـ (${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}م)`; }
+function inT2() { return /الثاني|2/.test(S.s.sem || ''); }
+function isAdmin() { return !ROLE || ROLE === 'admin'; }
+
+/* ----- رفع التقويم: صورة أو PDF أو Word أو Excel ----- */
+async function calUpload(file) {
+  const buf = new Uint8Array(await file.arrayBuffer()); let imgs = [], txt = '', html = '';
+  const asUrl = (b, type) => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(new Blob([b], { type })); });
+  const isImg = /^image\//.test(file.type) || /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(file.name);
+  if (isImg) imgs.push(await imgToJpeg(await asUrl(buf, file.type || 'image/jpeg'), 1600));
+  else if (buf[0] === 0x25 && buf[1] === 0x50) {
+    await ensurePdfJs(); const pdf = await pdfjsLib.getDocument({ data: buf.slice(), isEvalSupported: false }).promise;
+    for (let i = 1; i <= Math.min(4, pdf.numPages); i++) {
+      const pg = await pdf.getPage(i); const vp0 = pg.getViewport({ scale: 1 }); const vp = pg.getViewport({ scale: 1600 / vp0.width });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+      await pg.render({ canvasContext: x, viewport: vp }).promise; imgs.push(await imgToJpeg(c.toDataURL('image/png'), 1600));
+      try { txt += ' ' + (await pg.getTextContent()).items.map(t => t.str).join(' '); } catch (e) { }
+    }
+  } else if (buf[0] === 0xD0 && buf[1] === 0xCF && /\.doc$/i.test(file.name)) {
+    txt = docBinaryRows(buf).map(r => r.join(' ')).join('\n');
+  } else if (/\.docx$/i.test(file.name) || (buf[0] === 0x50 && /\.do[ct]x?$/i.test(file.name))) {
+    const z = XLSX.CFB.read(buf, { type: 'array' });
+    const media = z.FullPaths.map((p, i) => ({ p, f: z.FileIndex[i] })).filter(x => /word\/media\/.+\.(png|jpe?g|gif|bmp|webp)$/i.test(x.p) && x.f.content && x.f.content.length > 8000);
+    for (const m of media.slice(0, 4)) { const ext = m.p.split('.').pop().toLowerCase(); imgs.push(await imgToJpeg(await asUrl(m.f.content, 'image/' + (ext === 'jpg' ? 'jpeg' : ext)), 1600)); }
+    try { txt = docxRows(buf).map(r => r.join(' ')).join('\n'); } catch (e) { }
+    if (!imgs.length && txt) html = txt.split('\n').map(l => `<p style="margin:2px 0">${esc(l)}</p>`).join('');
+  } else if (/\.(xlsx|xls|csv)$/i.test(file.name)) {
+    const wb = XLSX.read(buf, { type: 'array' }); const sh = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '' }).filter(r => r.some(c => String(c).trim()));
+    txt = rows.map(r => r.join(' ')).join('\n');
+    html = `<table class="et dense"><tbody>${rows.slice(0, 80).map(r => `<tr>${r.map(c => `<td>${esc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  } else throw new Error('صيغة غير مدعومة — ارفع صورة أو PDF أو Word أو Excel');
+  if (!imgs.length && !html) throw new Error('لم أجد في الملف صورة أو نصاً للتقويم');
+  const c = CAL(); const found = calDetect(txt);
+  c.imgs = imgs; c.html = html; c.src = file.name; c.at = stamp();
+  Object.assign(c, found);
+  S.uploads.cal = { name: file.name, at: stamp(), info: imgs.length ? `${imgs.length} صفحة` : 'نص' };
+  const got = Object.keys(found);
+  return `حُفظ التقويم الدراسي (${file.name}). ` + (got.includes('t2') ? `قرأت منه بداية الفصل الثاني: ${calTxt(c.t2)}.` : `بداية الفصل الثاني: ${calTxt(c.t2)} — راجِع التواريخ في البطاقة وعدّلها إن لزم.`);
+}
+/* استخراج التواريخ من نص التقويم (هجري أو ميلادي) */
+function calDetect(txt) {
+  const out = {}; if (!txt) return out; const t = toWestern(String(txt)).replace(/\s+/g, ' ');
+  const dateAfter = (re) => {
+    const m = re.exec(t); if (!m) return null; const seg = t.slice(m.index, m.index + 140);
+    let d = /(14\d\d)\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})/.exec(seg); if (d) { const iso = hijriToIso(+d[1], +d[2], +d[3]); if (iso) return iso; }
+    d = /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(14\d\d)/.exec(seg); if (d) { const iso = hijriToIso(+d[3], +d[2], +d[1]); if (iso) return iso; }
+    d = /(20\d\d)\s*[\/-]\s*(\d{1,2})\s*[\/-]\s*(\d{1,2})/.exec(seg); if (d) return `${d[1]}-${String(d[2]).padStart(2, '0')}-${String(d[3]).padStart(2, '0')}`;
+    d = /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(20\d\d)/.exec(seg); if (d) return `${d[3]}-${String(d[2]).padStart(2, '0')}-${String(d[1]).padStart(2, '0')}`;
+    return null;
+  };
+  const t2 = dateAfter(/(بداية|بدء|تبدأ)\s*(الدراسة)?\s*(لل|في\s*ال)?فصل\s*(الدراسي)?\s*الثاني/) || dateAfter(/العودة\s*(إلى|ل|لل)?\s*الدراسة/);
+  if (t2) out.t2 = t2;
+  const y = /(14\d\d)\s*هـ?\s*\/\s*14\d\d|للعام\s*(14\d\d)/.exec(t); if (y) out.y = y[1] || y[2];
+  return out;
+}
+
+/* ----- بطاقة التقويم في صفحة الملفات ----- */
+function calCard(n, noUp) {
+  const c = CAL(), dd = daysTo(c.t2), imgs = calImgs();
+  const when = inT2() ? 'النظام على الفصل الثاني' : dd > 0 ? `بعد ${dd} يوماً` : dd === 0 ? 'يبدأ اليوم' : 'بدأ';
+  const field = (k, l) => `<label class="inl">${l} <input class="in" type="date" data-k="cal.${k}" value="${esc(c[k] || '')}"${noUp ? ' disabled' : ''}></label>`;
+  return fileCard('cal', { n, c: '#b45309', t: 'التقويم الدراسي', d: 'مواعيد بداية الفصلين والاختبارات والإجازات — يُذكّرك بموعد الانتقال للفصل الثاني.', has: true, noUp,
+    fmt: 'صورة أو PDF أو Word أو Excel', accept: 'image/*,.png,.jpg,.jpeg,.webp,.heic,.pdf,.docx,.doc,.xlsx,.xls,.csv',
+    facts: `<b>${esc(c.y)} هـ</b><span>بداية الفصل الثاني</span><em>${calTxt(c.t2)} · ${when}</em>`,
+    out: `${imgs.length || c.html ? '<button class="btn sm" data-tact="calView" type="button">عرض التقويم وطباعته</button>' : ''}<details class="caldates"><summary>التواريخ المعتمدة${noUp ? '' : ' (تعديل)'}</summary><div class="acts wrap">${field('t1', 'بداية الفصل الأول')}${field('ex1a', 'اختبارات الفصل الأول من')}${field('ex1b', 'إلى')}${field('mida', 'إجازة منتصف العام من')}${field('midb', 'إلى')}${field('t2', 'بداية الفصل الثاني')}</div></details>` });
+}
+function calView() {
+  const c = CAL(), imgs = calImgs();
+  const pages = imgs.length ? imgs.map(im => `<p style="text-align:center;margin:0"><img src="${im.src}" alt="التقويم الدراسي" style="max-width:100%;max-height:245mm;height:auto"></p>`) : [c.html];
+  openPreview([{ land: false, pages, t: 'التقويم الدراسي' }], fname('التقويم الدراسي ' + c.y));
+}
+
+/* ----- فحص جاهزية الفصل الثاني ----- */
+function t2Check() {
+  const a = secData('ta-agent') || {}, ta = a.ta || [], tt = inT2() ? (D().tt) : (D().ttNext || null);
+  const tlist = (a.teachers && a.teachers.length ? a.teachers : S.teachers) || [];
+  const R = { ta, tt, issues: [], ok: [], pct: 0 };
+  const taT = [...new Set(ta.map(x => String(x.t || '').trim()).filter(Boolean))];
+  const ttT = tt ? tt.teachers.map(x => x.n) : [];
+  if (!ta.length) R.issues.push({ k: 'bad', t: 'لا توجد إسنادات في «حفظ الوكيل» بعد.' }); else R.ok.push(`إسنادات الوكيل: ${ta.length} سطراً لـ ${taT.length} معلماً.`);
+  if (!tt) R.issues.push({ k: 'warn', t: 'لم يُرفع جدول الفصل الثاني بعد (خانة «جدول الفصل القادم» في الملفات).' }); else R.ok.push(`جدول الفصل الثاني: ${ttT.length} معلماً.`);
+  const inTa = sameTeacher(taT), inTt = sameTeacher(ttT), inList = sameTeacher(tlist);
+  const bad = new Set();
+  if (tt && ta.length) {
+    const a1 = ttT.filter(n => !inTa(n)); if (a1.length) { a1.forEach(n => bad.add(normName(n))); R.issues.push({ k: 'warn', t: `في الجدول بلا إسناد (${a1.length}): ${a1.join('، ')}` }); }
+    const a2 = taT.filter(n => !inTt(n)); if (a2.length) { a2.forEach(n => bad.add(normName(n))); R.issues.push({ k: 'warn', t: `مُسنَد لهم وليسوا في الجدول (${a2.length}): ${a2.join('، ')}` }); }
+    const load = {}; ta.forEach(x => { const h = Number(x.h) || 0; if (h) { const k = normName(x.t); load[k] = (load[k] || 0) + h; } });
+    if (Object.keys(load).length) {
+      const mm = tt.teachers.map(x => ({ n: x.n, p: Object.keys(x.c).length, h: load[normName(x.n)] })).filter(x => x.h && x.h !== x.p);
+      if (mm.length) { mm.forEach(x => bad.add(normName(x.n))); R.issues.push({ k: 'warn', t: `نصاب الإسناد يختلف عن حصص الجدول (${mm.length}): ${mm.map(x => `${x.n} (إسناد ${x.h} / جدول ${x.p})`).join('، ')}` }); }
+    }
+  }
+  if (ta.length && tlist.length) { const a3 = taT.filter(n => !inList(n)); if (a3.length) R.issues.push({ k: 'info', t: `أسماء في الإسناد ليست في قائمة المعلمين (${a3.length}): ${a3.join('، ')} — قد يكونون جدداً.` }); }
+  const all = new Set([...taT, ...ttT].map(normName));
+  R.pct = !ta.length ? 0 : !tt ? 50 : all.size ? Math.round(100 * (all.size - bad.size) / all.size) : 0;
+  return R;
+}
+function t2Modal() {
+  const R = t2Check(), c = CAL();
+  let m = $('#termModal'); if (!m) { m = document.createElement('div'); m.id = 'termModal'; m.className = 'modal'; document.body.appendChild(m); }
+  m.innerHTML = `<div class="box tchbox"><h3>جاهزية الفصل الدراسي الثاني — ${R.pct}%</h3>
+    <p class="hint">مقارنة «حفظ الوكيل» بجدول الفصل الثاني وقائمة المعلمين. يبدأ الفصل الثاني ${calTxt(c.t2)}.</p>
+    <div class="tlist">${R.ok.map(t => `<p class="upnote ok">✓ ${esc(t)}</p>`).join('')}${R.issues.length ? R.issues.map(x => `<p class="upnote ${x.k === 'bad' ? 'bad' : x.k === 'info' ? '' : 'warn'}">${x.k === 'info' ? 'ℹ' : '⚠'} ${esc(x.t)}</p>`).join('') : '<p class="upnote ok">✓ لا توجد ملاحظات — الإسناد مطابق للجدول.</p>'}</div>
+    <div class="acts">${ROLE === 'agent' || ACTIVE === 'ta-agent' ? '<button class="btn" data-tm="assign" type="button">فتح الإسناد</button>' : ''}<button class="btn ghost" data-tm="close" type="button">إغلاق</button></div></div>`;
+  m.hidden = false;
+  m.onclick = e => { if (e.target === m || e.target.closest('[data-tm="close"]')) m.hidden = true; else if (e.target.closest('[data-tm="assign"]')) { m.hidden = true; go('assign'); } };
+}
+
+/* ----- شريط الانتقال ----- */
+function termBanner(tab) {
+  if (!['home', 'assign', 'daily', 'settings', 'files'].includes(tab)) return '';
+  const c = CAL(); let arc = null; try { arc = JSON.parse(localStorage.getItem(LS_KEY + '-termArc') || 'null'); } catch (e) { }
+  if (inT2()) {
+    if (!arc || !isAdmin() || daysTo(arc.day) < -30) return '';
+    return `<div class="tbar done"><div><b>النظام على الفصل الدراسي الثاني</b><span>انتقلت في ${esc(arc.at)}. أعمال الفصل الأول مؤرشفة على هذا الجهاز.</span></div><div class="tba"><button class="btn sm ghost" data-tact="termUndo" type="button">تراجع عن الانتقال</button></div></div>`;
+  }
+  const dd = daysTo(c.t2), R = t2Check(), near = dd <= 14;
+  if (!R.ta.length && !R.tt && dd > 45) return '';
+  const col = R.pct >= 90 ? 'g' : R.pct >= 60 ? 'w' : 'b';
+  return `<div class="tbar${near ? ' near' : ''}"><div class="tbi">٢</div><div><b>${dd > 0 ? `الفصل الدراسي الثاني يبدأ بعد ${dd} يوماً` : dd === 0 ? 'الفصل الدراسي الثاني يبدأ اليوم' : `بدأ الفصل الدراسي الثاني منذ ${-dd} يوماً`}</b><span>${calTxt(c.t2)} · «${esc(setMeta('ta-agent').n)}» جاهز بنسبة <em class="tp ${col}">${R.pct}%</em>${R.issues.length ? ` · ${R.issues.length} ملاحظات` : ''}</span></div>
+    <div class="tba"><button class="btn sm" data-tact="t2Check" type="button">تفاصيل الجاهزية</button>${isAdmin() ? `<button class="btn sm ${near ? 'pri' : 'ghost'}" data-tact="termGo" type="button">بدء الفصل الثاني</button>` : ''}</div></div>`;
+}
+function htmlBox(title, html, yes, no) {
+  return new Promise(res => {
+    let m = $('#termModal'); if (!m) { m = document.createElement('div'); m.id = 'termModal'; m.className = 'modal'; document.body.appendChild(m); }
+    m.innerHTML = `<div class="box tchbox"><h3>${title}</h3>${html}<div class="acts"><button class="btn pri" data-tm="y" type="button">${yes}</button><button class="btn ghost" data-tm="n" type="button">${no}</button></div></div>`;
+    m.hidden = false; m.onclick = e => { const y = e.target.closest('[data-tm="y"]'), n = e.target.closest('[data-tm="n"]'); if (y || n || e.target === m) { m.hidden = true; res(!!y); } };
+  });
+}
+async function termGo() {
+  if (!isAdmin()) return toast('الانتقال بين الفصلين من صلاحية مدير النظام', true);
+  const R = t2Check(), c = CAL(), n = D().ttNext;
+  const ok = await htmlBox('بدء الفصل الدراسي الثاني', `<p class="hint">سيتم بضغطة واحدة:</p><ol class="tsteps">
+    <li>تحويل النظام كله إلى <b>الفصل الدراسي الثاني</b> (الكليشة والاختبارات والانتظار والمناوبة).</li>
+    <li>اعتماد إسنادات «${esc(setMeta('ta-agent').n)}» (${R.ta.length} سطراً) مصدراً للاختبارات والتكليفات.</li>
+    <li>${n ? `اعتماد جدول الفصل الثاني (${n.teachers.length} معلماً) جدولاً حالياً لحصص الانتظار.` : '<span class="bad">لم يُرفع جدول الفصل الثاني — يبقى الجدول الحالي إلى أن ترفعه.</span>'}</li>
+    <li>أرشفة أعمال الفصل الأول كاملة على هذا الجهاز، مع زر «تراجع» متاح.</li></ol>
+    <p class="upnote ${R.issues.length ? 'warn' : 'ok'}">الجاهزية ${R.pct}%${R.issues.length ? ` — ${R.issues.length} ملاحظات (اضغط «تفاصيل الجاهزية» لمراجعتها)` : ''}</p>
+    <p class="hint">لا يُحذف شيء: سجلات الانتظار والمناوبة السابقة باقية، وجدول الاختبارات يبقى لتحدّثه بمواعيد الفصل الثاني.</p>`, 'ابدأ الفصل الثاني', 'إلغاء');
+  if (!ok) return;
+  const ex = clone(secData('ex')); delete ex.cal;
+  const arc = { at: stamp(), day: todayIso(), sem: S.s.sem, active: ACTIVE, ex, sets: {}, daily: clone(S.daily || {}) };
+  TA_SETS.forEach(id => arc.sets[id] = clone(secData(id)));
+  try { localStorage.setItem(LS_KEY + '-termArc', JSON.stringify(arc)); } catch (e) { return toast('تعذّر حفظ الأرشيف على هذا الجهاز (المساحة ممتلئة) — نزّل نسخة احتياطية أولاً', true); }
+  if (R.ta.length) copySet('ta-agent', 'ta');
+  TA_SETS.forEach(id => updSetMeta(id, { sem: 'الثاني' }));
+  if (n) { D().ttPrev = D().tt; D().tt = n; delete D().ttNext; if (typeof TT_WHICH !== 'undefined') TT_WHICH = 'cur'; S.uploads.tt = { name: n.src, at: stamp(), info: `${n.teachers.length} معلماً` }; }
+  S.s.sem = 'الثاني'; CAL().doneAt = stamp();
+  save(true); try { drawBrand(); } catch (e) { } syncSoon(); renderNav(); render(); updSetChip();
+  toast('بدأ الفصل الدراسي الثاني ✓ — أعمال الفصل الأول مؤرشفة');
+}
+async function termUndo() {
+  let arc; try { arc = JSON.parse(localStorage.getItem(LS_KEY + '-termArc') || 'null'); } catch (e) { }
+  if (!arc) return toast('لا يوجد أرشيف للتراجع', true);
+  if (!await confirmBox(`التراجع عن الانتقال وإعادة النظام إلى ${arc.sem === 'الأول' ? 'الفصل الأول' : arc.sem} كما كان في ${arc.at}؟ أي تعديل بعد الانتقال سيُستبدل بالنسخة المؤرشفة.`)) return;
+  const cal = clone(CAL()); delete cal.doneAt;
+  applySec('ex', arc.ex); S.cal = cal;
+  TA_SETS.forEach(id => { if (arc.sets[id]) applySec(id, arc.sets[id]); });
+  S.daily = arc.daily || {};
+  try { localStorage.removeItem(LS_KEY + '-termArc'); } catch (e) { }
+  save(true); try { drawBrand(); } catch (e) { } syncSoon(); renderNav(); render(); updSetChip();
+  toast('أُعيد النظام إلى الفصل الأول ✓');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'calView') calView(); else if (a === 't2Check') t2Modal(); else if (a === 'termGo') termGo(); else if (a === 'termUndo') termUndo();
 });
 
 </script>

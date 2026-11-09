@@ -1,7 +1,7 @@
 import pathlib
 d = pathlib.Path(__file__).parent
 src = (d / 'index.src.html').read_text(encoding='utf-8')
-app = ((d / 'app.js').read_text(encoding='utf-8') + '\n' + (d / 'home.js').read_text(encoding='utf-8') + '\n' + (d / 'daily.js').read_text(encoding='utf-8')).replace('__LOGO__', (d / 'logo_white.b64').read_text().strip())
+app = ((d / 'app.js').read_text(encoding='utf-8') + '\n' + (d / 'home.js').read_text(encoding='utf-8') + '\n' + (d / 'daily.js').read_text(encoding='utf-8') + '\n' + (d / 'term.js').read_text(encoding='utf-8')).replace('__LOGO__', (d / 'logo_white.b64').read_text().strip())
 out = src.replace('__DATA__', (d / 'data.js').read_text(encoding='utf-8')).replace('__APP__', app)
 (d.parent / 'site').mkdir(exist_ok=True)
 (d.parent / 'site' / 'index.html').write_text(out, encoding='utf-8')
@@ -17,6 +17,7 @@ shutil.copy(nm/'docx/build/index.umd.js', d.parent/'site'/'docx.umd.js')
 shutil.copy(nm/'pdfjs-dist/build/pdf.min.js', d.parent/'site'/'pdf.min.js')
 shutil.copy(nm/'html2canvas/dist/html2canvas.min.js', d.parent/'site'/'html2canvas.min.js')
 shutil.copy(nm/'jspdf/dist/jspdf.umd.min.js', d.parent/'site'/'jspdf.umd.min.js')
+shutil.copy(d/'cal-1448.webp', d.parent/'site'/'cal-1448.webp')
 shutil.copy(nm/'pdfjs-dist/build/pdf.worker.min.js', d.parent/'site'/'pdf.worker.min.js')
 # ---- نسخة الملف الواحد ----
 import base64, re

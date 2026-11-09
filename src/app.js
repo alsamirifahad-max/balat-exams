@@ -1071,7 +1071,7 @@ function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
-  m.innerHTML = '<div id="pendBox"></div>' + roNote + stageHero(p) + `<div class="sbody">${tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p) + `<div class="sbody">${tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
     j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
@@ -1335,7 +1335,7 @@ function fileCard(slot, o) {
   return `<article id="fc_${slot}" class="fcard${u || o.has ? ' done' : ''}" style="--fc:${o.c}">
     <div class="fhead"><span class="fnum">${o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div></div>
     <div class="ffacts">${o.facts}</div>
-    ${dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
+    ${o.noUp ? '' : dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
     ${o.out ? `<div class="fout"><span>تحميل:</span>${o.out}</div>` : ''}
   </article>`;
 }
@@ -1365,7 +1365,8 @@ function vFiles() {
       facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span><em>${S.ta.length ? (() => { const inTa = sameTeacher(S.ta.map(x => x.t)); const k = S.teachers.filter(inTa).length; return `${k} منهم في الإسناد${S.teachers.length - k ? ` · ${S.teachers.length - k} بلا إسناد` : ''}`; })() : 'لم يُرفع الإسناد بعد'}</em>` : '<span class="fnone">القائمة فارغة</span>',
       out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button><button class="btn sm" data-act="qopen" data-form="tList" type="button">معاينة وطباعة</button>` })}
     ${ttCard(4)}
-  </div><div id="upMsg"></div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>`;
+    ${calCard(5)}
+  </div><div id="upMsg"></div><div id="upMsg_tch"></div><div id="upMsg_tt"></div><div id="upMsg_cal"></div>`;
   const tlist = `<section class="card" id="tchCard">
     <h2>قائمة المعلمين — تعديل يدوي</h2>
     <p class="hint">اسم في كل سطر. تُضاف أسماء معلمي الإسناد تلقائياً، وكل قوائم اختيار المعلمين في الموقع مرتبة هجائياً.</p>
@@ -1374,7 +1375,7 @@ function vFiles() {
     <div class="acts"><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
     <details${S.teachers.length ? '' : ' open'}><summary>عرض القائمة وتعديلها (${S.teachers.length})</summary><textarea class="in ta" data-k="teachers" data-lines="1" rows="12" id="f_teachers">${esc(S.teachers.join('\n'))}</textarea></details>
   </section>`;
-  if (agentOnly) return `<div class="fcards">${ttCard(2)}${fileCard('tch', { n: 1, c: PEOPLE.agent.c, t: 'قائمة المعلمين', d: 'معلمو المدرسة لحفظك — تنعكس في الإسناد. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt', facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span>` : '<span class="fnone">القائمة فارغة</span>', out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button>` })}</div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>` + tlist;
+  if (agentOnly) return `<div class="fcards">${ttCard(2)}${calCard(3, true)}${fileCard('tch', { n: 1, c: PEOPLE.agent.c, t: 'قائمة المعلمين', d: 'معلمو المدرسة لحفظك — تنعكس في الإسناد. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt', facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span>` : '<span class="fnone">القائمة فارغة</span>', out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button>` })}</div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>` + tlist;
   return cards + vStudents(true) + tlist;
 }
 function vStudents(noUpload) {
@@ -1475,6 +1476,8 @@ async function processSlot(slot, file) {
         S.uploads.tt = { name: file.name, at: stamp(), info: `${list.length} معلماً` };
         msg = `اعتُمد الجدول المدرسي العام: ${list.length} معلماً و${tot} حصة. تظهر الآن الحصص والمتاحون في «الانتظار والمناوبة».`;
       }
+    } else if (slot === 'cal') {
+      msg = await calUpload(file);
     } else if (slot === 'tch') {
       const found = await readTeacherFile(file);
       if (!found.length) throw new Error('لم يُعثر على أسماء معلمين في الملف. اجعل الأسماء في عمود عنوانه «اسم المعلم» أو اسماً في كل سطر، أو نزّل القالب واملأه.');
@@ -2822,7 +2825,7 @@ function choiceBox(msg, yes, no) {
     const fin = v => { m.hidden = true; Y.textContent = oy; N.textContent = on; Y.className = 'btn danger'; res(v); };
     Y.onclick = () => fin(true); N.onclick = () => fin(false); });
 }
-const SLOT_NAMES = { ttn: 'جدول الفصل القادم', tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
+const SLOT_NAMES = { cal: 'التقويم الدراسي', ttn: 'جدول الفصل القادم', tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
 /* يُطلب الرمز مرة واحدة في الجلسة؛ اختيار الملف يتم أولاً بلمسة مباشرة (متطلب سفاري في الآيفون) ثم التحقق */
 let UNLOCKED = (() => { try { return sessionStorage.getItem('balat-unlock') === '1' || !!localStorage.getItem('balat-exams-v1-code'); } catch (e) { return false; } })();
 async function unlock(reason) {
