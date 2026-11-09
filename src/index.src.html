@@ -586,6 +586,14 @@ body.nosc{overflow:hidden}
 .achip.zero{opacity:.55}.achip.on{background:#dc2626;border-color:#dc2626;color:#fff;font-weight:700;opacity:1}.achip.on i{background:rgba(255,255,255,.25);color:#fff}
 .lvbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;font-size:.84rem;border-bottom:1px dashed var(--line)}.lvbar span{flex:1;min-width:180px;color:#b45309}
 .lvform{display:flex;flex-direction:column;gap:8px;padding:10px;background:color-mix(in srgb,#b45309 7%,var(--surface));border-bottom:1px dashed var(--line)}
+.obe{font:inherit;font-size:.8rem;border:1.5px dashed #94a3b8;background:transparent;color:var(--muted);border-radius:999px;padding:4px 12px;cursor:pointer;min-height:32px}.obe.on,.ob.tgt .obn{border-color:#0e7490;border-style:solid;background:#0e7490;color:#fff}
+.obn{font:inherit;border:0;background:none;color:inherit;cursor:pointer;padding:0 4px;font-weight:700}
+.obpick td{background:color-mix(in srgb,#0e7490 6%,var(--surface))!important}.wchip i.ld{font-style:normal;font-size:.68rem;margin-inline-start:5px;color:var(--muted)}
+@media (max-width:700px){table.obs,table.obs tbody{display:block}table.obs tr:first-child{display:none}
+ table.obs tr{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 10px;align-items:center;padding:10px 8px;border-bottom:1px solid var(--line)}table.obs td{display:block;border:0;padding:0}
+ table.obs td:nth-child(1) b{font-size:1.25rem;color:var(--sc)}table.obs td:nth-child(2){font-size:.8rem}table.obs td:nth-child(3)::after{content:" طالباً";font-size:.72rem;color:var(--muted)}
+ table.obs td:nth-child(5){grid-column:1/-1}table.obs tr.obpick{display:block;padding:8px 6px}table.obs tr.obpick td{display:block}}
+.ob .obn{white-space:nowrap}
 .ttnext{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.ttnext > b{font-size:.92rem}.ttnext .drop{padding:10px}
 .pickl1{padding:3px 14px;font-size:.78rem;font-weight:800;color:var(--accent);background:var(--bg);border-bottom:1px solid var(--line)}
 .setnow{display:flex;gap:12px;align-items:center;border:2px solid var(--sc2);border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--sc2) 8%,var(--surface));margin-top:8px}

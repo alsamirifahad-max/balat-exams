@@ -381,3 +381,42 @@ function autoSeed(meta) {
     renderNav(); render(); toast(`جُهّز إسناد الفصل ${setMeta(s2).sem} بمعلمي الفصل ${setMeta(s1).sem} وتخصصاتهم وإسناداتهم — عدّل ما يتغير فقط`);
   } catch (e) { }
 }
+
+/* ===================== توزيع الملاحظين بلمسة ===================== */
+var OBS_T = null;
+function obsSlots(se, c, key, list, busy, cnt, load) {
+  const slots = Math.max(list.length, obsNeed(c.no)); let h = '';
+  for (let i = 0; i < slots; i++) {
+    const n = list[i] || '', on = OBS_T && OBS_T.key === key && OBS_T.i === i, dup = n && cnt[normName(n)] > 1, bz = n && busy.has(normName(n)), sw = SWAP && SWAP.key === key && SWAP.i === i;
+    h += n ? `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}${on ? ' tgt' : ''}"><button type="button" class="obn" data-tact="obsT" data-k="${key}" data-i="${i}" title="${dup ? 'مكرر في نفس الفترة — ' : bz ? 'معلم مادة مختبرة في هذه الفترة — ' : ''}المس للتغيير">${esc(n)}</button><button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`
+      : `<button type="button" class="obe${on ? ' on' : ''}" data-tact="obsT" data-k="${key}" data-i="${i}">＋ الملاحظ ${i + 1}</button>`;
+  }
+  return h + `<button type="button" class="btn sm ghost" data-act="obsAdd" data-k="${key}">+ ملاحظ</button>`;
+}
+function obsPickRow(key, busy, cnt, load) {
+  const i = OBS_T.i, cur = obsList(key)[i] || '';
+  const avail = tchAll().filter(t => !busy.has(normName(t)) && !cnt[normName(t)]).sort((a, b) => AR.compare(normName(a), normName(b)));
+  const L = {}; Object.entries(load).forEach(([n, v]) => L[normName(n)] = (L[normName(n)] || 0) + v);
+  const sug = new Set(avail.slice().sort((a, b) => (L[normName(a)] || 0) - (L[normName(b)] || 0) || AR.compare(normName(a), normName(b))).slice(0, 3));
+  const com = key.split('_').pop();
+  return `<tr class="obpick"><td colspan="5"><div class="wpick"><small>${cur ? `تغيير «${esc(cur)}» في` : 'اختر الملاحظ'} ${i + 1} للجنة ${esc(com)} — المتاحون في هذه الفترة (${avail.length})، والأقل ملاحظةً بنجمة ★. بعد الاختيار ينتقل التحديد تلقائياً للخانة الفارغة التالية.</small>
+    <div class="wchips">${avail.map(n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}" data-tact="obsPick" data-n="${esc(n)}">${esc(n)}<i class="ld">${L[normName(n)] || 0}</i></button>`).join('') || '<span class="hint">لا يوجد معلم متاح في هذه الفترة</span>'}</div>
+    <div class="acts wrap" style="margin:0"><details class="wother"><summary>اسم آخر من كل المعلمين…</summary>${pickSel(`obs.${key}.${i}`, cur, [{ label: 'جميع المعلمين', items: tchAll() }], { ph: '— كل المعلمين —' })}</details><button type="button" class="btn sm ghost" data-tact="obsT0" type="button">إنهاء الاختيار</button></div></div></td></tr>`;
+}
+function obsNextEmpty(key, i) {
+  const se = key.slice(0, key.lastIndexOf('_')), coms = S.com.map(c => c.no); let started = false;
+  for (const no of coms) { const k = `${se}_${no}`, L = obsList(k), n = Math.max(L.length, obsNeed(no));
+    for (let j = 0; j < n; j++) { if (!started) { if (k === key && j === i) started = true; continue; } if (!L[j]) return { key: k, i: j }; } }
+  return null;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'obsT') { const t = { key: b.dataset.k, i: +b.dataset.i }; OBS_T = OBS_T && OBS_T.key === t.key && OBS_T.i === t.i ? null : t; render(); }
+  else if (a === 'obsT0') { OBS_T = null; render(); }
+  else if (a === 'obsPick' && OBS_T) {
+    const L = obsList(OBS_T.key).slice(); while (L.length <= OBS_T.i) L.push(''); L[OBS_T.i] = b.dataset.n; S.obs[OBS_T.key] = L; save();
+    OBS_T = obsNextEmpty(OBS_T.key, OBS_T.i); render();
+    setTimeout(() => { const el = document.querySelector('.obpick'); if (el) { const r = el.getBoundingClientRect(); if (r.top < 80 || r.bottom > innerHeight) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 40);
+    if (!OBS_T) toast('اكتملت خانات الملاحظين لهذه الفترة ✓');
+  }
+});

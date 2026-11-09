@@ -1577,9 +1577,7 @@ function vStaff() {
       const key = `${se.key}_${c.no}`, list = obsList(key);
       return `<tr><td><b>${c.no}</b></td><td class="tnames">${esc(comPlace(c))}</td><td>${comSum(c)}</td>
       <td><input class="in" type="number" min="1" max="5" data-k="obsN.${c.no}" data-num="1" value="${obsNeed(c.no)}" style="width:4rem" id="on_${c.no}"></td>
-      <td><div class="obsl">${list.map((n, i) => { const dup = n && cnt[normName(n)] > 1, bz = n && busy.has(normName(n)), sw = SWAP && SWAP.key === key && SWAP.i === i;
-        return `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}">${pickSel(`obs.${key}.${i}`, n, [{ label: 'متاحون في هذه الفترة', items: tchAll().filter(t => !busy.has(normName(t)) && !cnt[normName(t)]) }, { label: 'جميع المعلمين', items: tchAll() }], { ph: '— اختر الملاحظ —', title: dup ? 'مكرر في نفس الفترة' : bz ? 'معلم مادة مختبرة في هذه الفترة' : 'اختر اسماً للإحلال' })}<button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`; }).join('')}
-      <button type="button" class="btn sm ghost" data-act="obsAdd" data-k="${key}">+ ملاحظ</button></div></td></tr>`; }).join('')}</table></div>
+      <td><div class="obsl">${obsSlots(se, c, key, list, busy, cnt, load)}</div></td></tr>${typeof OBS_T !== 'undefined' && OBS_T && OBS_T.key === key ? obsPickRow(key, busy, cnt, load) : ''}`; }).join('')}</table></div>
       ${SWAP ? `<p class="upnote ok">اخترت «${esc(obsList(SWAP.key)[SWAP.i] || '')}» للتبديل — اضغط ⇅ عند الملاحظ الآخر لإتمام التبديل، أو <button class="btn sm ghost" data-act="obsSwapCancel" type="button">إلغاء</button></p>` : ''}
       <details><summary>أحمال الملاحظة لكل معلم (جميع الفترات)</summary><div class="loadl">${Object.entries(load).sort((a, b) => b[1] - a[1]).map(([n, v]) => `<span>${esc(n)} <b>${v}</b></span>`).join('') || '<span class="hint">لا يوجد توزيع بعد</span>'}</div></details>`;
   }
@@ -1620,7 +1618,7 @@ function vStaff() {
       <button class="btn sm pri" data-act="autoObs" type="button">توزيع تلقائي عادل لجميع الفترات</button>
       <button class="btn sm ghost" data-act="clearObs" type="button">مسح التوزيع</button>
     </div>
-    <p class="hint">للإحلال اكتب اسماً آخر في الخانة أو اختره من القائمة. للتبديل اضغط ⇅ عند ملاحظ ثم ⇅ عند ملاحظ آخر. الإطار الأحمر يعني اسماً مكرراً في نفس الفترة، والبرتقالي معلم مادة تُختبر في نفس الفترة.</p>
+    <p class="hint">المس خانة «＋ الملاحظ» أو اسم أي ملاحظ فتظهر تحت اللجنة أسماء المتاحين في هذه الفترة (الأقل ملاحظةً بنجمة)، والمس الاسم فيُوضع وينتقل التحديد تلقائياً للخانة التالية. للتبديل اضغط ⇅ عند ملاحظ ثم ⇅ عند ملاحظ آخر. الإطار الأحمر يعني اسماً مكرراً في نفس الفترة، والبرتقالي معلم مادة تُختبر في نفس الفترة.</p>
     ${obsHtml}
   </section>
 

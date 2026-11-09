@@ -586,6 +586,14 @@ body.nosc{overflow:hidden}
 .achip.zero{opacity:.55}.achip.on{background:#dc2626;border-color:#dc2626;color:#fff;font-weight:700;opacity:1}.achip.on i{background:rgba(255,255,255,.25);color:#fff}
 .lvbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;font-size:.84rem;border-bottom:1px dashed var(--line)}.lvbar span{flex:1;min-width:180px;color:#b45309}
 .lvform{display:flex;flex-direction:column;gap:8px;padding:10px;background:color-mix(in srgb,#b45309 7%,var(--surface));border-bottom:1px dashed var(--line)}
+.obe{font:inherit;font-size:.8rem;border:1.5px dashed #94a3b8;background:transparent;color:var(--muted);border-radius:999px;padding:4px 12px;cursor:pointer;min-height:32px}.obe.on,.ob.tgt .obn{border-color:#0e7490;border-style:solid;background:#0e7490;color:#fff}
+.obn{font:inherit;border:0;background:none;color:inherit;cursor:pointer;padding:0 4px;font-weight:700}
+.obpick td{background:color-mix(in srgb,#0e7490 6%,var(--surface))!important}.wchip i.ld{font-style:normal;font-size:.68rem;margin-inline-start:5px;color:var(--muted)}
+@media (max-width:700px){table.obs,table.obs tbody{display:block}table.obs tr:first-child{display:none}
+ table.obs tr{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 10px;align-items:center;padding:10px 8px;border-bottom:1px solid var(--line)}table.obs td{display:block;border:0;padding:0}
+ table.obs td:nth-child(1) b{font-size:1.25rem;color:var(--sc)}table.obs td:nth-child(2){font-size:.8rem}table.obs td:nth-child(3)::after{content:" طالباً";font-size:.72rem;color:var(--muted)}
+ table.obs td:nth-child(5){grid-column:1/-1}table.obs tr.obpick{display:block;padding:8px 6px}table.obs tr.obpick td{display:block}}
+.ob .obn{white-space:nowrap}
 .ttnext{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.ttnext > b{font-size:.92rem}.ttnext .drop{padding:10px}
 .pickl1{padding:3px 14px;font-size:.78rem;font-weight:800;color:var(--accent);background:var(--bg);border-bottom:1px solid var(--line)}
 .setnow{display:flex;gap:12px;align-items:center;border:2px solid var(--sc2);border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--sc2) 8%,var(--surface));margin-top:8px}
@@ -2303,9 +2311,7 @@ function vStaff() {
       const key = `${se.key}_${c.no}`, list = obsList(key);
       return `<tr><td><b>${c.no}</b></td><td class="tnames">${esc(comPlace(c))}</td><td>${comSum(c)}</td>
       <td><input class="in" type="number" min="1" max="5" data-k="obsN.${c.no}" data-num="1" value="${obsNeed(c.no)}" style="width:4rem" id="on_${c.no}"></td>
-      <td><div class="obsl">${list.map((n, i) => { const dup = n && cnt[normName(n)] > 1, bz = n && busy.has(normName(n)), sw = SWAP && SWAP.key === key && SWAP.i === i;
-        return `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}">${pickSel(`obs.${key}.${i}`, n, [{ label: 'متاحون في هذه الفترة', items: tchAll().filter(t => !busy.has(normName(t)) && !cnt[normName(t)]) }, { label: 'جميع المعلمين', items: tchAll() }], { ph: '— اختر الملاحظ —', title: dup ? 'مكرر في نفس الفترة' : bz ? 'معلم مادة مختبرة في هذه الفترة' : 'اختر اسماً للإحلال' })}<button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`; }).join('')}
-      <button type="button" class="btn sm ghost" data-act="obsAdd" data-k="${key}">+ ملاحظ</button></div></td></tr>`; }).join('')}</table></div>
+      <td><div class="obsl">${obsSlots(se, c, key, list, busy, cnt, load)}</div></td></tr>${typeof OBS_T !== 'undefined' && OBS_T && OBS_T.key === key ? obsPickRow(key, busy, cnt, load) : ''}`; }).join('')}</table></div>
       ${SWAP ? `<p class="upnote ok">اخترت «${esc(obsList(SWAP.key)[SWAP.i] || '')}» للتبديل — اضغط ⇅ عند الملاحظ الآخر لإتمام التبديل، أو <button class="btn sm ghost" data-act="obsSwapCancel" type="button">إلغاء</button></p>` : ''}
       <details><summary>أحمال الملاحظة لكل معلم (جميع الفترات)</summary><div class="loadl">${Object.entries(load).sort((a, b) => b[1] - a[1]).map(([n, v]) => `<span>${esc(n)} <b>${v}</b></span>`).join('') || '<span class="hint">لا يوجد توزيع بعد</span>'}</div></details>`;
   }
@@ -2346,7 +2352,7 @@ function vStaff() {
       <button class="btn sm pri" data-act="autoObs" type="button">توزيع تلقائي عادل لجميع الفترات</button>
       <button class="btn sm ghost" data-act="clearObs" type="button">مسح التوزيع</button>
     </div>
-    <p class="hint">للإحلال اكتب اسماً آخر في الخانة أو اختره من القائمة. للتبديل اضغط ⇅ عند ملاحظ ثم ⇅ عند ملاحظ آخر. الإطار الأحمر يعني اسماً مكرراً في نفس الفترة، والبرتقالي معلم مادة تُختبر في نفس الفترة.</p>
+    <p class="hint">المس خانة «＋ الملاحظ» أو اسم أي ملاحظ فتظهر تحت اللجنة أسماء المتاحين في هذه الفترة (الأقل ملاحظةً بنجمة)، والمس الاسم فيُوضع وينتقل التحديد تلقائياً للخانة التالية. للتبديل اضغط ⇅ عند ملاحظ ثم ⇅ عند ملاحظ آخر. الإطار الأحمر يعني اسماً مكرراً في نفس الفترة، والبرتقالي معلم مادة تُختبر في نفس الفترة.</p>
     ${obsHtml}
   </section>
 
@@ -4899,6 +4905,45 @@ function autoSeed(meta) {
     renderNav(); render(); toast(`جُهّز إسناد الفصل ${setMeta(s2).sem} بمعلمي الفصل ${setMeta(s1).sem} وتخصصاتهم وإسناداتهم — عدّل ما يتغير فقط`);
   } catch (e) { }
 }
+
+/* ===================== توزيع الملاحظين بلمسة ===================== */
+var OBS_T = null;
+function obsSlots(se, c, key, list, busy, cnt, load) {
+  const slots = Math.max(list.length, obsNeed(c.no)); let h = '';
+  for (let i = 0; i < slots; i++) {
+    const n = list[i] || '', on = OBS_T && OBS_T.key === key && OBS_T.i === i, dup = n && cnt[normName(n)] > 1, bz = n && busy.has(normName(n)), sw = SWAP && SWAP.key === key && SWAP.i === i;
+    h += n ? `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}${on ? ' tgt' : ''}"><button type="button" class="obn" data-tact="obsT" data-k="${key}" data-i="${i}" title="${dup ? 'مكرر في نفس الفترة — ' : bz ? 'معلم مادة مختبرة في هذه الفترة — ' : ''}المس للتغيير">${esc(n)}</button><button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`
+      : `<button type="button" class="obe${on ? ' on' : ''}" data-tact="obsT" data-k="${key}" data-i="${i}">＋ الملاحظ ${i + 1}</button>`;
+  }
+  return h + `<button type="button" class="btn sm ghost" data-act="obsAdd" data-k="${key}">+ ملاحظ</button>`;
+}
+function obsPickRow(key, busy, cnt, load) {
+  const i = OBS_T.i, cur = obsList(key)[i] || '';
+  const avail = tchAll().filter(t => !busy.has(normName(t)) && !cnt[normName(t)]).sort((a, b) => AR.compare(normName(a), normName(b)));
+  const L = {}; Object.entries(load).forEach(([n, v]) => L[normName(n)] = (L[normName(n)] || 0) + v);
+  const sug = new Set(avail.slice().sort((a, b) => (L[normName(a)] || 0) - (L[normName(b)] || 0) || AR.compare(normName(a), normName(b))).slice(0, 3));
+  const com = key.split('_').pop();
+  return `<tr class="obpick"><td colspan="5"><div class="wpick"><small>${cur ? `تغيير «${esc(cur)}» في` : 'اختر الملاحظ'} ${i + 1} للجنة ${esc(com)} — المتاحون في هذه الفترة (${avail.length})، والأقل ملاحظةً بنجمة ★. بعد الاختيار ينتقل التحديد تلقائياً للخانة الفارغة التالية.</small>
+    <div class="wchips">${avail.map(n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}" data-tact="obsPick" data-n="${esc(n)}">${esc(n)}<i class="ld">${L[normName(n)] || 0}</i></button>`).join('') || '<span class="hint">لا يوجد معلم متاح في هذه الفترة</span>'}</div>
+    <div class="acts wrap" style="margin:0"><details class="wother"><summary>اسم آخر من كل المعلمين…</summary>${pickSel(`obs.${key}.${i}`, cur, [{ label: 'جميع المعلمين', items: tchAll() }], { ph: '— كل المعلمين —' })}</details><button type="button" class="btn sm ghost" data-tact="obsT0" type="button">إنهاء الاختيار</button></div></div></td></tr>`;
+}
+function obsNextEmpty(key, i) {
+  const se = key.slice(0, key.lastIndexOf('_')), coms = S.com.map(c => c.no); let started = false;
+  for (const no of coms) { const k = `${se}_${no}`, L = obsList(k), n = Math.max(L.length, obsNeed(no));
+    for (let j = 0; j < n; j++) { if (!started) { if (k === key && j === i) started = true; continue; } if (!L[j]) return { key: k, i: j }; } }
+  return null;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'obsT') { const t = { key: b.dataset.k, i: +b.dataset.i }; OBS_T = OBS_T && OBS_T.key === t.key && OBS_T.i === t.i ? null : t; render(); }
+  else if (a === 'obsT0') { OBS_T = null; render(); }
+  else if (a === 'obsPick' && OBS_T) {
+    const L = obsList(OBS_T.key).slice(); while (L.length <= OBS_T.i) L.push(''); L[OBS_T.i] = b.dataset.n; S.obs[OBS_T.key] = L; save();
+    OBS_T = obsNextEmpty(OBS_T.key, OBS_T.i); render();
+    setTimeout(() => { const el = document.querySelector('.obpick'); if (el) { const r = el.getBoundingClientRect(); if (r.top < 80 || r.bottom > innerHeight) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 40);
+    if (!OBS_T) toast('اكتملت خانات الملاحظين لهذه الفترة ✓');
+  }
+});
 
 </script>
 </body>
