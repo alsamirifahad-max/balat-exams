@@ -4409,10 +4409,10 @@ document.addEventListener('change', e => {
 });
 
 /* ===================== التقويم الدراسي والانتقال بين الفصلين ===================== */
-var CAL_DEF = { y: '1448', t1: '2026-08-30', ex1a: '2027-01-03', ex1b: '2027-01-07', mida: '2027-01-08', midb: '2027-01-16', t2: '2027-01-17' };
+var CAL_DEF = { y: '1448', t1: '2026-08-30', ex1a: '2027-01-03', ex1b: '2027-01-07', mida: '2027-01-08', midb: '2027-01-16', t2: '2027-01-17', ex2a: '2027-06-27', ex2b: '2027-07-01', end: '2027-07-01' };
 var CAL_IMG = 'cal-1448.webp';
 function CAL() { S.cal = S.cal || {}; Object.keys(CAL_DEF).forEach(k => { if (!S.cal[k]) S.cal[k] = CAL_DEF[k]; }); return S.cal; }
-function calImgs() { const c = CAL(); return c.imgs && c.imgs.length ? c.imgs : (c.y === '1448' ? [{ src: CAL_IMG, w: 481, h: 681 }] : []); }
+function calImgs() { const c = CAL(); return c.own && c.imgs && c.imgs.length ? c.imgs : (c.y === '1448' ? [{ src: CAL_IMG, w: 481, h: 681 }, { src: 'cal-1448-t2.jpg', w: 1179, h: 1313 }] : (c.imgs || [])); }
 function daysTo(iso) { return Math.round((isoToDate(iso) - isoToDate(todayIso())) / 864e5); }
 const WDN = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 function calTxt(iso) { if (!iso) return '—'; const d = isoToDate(iso); return `${WDN[d.getUTCDay()]} ${hijriOf(iso)}هـ (${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}م)`; }
@@ -4449,7 +4449,7 @@ async function calUpload(file) {
   } else throw new Error('صيغة غير مدعومة — ارفع صورة أو PDF أو Word أو Excel');
   if (!imgs.length && !html) throw new Error('لم أجد في الملف صورة أو نصاً للتقويم');
   const c = CAL(); const found = calDetect(txt);
-  c.imgs = imgs; c.html = html; c.src = file.name; c.at = stamp();
+  c.imgs = imgs; c.html = html; c.src = file.name; c.at = stamp(); c.own = true;
   Object.assign(c, found);
   S.uploads.cal = { name: file.name, at: stamp(), info: imgs.length ? `${imgs.length} صفحة` : 'نص' };
   const got = Object.keys(found);
@@ -4484,7 +4484,7 @@ function calCard(n, noUp) {
 }
 function calView() {
   const c = CAL(), imgs = calImgs();
-  const pages = imgs.length ? imgs.map(im => `<p style="text-align:center;margin:0"><img src="${im.src}" alt="التقويم الدراسي" style="max-width:100%;max-height:245mm;height:auto"></p>`) : [c.html];
+  const pages = imgs.length ? imgs.map(im => `<p style="text-align:center;margin:0"><img src="${im.src}" alt="التقويم الدراسي" style="width:100%;max-height:245mm;height:auto;object-fit:contain"></p>`) : [c.html];
   openPreview([{ land: false, pages, t: 'التقويم الدراسي' }], fname('التقويم الدراسي ' + c.y));
 }
 
@@ -4589,9 +4589,13 @@ document.addEventListener('click', e => {
 var HOL_DEF = [
   { n: 'إجازة اليوم الوطني', a: '2026-09-23', b: '2026-09-24' },
   { n: 'إجازة إضافية', a: '2026-10-25', b: '2026-10-25' },
-  { n: 'إجازة الخريف', a: '2026-11-20', b: '2026-11-28' }
+  { n: 'إجازة الخريف', a: '2026-11-20', b: '2026-11-28' },
+  { n: 'إجازة يوم التأسيس', a: '2027-02-21', b: '2027-02-22' },
+  { n: 'إجازة عيد الفطر', a: '2027-02-26', b: '2027-03-13' },
+  { n: 'إجازة عيد الأضحى', a: '2027-04-30', b: '2027-05-22' },
+  { n: 'إجازة نهاية العام الدراسي', a: '2027-07-02', b: '2027-08-21' }
 ];
-function hols() { const c = CAL(); if (!Array.isArray(c.hol)) c.hol = c.y === '1448' ? clone(HOL_DEF) : []; return c.hol; }
+function hols() { const c = CAL(); if (!Array.isArray(c.hol)) c.hol = c.y === '1448' ? clone(HOL_DEF) : []; if (c.y === '1448' && !c.holV2) { HOL_DEF.forEach(h => { if (!c.hol.some(x => x.a === h.a)) c.hol.push(clone(h)); }); c.hol.sort((a, b) => String(a.a).localeCompare(String(b.a))); c.holV2 = 1; } return c.hol; }
 function holOf(iso) {
   const c = CAL(); if (c.mida && c.midb && iso >= c.mida && iso <= c.midb) return 'إجازة منتصف العام';
   const h = hols().find(x => x.a && iso >= x.a && iso <= (x.b || x.a)); return h ? (h.n || 'إجازة') : '';
