@@ -24,6 +24,7 @@ function normState() {
   S.days.forEach(fixDay);
   if (!S.m2) { if (S.s.footColor === 'green') S.s.footColor = 'doc'; S.m2 = true; }
   S.guide = S.guide || []; S.uploads = S.uploads || {}; S.obsN = S.obsN || {};
+  if (S.s.gs && !S.s.gs.sepV1) { S.s.gs.include = false; S.s.gs.sepV1 = true; } /* البيان مستقل عن خطاب التكليف */
   if (!S.taMeta && typeof SET_DEF !== 'undefined') S.taMeta = { n: SET_DEF[ACTIVE].n, d: SET_DEF[ACTIVE].d };
   (S.ta || []).forEach(x => x.sub = spaceNum(x.sub));
   Object.keys(S.obs || {}).forEach(k => { if (!Array.isArray(S.obs[k])) S.obs[k] = S.obs[k] ? [S.obs[k]] : []; });
@@ -1557,7 +1558,7 @@ function vStaff() {
     ${qbar('gradeStmt', 'بيان توزيع الدرجات:')}
     <p class="hint">يُرفق مع خطابات تكليف وضع الأسئلة حسب اختيارك. إذا صدر بيان جديد فارفعه بصيغة Word أو PDF أو صورة، وسيُستخدم بدلاً من البيان المعتمد.</p>
     <div class="acts wrap">
-      <label class="ck"><input type="checkbox" data-k="s.gs.include" ${gsx.include ? 'checked' : ''}> إرفاق البيان في تكليف وضع الأسئلة</label>
+      <label class="ck"><input type="checkbox" data-k="s.gs.include" ${gsx.include ? 'checked' : ''}> إرفاق البيان مع تكليف وضع الأسئلة (افتراضياً يُطبع مستقلاً)</label>
       <label class="inl">موضعه <select class="in" data-k="s.gs.place" id="gs_place"><option value="page"${gsx.place !== 'inside' ? ' selected' : ''}>صفحة مستقلة بعد كل تكليف</option><option value="inside"${gsx.place === 'inside' ? ' selected' : ''}>داخل خطاب التكليف</option></select></label>
       <label class="inl">المصدر <select class="in" data-k="s.gs.src" id="gs_src"><option value="builtin"${gsx.src !== 'file' ? ' selected' : ''}>البيان المعتمد (المسارات)</option><option value="file"${gsx.src === 'file' ? ' selected' : ''}${gsx.file ? '' : ' disabled'}>الملف المرفوع${gsx.file ? ': ' + esc(gsx.file.name) : ''}</option></select></label>
     </div>

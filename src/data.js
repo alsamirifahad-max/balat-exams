@@ -39,7 +39,7 @@ const DEFAULT_STATE = {
       { n: 'عبدالله الغامدي', w: 'وكيل الشؤون التعليمية', r: 'عضواً' }
     ],
     openWithTeachers: true,
-    gs: { include: true, place: 'page', src: 'builtin', file: null },
+    gs: { include: false, place: 'page', src: 'builtin', file: null },
     obsDef: 1,
     taPrint: { title: 'إسناد المعلمين', sign: true, h: true, note: false }
   },
