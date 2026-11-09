@@ -428,13 +428,33 @@ body.nosc{overflow:hidden}
 .dl.add{border-inline-start:4px solid #1f9d66}.dl.del{border-inline-start:4px solid #d14b6a}.dl.chg{border-inline-start:4px solid #e0a53a}
 .hrow{display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--line)}.hrow > div{flex:1;display:flex;flex-direction:column}.hrow small{color:var(--muted)}
 .synccard .mode{white-space:normal;flex-wrap:wrap}
+.setchip{font:inherit;font-size:.78rem;font-weight:700;border:0;border-radius:999px;padding:4px 11px;background:var(--scc,#2563eb);color:#fff;cursor:pointer;white-space:nowrap}
+.setchip::before{content:"الإسناد: ";opacity:.8;font-weight:500}
+.sets .setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:10px}
+.setc{position:relative;border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface);min-width:0;transition:border-color .15s,box-shadow .15s}
+.setc.on{border-color:var(--sc2);box-shadow:0 0 0 3px color-mix(in srgb,var(--sc2) 22%,transparent);background:color-mix(in srgb,var(--sc2) 6%,var(--surface))}
+.seth{display:flex;gap:10px;align-items:flex-start}
+.setic{width:40px;height:40px;border-radius:12px;background:var(--sc2);color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.15rem;flex:none}
+.seth > div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.setn,.setd{font:inherit;border:1px dashed transparent;background:transparent;color:var(--ink);border-radius:6px;padding:2px 4px;width:100%}
+.setn{font-weight:800;font-size:1.05rem}.setd{font-size:.82rem;color:var(--muted)}
+.setn:hover,.setd:hover,.setn:focus,.setd:focus{border-color:var(--line);background:var(--bg);outline:none}
+.setst{font-size:.9rem}.setst b{color:var(--sc2);font-size:1.15rem}
+.setc small{color:var(--muted)}
+.setbadge{align-self:flex-start;background:var(--sc2);color:#fff;font-weight:800;font-size:.85rem;border-radius:999px;padding:6px 14px}
+.setc .btn.pri{background:var(--sc2);border-color:var(--sc2)}
+.setmore summary{cursor:pointer;font-size:.82rem;color:var(--muted)}.setmore .btn{margin:4px 0 0 4px}
+.pend.ro{border-color:#ea580c;background:color-mix(in srgb,#ea580c 9%,var(--surface))}
+@media (max-width:700px){.setc.on{order:-1}}
+.setcall{border:2px solid #e0a53a;background:color-mix(in srgb,#f5b942 14%,var(--surface));border-radius:10px;padding:10px 12px;font-weight:700}
+@media (max-width:600px){.setchip{font-size:.72rem;padding:3px 9px}}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top"><div class="topin">
     <div><h1>نظام الإسناد واللجان وأعمال الاختبارات</h1><div class="sub" id="topSub">مدرسة بلاط الشهداء الثانوية</div></div>
-    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span>
+    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span>
   </div></header>
   <nav id="nav" aria-label="الأقسام"></nav>
   <main id="main"></main>
