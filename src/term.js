@@ -563,3 +563,28 @@ document.addEventListener('click', async e => {
   else if (a === 'bPer') { BOARD_PI = +b.dataset.v; render(); }
   else if (a === 'bPrint') { const f = FORMS.find(x => x.id === 'obsNames'); openPreview([{ land: false, pages: buildForm(f, { ses: b.dataset.s }), t: 'أسماء الملاحظين على اللجان' }], fname('أسماء الملاحظين على اللجان')); }
 });
+
+/* ===================== ملخص الصباح ===================== */
+function morningCard() {
+  if (ROLE === 'sup' && TAB !== 'today') return '';
+  let iso = todayIso(); const real = iso; let note = '';
+  if (!isSchoolDay(iso)) { let d = iso, k = 0; do { d = addDays(d, 1); } while (!isSchoolDay(d) && ++k < 90); note = `اليوم ${holOf(iso) || 'عطلة نهاية الأسبوع'} — الملخص لأقرب يوم دراسي: ${dayAr(d)} ${hijriOf(d)}`; iso = d; }
+  ensureLeaves(iso);
+  const wd = wdOf(iso), w = D().wait[iso] || { blocks: [] }, abs = w.blocks.filter(b => b.abs);
+  let need = 0, done = 0; abs.forEach(b => { for (let p = 1; p <= 7; p++) { const has = wd >= 0 && ttCell(b.abs, wd, p); const r = (b.rows || {})[p] || {}; if (has || r.t) { need++; if (r.t) done++; } } });
+  const u = D().duty[iso]; let dn = 0, dt = 0; if (u) { (u.b || []).forEach(x => { dt++; if (x.gen) dn++; (x.rows || []).forEach(r => { dt++; if (r.n) dn++; }); }); (u.duty || []).forEach(r => { dt++; if (r.n) dn++; }); }
+  const di = S.days.findIndex(d => d.g === iso), nextEx = S.days.find(d => d.g > iso);
+  let ex;
+  if (di >= 0) { const day = S.days[di]; let obsN = 0, obsT = 0, here = 0, resN = 0; day.p.forEach((p, pi) => { const sk = `${di}_${pi}`, att = D().att && D().att[sk] || {}; S.com.forEach(c => { const L = obsList(`${sk}_${c.no}`); const n = Math.max(L.length, obsNeed(c.no)); obsT += n; L.forEach((nm, i) => { if (nm) { obsN++; const a = att[`${c.no}_${i}`]; if (a && a.n === nm) here++; } }); }); resN += obsList(`${sk}_R`).filter(Boolean).length; });
+    const subs = day.p.map(p => G.map(g => (p.s[g] || '').trim()).filter(Boolean).join('، ')).filter(Boolean).join(' / ');
+    ex = { st: obsN >= obsT ? (here >= obsN && obsN ? 'ok' : 'info') : 'bad', t: `اختبار اليوم: ${esc(subs || '—')}`, s: `الملاحظون ${obsN} من ${obsT}${here ? ` · حضر ${here}` : ''} · الاحتياط ${resN}`, go: 'today' };
+  } else ex = { st: 'mute', t: 'لا يوجد اختبار اليوم', s: nextEx ? `أقرب اختبار: ${dayName(nextEx)} ${dateShort(nextEx)} (بعد ${daysTo(nextEx.g)} يوماً)` : (S.days.length ? 'لا توجد أيام اختبار قادمة في الجدول' : 'لم يُدخل جدول الاختبارات'), go: 'schedule' };
+  const wt = !D().tt ? { st: 'mute', t: 'حصص الانتظار', s: 'ارفع الجدول المدرسي أولاً' } : !abs.length ? { st: 'ok', t: 'لا غائبين مسجلين', s: 'المس «تسجيل غائب» عند الحاجة' } : { st: done >= need ? 'ok' : 'bad', t: `${abs.length} غائب: ${abs.map(b => esc(b.abs)).slice(0, 3).join('، ')}${abs.length > 3 ? '…' : ''}`, s: `سُدّد ${done} من ${need} حصة${need - done ? ` — باقي ${need - done}` : ' ✓'}` };
+  const dy = !u ? { st: 'bad', t: 'المناوبة والإشراف', s: 'لم يُعبّأ تقرير اليوم' } : { st: dn >= dt ? 'ok' : 'info', t: 'المناوبة والإشراف', s: `${dn} من ${dt} خانة معبأة` };
+  const wk = termWeek(iso);
+  const tile = (x, act, lbl) => `<button type="button" class="mtile ${x.st}" ${act}><b>${x.t}</b><span>${x.s}</span><em>${lbl} ←</em></button>`;
+  const canDaily = typeof roleAllows !== 'function' || roleAllows('daily'), canEx = typeof roleAllows !== 'function' || roleAllows(ex.go);
+  return `<section class="card morning"><div class="mhead"><h2>☀︎ ملخص ${iso === real ? 'اليوم' : 'اليوم الدراسي القادم'} — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>${wk && wk.n ? `<span class="wkchip">${esc(wk.txt)}</span>` : ''}</div>${note ? `<p class="hint">${esc(note)}</p>` : ''}
+    <div class="mgrid">${canDaily ? tile(wt, `data-tact="mGo" data-v="wait" data-d="${iso}"`, 'الانتظار') + tile(dy, `data-tact="mGo" data-v="duty" data-d="${iso}"`, 'المناوبة') : ''}${canEx ? tile(ex, `data-tab="${ex.go}"`, ex.go === 'today' ? 'لوحة الاختبار' : 'الجدول') : ''}</div></section>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-tact="mGo"]'); if (!b) return; DAILY_DATE = b.dataset.d; DAILY_TAB = b.dataset.v; go('daily'); });
