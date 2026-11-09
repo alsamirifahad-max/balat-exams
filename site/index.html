@@ -564,6 +564,19 @@ body.nosc{overflow:hidden}
 .fk{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle}.fk.hi{background:#fecaca}.fk.lo{background:#bbf7d0}
 .ftab tr.hi td{background:color-mix(in srgb,#ef4444 12%,var(--surface))}.ftab tr.lo td{background:color-mix(in srgb,#22c55e 10%,var(--surface))}.ftab .tn{text-align:right}
 .fbarh{min-width:90px}.fbarc{min-width:90px}.fbarc i{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,#f59e0b,#ea580c);min-width:2px}
+.semsw{padding:12px}.semgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:640px){.semgrid{grid-template-columns:1fr}}
+.semcard{font:inherit;text-align:right;display:flex;align-items:center;gap:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:16px;padding:12px 14px;cursor:pointer;transition:.15s}
+.semcard.s1{--sx:#2563eb}.semcard.s2{--sx:#ea580c}.semcard:hover{border-color:var(--sx)}
+.semcard.on{border-color:var(--sx);background:color-mix(in srgb,var(--sx) 10%,var(--surface));box-shadow:0 3px 14px color-mix(in srgb,var(--sx) 22%,transparent)}
+.semn{flex:none;width:44px;height:44px;border-radius:12px;background:var(--sx);color:#fff;display:grid;place-items:center;font-size:1.4rem;font-weight:800}
+.semt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.semt b{font-size:1.02rem}.semt small{color:var(--muted);font-size:.8rem}.semt em{font-style:normal;font-size:.78rem;font-weight:700}.semt em.live{color:#16a34a}.semt em.prep{color:#b45309}
+.semst{flex:none;font-size:.78rem;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--soft);color:var(--muted)}.semcard.on .semst{background:var(--sx);color:#fff}
+.setadv{margin:0 0 12px}.setadv > summary{cursor:pointer;font-weight:700;color:var(--muted);font-size:.88rem;padding:6px 4px}
+.box.wide{max-width:min(860px,96vw)}.dft td{vertical-align:top;font-size:.85rem}.dft .tn small{display:block;font-size:.72rem;color:var(--muted)}.dft tr.d-new td{background:color-mix(in srgb,#22c55e 10%,var(--surface))}.dft tr.d-gone td{background:color-mix(in srgb,#ef4444 9%,var(--surface))}.dft tr.d-chg td{background:color-mix(in srgb,#f59e0b 11%,var(--surface))}
+.wpick{display:flex;flex-direction:column;gap:6px}.wpick small{color:var(--muted);font-size:.78rem}.wpick.done{flex-direction:row;align-items:center;gap:8px}.wname{font-weight:800;color:var(--sc,#0e7490);background:color-mix(in srgb,#0e7490 10%,var(--surface));padding:5px 12px;border-radius:999px}
+.wchips{display:flex;flex-wrap:wrap;gap:5px}.wchip{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer;min-height:32px}.wchip:hover,.wchip:active{border-color:#0e7490;background:color-mix(in srgb,#0e7490 10%,var(--surface))}
+.wchip.sug{border-color:#16a34a;background:color-mix(in srgb,#16a34a 10%,var(--surface));font-weight:700}.wchip.sug::before{content:"★ ";color:#16a34a}
+.wother summary{cursor:pointer;font-size:.78rem;color:var(--muted)}
 .ttnext{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.ttnext > b{font-size:.92rem}.ttnext .drop{padding:10px}
 .pickl1{padding:3px 14px;font-size:.78rem;font-weight:800;color:var(--accent);background:var(--bg);border-bottom:1px solid var(--line)}
 .setnow{display:flex;gap:12px;align-items:center;border:2px solid var(--sc2);border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--sc2) 8%,var(--surface));margin-top:8px}
@@ -2350,7 +2363,6 @@ function setChooser() {
     <p class="hint">ثلاثة حفظ مستقلة تماماً، لا يتداخل أحدها مع الآخر، وكلها محفوظة على السحابة. اختر الحفظ الذي تعمل عليه على هذا الجهاز؛ <b>الاختبارات والتكليفات والملاحظة تُبنى على الحفظ النشط</b>. يمكنك تعديل الاسم والوصف بالضغط عليهما.</p>
     <div class="setnow" style="--sc2:${SET_DEF[ACTIVE].c}"><span class="setic">${SET_DEF[ACTIVE].ic}</span><div><small>تعمل الآن على</small><b>${esc(setMeta(ACTIVE).n)} — الفصل الدراسي ${esc(setMeta(ACTIVE).sem)} ${esc(setMeta(ACTIVE).y)}</b><span>كشوف الإسناد ونصاب المعلمين تُطبع بهذا الفصل، وقائمة المواد تُقترح من خطته. بقية النظام (الاختبارات والانتظار والمناوبة) يبقى على الفصل ${esc(S.s.sem)}.</span></div></div>
     ${chosen ? '' : `<p class="setcall">هذه أول مرة على هذا الجهاز — اختر الحفظ الذي ستعمل عليه: فهد يعمل على «حفظ فهد»، والوكيل على «حفظ الوكيل». <button class="btn sm" data-act="setUse" data-v="${ACTIVE}" type="button">متابعة على «${esc(setMeta(ACTIVE).n)}»</button></p>`}
-    ${typeof seedBox === 'function' ? seedBox() : ''}
     <div class="setgrid">${TA_SETS.map(id => { const d = secData(id), m = setMeta(id), on = id === ACTIVE, sy = SYNC[id], tc = new Set((d.ta || []).map(x => normName(x.t))).size;
       return `<article class="setc${on ? ' on' : ''}" style="--sc2:${SET_DEF[id].c}">
         <div class="seth"><span class="setic">${SET_DEF[id].ic}</span><div><input class="setn" data-setmeta="${id}" data-f="n" value="${esc(m.n)}" aria-label="اسم الحفظ" maxlength="30"><input class="setd" data-setmeta="${id}" data-f="d" value="${esc(m.d)}" placeholder="وصف، مثل: إسناد الفصل الثاني 1447" aria-label="وصف الحفظ" maxlength="60"></div></div>
@@ -2366,7 +2378,8 @@ function vAssign() {
   const tcount = new Set(S.ta.map(x => x.t)).size;
   const taByG = g => S.ta.map((x, i) => [x, i]).filter(([x]) => +x.g === g);
   return `${teacherDatalist()}${G.map(g => `<datalist id="curr${g}">${currList(g).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>`).join('')}
-  ${setChooser()}
+  ${typeof semSwitch === 'function' ? semSwitch() : ''}
+  <details class="setadv"><summary>خيارات متقدمة للحفظ: الأسماء والفصل والنسخ والحفظ المشترك</summary>${setChooser()}</details>
   <section class="card">
     <h2>ملف الإسناد</h2>
     <p class="hint">الإسناد هو الأساس الذي تُبنى عليه: تكليفات وضع الأسئلة، بيان استلام الأسئلة، محضر فتح المظاريف، محضر اتفاقية التصحيح، إقرار إنهاء المقرر، وتوزيع التصحيح. يقبل الموقع ملف PDF أو Word (‎.docx و‎.doc) أو Excel، وتُتجاوز تلقائياً إسنادات العوق البصري والتربية الفكرية وحصص النشاط.</p>
@@ -4281,7 +4294,7 @@ function vWait(iso) {
     const rows = []; for (let p = 1; p <= 7; p++) {
       const sc = d >= 0 ? ttSecs(b.abs, d, p) : [], has = sc.length > 0 || !tt0(), r = (b.rows || {})[p] || {}, iss = subIssue(iso, bi, p, r.t);
       rows.push(`<tr class="${has ? '' : 'nocls'}${iss ? ' bad' : ''}"><td class="pn">${p}</td><td>${sc.length ? [...new Set(sc.map(s => GSHORT[secGrade(s)] || ''))].join('/') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.g`, r.g || '', { ph: 'الفصل' }) : '—')}</td><td>${sc.length ? sc.join('، ') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.s`, r.s || '', { ph: 'الشعبة' }) : '')}</td>
-        <td>${has ? pickSel(`daily.wait.${iso}.blocks.${bi}.rows.${p}.t`, r.t || '', subOptsFor(iso, bi, p), { ph: '— اختر المنتظر —' }) + (iss ? `<span class="cf">⚠ ${esc(iss)}</span>` : '') : '<span class="hint">لا حصة</span>'}</td>
+        <td>${has ? waitChips(iso, bi, p, r) + (iss ? `<span class="cf">⚠ ${esc(iss)}</span>` : '') : '<span class="hint">لا حصة</span>'}</td>
         <td>${has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.note`, r.note || '', { ph: 'ما تم تنفيذه' }) : ''}</td></tr>`);
     }
     const n = d >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(p => ttCell(b.abs, d, p)).length : 0;
@@ -4291,7 +4304,7 @@ function vWait(iso) {
   const issues = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => subIssue(iso, bi, p, ((b.rows || {})[p] || {}).t)).length, 0);
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">أضف المعلم الغائب فتظهر حصصه وشعبه لهذا اليوم من الجدول المدرسي، ثم اختر المنتظر: القائمة تعرض <b>المتاحين في تلك الحصة بالضبط</b> (الأقل انتظاراً أولاً)، وينبّهك النظام عند أي تعارض.</p>
+    <p class="hint">أضف المعلم الغائب فتظهر حصصه وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b> — الأسماء مرتبة هجائياً، والمميَّزة بنجمة هي الأقل انتظاراً. تُطبع الاستمارة في ورقة واحدة لكل الغائبين.</p>
     <div class="acts wrap">${pickSel(`daily.ui.addAbs`, '', [{ items: ttNames().filter(n => !absentSet(iso).has(normName(n))) }], { ph: '+ إضافة معلم غائب' })}
       ${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
@@ -4299,6 +4312,17 @@ function vWait(iso) {
     <div class="wblks">${blocks}</div></section>`;
 }
 function tt0() { return !!D().tt; }
+/* اختيار المنتظر بلمسة: المتاحون في الحصة نفسها أمامك مباشرة، مرتبين هجائياً، والأقل انتظاراً مميزون */
+function waitChips(iso, bi, p, r) {
+  const path = `daily.wait.${iso}.blocks.${bi}.rows.${p}.t`;
+  if (r.t) return `<div class="wpick done"><span class="wname">${esc(r.t)}</span><button class="btn sm ghost" data-act="wClr" data-bi="${bi}" data-p="${p}" type="button">تغيير</button></div>`;
+  const g = subOptsFor(iso, bi, p), free = g[0].items.slice().sort((a, b) => AR.compare(normName(a), normName(b)));
+  if (!tt0()) return pickSel(path, '', g, { ph: '— اختر المنتظر —' });
+  const ld = waitLoad(iso), wk = weekLoad(), sc = n => (ld[normName(n)] || 0) * 100 + (wk[normName(n)] || 0);
+  const sug = new Set(free.slice().sort((a, b) => sc(a) - sc(b) || AR.compare(normName(a), normName(b))).slice(0, 3));
+  return `<div class="wpick"><small>المتاحون في الحصة ${p} (${free.length}) — اضغط الاسم:</small><div class="wchips">${free.map(n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}"${sug.has(n) ? ' title="الأقل انتظاراً"' : ''}>${esc(n)}</button>`).join('') || '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}</div>
+    <details class="wother"><summary>اسم آخر…</summary>${pickSel(path, '', g, { ph: '— كل المعلمين —' })}</details></div>`;
+}
 function vDuty(iso) {
   const u = U(iso), cfg = D().cfg, saved = !!D().duty[iso], P = `daily.duty.${iso}`, opt = dutyOpts(iso);
   const sel = (path, v, where) => { const is = dutyIssue(iso, v, where); return pickSel(path, v, opt, { ph: '— اختر —' }) + (is ? `<span class="cf">⚠ ${esc(is)}</span>` : ''); };
@@ -4333,18 +4357,21 @@ function vLog() {
 }
 
 /* ---------- الطباعة ---------- */
-function waitBlockHtml(iso, b) {
-  const d = wdOf(iso), rows = [[H('الحصة', { w: '8%' }), H('الفصل', { w: '10%' }), H('الشعبة', { w: '10%' }), H('المعلم المنتظر', { w: '24%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '14%' })]];
-  for (let p = 1; p <= 7; p++) { const sc = b && d >= 0 ? ttSecs(b.abs, d, p) : [], r = b && b.rows && b.rows[p] || {};
-    rows.push([`<b>${p}</b>`, sc.length ? [...new Set(sc.map(s => GSHORT[secGrade(s)] || ''))].join('/') : esc(r.g || '/'), sc.length ? sc.join('، ') : esc(r.s || ''), esc(r.t || ''), esc(r.note || ''), '']); }
-  return `<p class="wl">إخواني المعلمين / نظراً لغياب الزميل: <b>${b && b.abs ? esc(b.abs) : '..................................'}</b></p><p class="wl">هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد مكانه حسب الجدول الموضح والتوقيع بالعلم، ولكم جزيل الشكر.</p>` + T(rows, { cls: 'dense' });
+function waitRows(iso) {
+  const d = wdOf(iso), out = [];
+  (D().wait[iso] || { blocks: [] }).blocks.forEach(b => { if (!b.abs) return; for (let p = 1; p <= 7; p++) { const sc = d >= 0 ? ttSecs(b.abs, d, p) : [], r = (b.rows || {})[p] || {}; if (!sc.length && !r.t && !r.g && !r.s) continue;
+    const cls = sc.length ? `${[...new Set(sc.map(x => GSHORT[secGrade(x)] || ''))].join('/')} / ${sc.join('، ')}` : [r.g, r.s].filter(Boolean).join(' / '); out.push({ p, cls, abs: b.abs, t: r.t || '', note: r.note || '' }); } });
+  return out.sort((a, b) => a.p - b.p);
 }
 function waitPages(iso) {
-  const bl = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs); const list = bl.length ? bl : [null, null, null];
-  const pages = []; for (let i = 0; i < list.length; i += 3) {
-    const part = list.slice(i, i + 3);
-    pages.push(title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`) + part.map(b => waitBlockHtml(iso, b)).join(sp(8)) + sp(8) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]]));
-  }
+  const bl = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs), names = bl.map(b => b.abs), rows = waitRows(iso);
+  const many = names.length > 1;
+  const intro = `<p class="wl">إخواني المعلمين / نظراً لغياب ${many ? 'الزملاء' : 'الزميل'}: <b>${names.length ? names.map(esc).join('، ') : '..................................................'}</b></p><p class="wl">هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد ${many ? 'حصصهم' : 'حصصه'} حسب الجدول الموضح والتوقيع بالعلم، ولكم جزيل الشكر.</p>`;
+  const hd = [H('الحصة', { w: '8%' }), H('الفصل / الشعبة', { w: '15%' }), H('المعلم الغائب', { w: '19%' }), H('المعلم المنتظر', { w: '21%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
+  const body = rows.length ? rows.map(r => [`<b>${r.p}</b>`, esc(r.cls), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), '']) : Array.from({ length: 14 }, () => ['', '', '', '', '', '']);
+  const pages = [], per = 22;
+  for (let i = 0; i < body.length; i += per) { const last = i + per >= body.length;
+    pages.push(title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`) + (i ? `<p class="ds">تابع — ${names.map(esc).join('، ')}</p>` : intro) + T([hd, ...body.slice(i, i + per)], { cls: 'dense' }) + (last ? sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]]) : '')); }
   return pages;
 }
 function dutyPages(iso) {
@@ -4386,6 +4413,8 @@ document.addEventListener('click', async e => {
   if (a === 'ttnApply') { const n = D().ttNext; if (n && await confirmBox(`اعتماد جدول الفصل القادم (${n.teachers.length} معلماً) جدولاً حالياً؟ تُبنى عليه حصص الانتظار من الآن، ويُحفظ الجدول الحالي لاسترجاعه عند الحاجة.`)) { D().ttPrev = D().tt; D().tt = n; delete D().ttNext; TT_WHICH = 'cur'; S.uploads.tt = { name: n.src, at: stamp(), info: `${n.teachers.length} معلماً` }; save(); render(); toast('اعتُمد جدول الفصل الجديد ✓'); } return; }
   if (a === 'ttPrev') { const p = D().ttPrev; if (p && await confirmBox(`استرجاع الجدول السابق (${p.src || ''})؟ يحل محل الجدول الحالي، ويُحفظ الحالي بدلاً منه.`)) { D().ttPrev = D().tt; D().tt = p; save(); render(); toast('استُرجع الجدول السابق'); } return; }
   if (a === 'wDel') { if (await confirmBox('حذف هذا المعلم الغائب واستمارته لهذا اليوم؟')) { W(iso).blocks.splice(+b.dataset.v, 1); save(); render(); } return; }
+  if (a === 'wSet') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, b.dataset.n); save(); render(); return; }
+  if (a === 'wClr') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, ''); save(); render(); return; }
   if (a === 'wAuto') { const n = autoFill(iso); save(); render(); return toast(n ? `عُبّئت ${n} حصة بالمعلمين المتاحين الأقل انتظاراً` : 'لا توجد حصص فارغة تحتاج تعبئة'); }
   if (a === 'dRow') { const u = D().duty[iso] = U(iso); if (b.dataset.v === 'duty') u.duty.push({ n: '', note: '' }); else u.b[+b.dataset.v].rows.push({ n: '', loc: '', note: '' }); save(); return render(); }
   if (a === 'dWeek') { const w = wdOf(iso); if (w < 0) return toast('اختر يوماً دراسياً', true); D().week[w] = clone(U(iso)); save(); return toast(`حُفظ كجدول ثابت — سيُعبّأ تلقائياً في كل يوم ${TT_DAYS[w]}`); }
@@ -4726,6 +4755,57 @@ document.addEventListener('click', e => {
   else if (a === 'examFromCal') examFromCal();
   else if (a === 'seedCopy') seedDo('copy'); else if (a === 'seedMerge') seedDo('merge');
   else if (a === 'statP') { STAT_P = b.dataset.v; render(); }
+});
+
+/* ===================== مفتاح الفصلين في صفحة الإسناد ===================== */
+function semSets() {
+  const by = s => TA_SETS.filter(id => id !== 'ta-shared' && setMeta(id).sem === s)[0];
+  let a = by('الأول'), b = by('الثاني'); if (!a || !b || a === b) { a = 'ta'; b = 'ta-agent'; }
+  return [a, b];
+}
+function semSwitch() {
+  const [s1, s2] = semSets();
+  const card = (id, k) => {
+    const m = setMeta(id), d = secData(id), on = id === ACTIVE, live = m.sem === S.s.sem, tc = new Set((d.ta || []).map(x => normName(x.t))).size;
+    const ro = ROLE === 'agent' && id === 'ta';
+    return `<button type="button" class="semcard s${k}${on ? ' on' : ''}" data-tact="semPick" data-v="${id}" aria-pressed="${on}">
+      <span class="semn">${k}</span><span class="semt"><b>إسناد الفصل الدراسي ${esc(m.sem)}</b><small>${esc(m.n)} · ${(d.ta || []).length} سطراً · ${tc} معلماً</small>
+      <em class="${live ? 'live' : 'prep'}">${live ? '● معتمد الآن في الاختبارات والانتظار' : '◐ قيد الإعداد — يُعتمد عند بدء الفصل ' + esc(m.sem)}</em></span>
+      <span class="semst">${on ? '✓ تعمل عليه' : ro ? 'اطلاع' : 'انتقل إليه'}</span></button>`;
+  };
+  return `<section class="card semsw"><div class="semgrid">${card(s1, 1)}${card(s2, 2)}</div>
+    <div class="acts wrap" style="margin:8px 0 0"><button class="btn sm" data-tact="semDiff" type="button">⇄ مقارنة الفصلين: ماذا تغيّر؟</button><span class="hint">التبديل لا يغيّر شيئاً في الاختبارات ولا الانتظار — يحدد فقط أي إسناد تعدّله الآن.</span></div>
+    ${seedBox()}</section>`;
+}
+async function semPick(id) {
+  if (id === ACTIVE) return;
+  if (ROLE === 'agent' && id === 'ta') return previewSet('ta');
+  try { localStorage.setItem(LS_KEY + '-taset', id); } catch (e) { }
+  await setActive(id); renderNav(); render(); toast(`تعمل الآن على إسناد الفصل ${setMeta(id).sem}`);
+}
+function taKey(x) { return `${x.sub || ''}${x.g ? ' — ' + (GSHORT[x.g] || x.g) : ''}${x.sec ? ' / ' + x.sec : ''}`; }
+function semDiff() {
+  const [s1, s2] = semSets(), A = secData(s1).ta || [], B = secData(s2).ta || [];
+  const group = L => { const m = new Map(); L.forEach(x => { const k = normName(x.t); if (!k) return; if (!m.has(k)) m.set(k, { n: x.t, r: [], h: 0 }); const o = m.get(k); o.r.push(taKey(x)); o.h += Number(x.h) || 0; }); return m; };
+  const ga = group(A), gb = group(B), keys = [...new Set([...ga.keys(), ...gb.keys()])];
+  const rows = keys.map(k => { const a = ga.get(k), b = gb.get(k); const sa = a ? a.r.slice().sort().join(' | ') : '', sb = b ? b.r.slice().sort().join(' | ') : '';
+    const st = !a ? 'new' : !b ? 'gone' : (sa !== sb || a.h !== b.h) ? 'chg' : 'same'; return { n: (b || a).n, a, b, st }; })
+    .sort((x, y) => ({ new: 0, gone: 1, chg: 2, same: 3 })[x.st] - ({ new: 0, gone: 1, chg: 2, same: 3 })[y.st] || AR.compare(normName(x.n), normName(y.n)));
+  const cnt = s => rows.filter(r => r.st === s).length, L = { new: 'جديد في الفصل الثاني', gone: 'غير موجود في الفصل الثاني', chg: 'تغيّر إسناده', same: 'بلا تغيير' };
+  const cell = o => o ? `${o.r.map(esc).join('<br>')}${o.h ? `<small> (${o.h} حصة)</small>` : ''}` : '—';
+  let m = $('#termModal'); if (!m) { m = document.createElement('div'); m.id = 'termModal'; m.className = 'modal'; document.body.appendChild(m); }
+  m.innerHTML = `<div class="box tchbox wide"><h3>مقارنة إسناد الفصلين</h3>
+    <div class="fsum"><div><b>${cnt('chg')}</b><span>تغيّر إسناده</span></div><div><b>${cnt('new')}</b><span>جديد</span></div><div><b>${cnt('gone')}</b><span>غير موجود في ف2</span></div><div><b>${cnt('same')}</b><span>بلا تغيير</span></div></div>
+    <label class="ck"><input type="checkbox" id="dfAll"> إظهار المعلمين بلا تغيير أيضاً</label>
+    <div class="tw"><table class="et dft"><tr><th>المعلم</th><th>الفصل الأول</th><th>الفصل الثاني</th></tr>${rows.map(r => `<tr class="d-${r.st}"${r.st === 'same' ? ' hidden' : ''}><td class="tn"><b>${esc(r.n)}</b><small>${L[r.st]}</small></td><td>${cell(r.a)}</td><td>${cell(r.b)}</td></tr>`).join('')}</table></div>
+    <div class="acts"><button class="btn ghost" data-tm="close" type="button">إغلاق</button></div></div>`;
+  m.hidden = false;
+  m.onclick = e => { if (e.target === m || e.target.closest('[data-tm="close"]')) m.hidden = true; };
+  m.querySelector('#dfAll').onchange = e => m.querySelectorAll('tr.d-same').forEach(tr => tr.hidden = !e.target.checked);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'semPick') semPick(b.dataset.v); else if (a === 'semDiff') semDiff();
 });
 
 </script>

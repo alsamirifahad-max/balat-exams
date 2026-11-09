@@ -317,3 +317,54 @@ document.addEventListener('click', e => {
   else if (a === 'seedCopy') seedDo('copy'); else if (a === 'seedMerge') seedDo('merge');
   else if (a === 'statP') { STAT_P = b.dataset.v; render(); }
 });
+
+/* ===================== مفتاح الفصلين في صفحة الإسناد ===================== */
+function semSets() {
+  const by = s => TA_SETS.filter(id => id !== 'ta-shared' && setMeta(id).sem === s)[0];
+  let a = by('الأول'), b = by('الثاني'); if (!a || !b || a === b) { a = 'ta'; b = 'ta-agent'; }
+  return [a, b];
+}
+function semSwitch() {
+  const [s1, s2] = semSets();
+  const card = (id, k) => {
+    const m = setMeta(id), d = secData(id), on = id === ACTIVE, live = m.sem === S.s.sem, tc = new Set((d.ta || []).map(x => normName(x.t))).size;
+    const ro = ROLE === 'agent' && id === 'ta';
+    return `<button type="button" class="semcard s${k}${on ? ' on' : ''}" data-tact="semPick" data-v="${id}" aria-pressed="${on}">
+      <span class="semn">${k}</span><span class="semt"><b>إسناد الفصل الدراسي ${esc(m.sem)}</b><small>${esc(m.n)} · ${(d.ta || []).length} سطراً · ${tc} معلماً</small>
+      <em class="${live ? 'live' : 'prep'}">${live ? '● معتمد الآن في الاختبارات والانتظار' : '◐ قيد الإعداد — يُعتمد عند بدء الفصل ' + esc(m.sem)}</em></span>
+      <span class="semst">${on ? '✓ تعمل عليه' : ro ? 'اطلاع' : 'انتقل إليه'}</span></button>`;
+  };
+  return `<section class="card semsw"><div class="semgrid">${card(s1, 1)}${card(s2, 2)}</div>
+    <div class="acts wrap" style="margin:8px 0 0"><button class="btn sm" data-tact="semDiff" type="button">⇄ مقارنة الفصلين: ماذا تغيّر؟</button><span class="hint">التبديل لا يغيّر شيئاً في الاختبارات ولا الانتظار — يحدد فقط أي إسناد تعدّله الآن.</span></div>
+    ${seedBox()}</section>`;
+}
+async function semPick(id) {
+  if (id === ACTIVE) return;
+  if (ROLE === 'agent' && id === 'ta') return previewSet('ta');
+  try { localStorage.setItem(LS_KEY + '-taset', id); } catch (e) { }
+  await setActive(id); renderNav(); render(); toast(`تعمل الآن على إسناد الفصل ${setMeta(id).sem}`);
+}
+function taKey(x) { return `${x.sub || ''}${x.g ? ' — ' + (GSHORT[x.g] || x.g) : ''}${x.sec ? ' / ' + x.sec : ''}`; }
+function semDiff() {
+  const [s1, s2] = semSets(), A = secData(s1).ta || [], B = secData(s2).ta || [];
+  const group = L => { const m = new Map(); L.forEach(x => { const k = normName(x.t); if (!k) return; if (!m.has(k)) m.set(k, { n: x.t, r: [], h: 0 }); const o = m.get(k); o.r.push(taKey(x)); o.h += Number(x.h) || 0; }); return m; };
+  const ga = group(A), gb = group(B), keys = [...new Set([...ga.keys(), ...gb.keys()])];
+  const rows = keys.map(k => { const a = ga.get(k), b = gb.get(k); const sa = a ? a.r.slice().sort().join(' | ') : '', sb = b ? b.r.slice().sort().join(' | ') : '';
+    const st = !a ? 'new' : !b ? 'gone' : (sa !== sb || a.h !== b.h) ? 'chg' : 'same'; return { n: (b || a).n, a, b, st }; })
+    .sort((x, y) => ({ new: 0, gone: 1, chg: 2, same: 3 })[x.st] - ({ new: 0, gone: 1, chg: 2, same: 3 })[y.st] || AR.compare(normName(x.n), normName(y.n)));
+  const cnt = s => rows.filter(r => r.st === s).length, L = { new: 'جديد في الفصل الثاني', gone: 'غير موجود في الفصل الثاني', chg: 'تغيّر إسناده', same: 'بلا تغيير' };
+  const cell = o => o ? `${o.r.map(esc).join('<br>')}${o.h ? `<small> (${o.h} حصة)</small>` : ''}` : '—';
+  let m = $('#termModal'); if (!m) { m = document.createElement('div'); m.id = 'termModal'; m.className = 'modal'; document.body.appendChild(m); }
+  m.innerHTML = `<div class="box tchbox wide"><h3>مقارنة إسناد الفصلين</h3>
+    <div class="fsum"><div><b>${cnt('chg')}</b><span>تغيّر إسناده</span></div><div><b>${cnt('new')}</b><span>جديد</span></div><div><b>${cnt('gone')}</b><span>غير موجود في ف2</span></div><div><b>${cnt('same')}</b><span>بلا تغيير</span></div></div>
+    <label class="ck"><input type="checkbox" id="dfAll"> إظهار المعلمين بلا تغيير أيضاً</label>
+    <div class="tw"><table class="et dft"><tr><th>المعلم</th><th>الفصل الأول</th><th>الفصل الثاني</th></tr>${rows.map(r => `<tr class="d-${r.st}"${r.st === 'same' ? ' hidden' : ''}><td class="tn"><b>${esc(r.n)}</b><small>${L[r.st]}</small></td><td>${cell(r.a)}</td><td>${cell(r.b)}</td></tr>`).join('')}</table></div>
+    <div class="acts"><button class="btn ghost" data-tm="close" type="button">إغلاق</button></div></div>`;
+  m.hidden = false;
+  m.onclick = e => { if (e.target === m || e.target.closest('[data-tm="close"]')) m.hidden = true; };
+  m.querySelector('#dfAll').onchange = e => m.querySelectorAll('tr.d-same').forEach(tr => tr.hidden = !e.target.checked);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'semPick') semPick(b.dataset.v); else if (a === 'semDiff') semDiff();
+});

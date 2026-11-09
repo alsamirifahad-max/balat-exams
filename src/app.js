@@ -1646,7 +1646,6 @@ function setChooser() {
     <p class="hint">ثلاثة حفظ مستقلة تماماً، لا يتداخل أحدها مع الآخر، وكلها محفوظة على السحابة. اختر الحفظ الذي تعمل عليه على هذا الجهاز؛ <b>الاختبارات والتكليفات والملاحظة تُبنى على الحفظ النشط</b>. يمكنك تعديل الاسم والوصف بالضغط عليهما.</p>
     <div class="setnow" style="--sc2:${SET_DEF[ACTIVE].c}"><span class="setic">${SET_DEF[ACTIVE].ic}</span><div><small>تعمل الآن على</small><b>${esc(setMeta(ACTIVE).n)} — الفصل الدراسي ${esc(setMeta(ACTIVE).sem)} ${esc(setMeta(ACTIVE).y)}</b><span>كشوف الإسناد ونصاب المعلمين تُطبع بهذا الفصل، وقائمة المواد تُقترح من خطته. بقية النظام (الاختبارات والانتظار والمناوبة) يبقى على الفصل ${esc(S.s.sem)}.</span></div></div>
     ${chosen ? '' : `<p class="setcall">هذه أول مرة على هذا الجهاز — اختر الحفظ الذي ستعمل عليه: فهد يعمل على «حفظ فهد»، والوكيل على «حفظ الوكيل». <button class="btn sm" data-act="setUse" data-v="${ACTIVE}" type="button">متابعة على «${esc(setMeta(ACTIVE).n)}»</button></p>`}
-    ${typeof seedBox === 'function' ? seedBox() : ''}
     <div class="setgrid">${TA_SETS.map(id => { const d = secData(id), m = setMeta(id), on = id === ACTIVE, sy = SYNC[id], tc = new Set((d.ta || []).map(x => normName(x.t))).size;
       return `<article class="setc${on ? ' on' : ''}" style="--sc2:${SET_DEF[id].c}">
         <div class="seth"><span class="setic">${SET_DEF[id].ic}</span><div><input class="setn" data-setmeta="${id}" data-f="n" value="${esc(m.n)}" aria-label="اسم الحفظ" maxlength="30"><input class="setd" data-setmeta="${id}" data-f="d" value="${esc(m.d)}" placeholder="وصف، مثل: إسناد الفصل الثاني 1447" aria-label="وصف الحفظ" maxlength="60"></div></div>
@@ -1662,7 +1661,8 @@ function vAssign() {
   const tcount = new Set(S.ta.map(x => x.t)).size;
   const taByG = g => S.ta.map((x, i) => [x, i]).filter(([x]) => +x.g === g);
   return `${teacherDatalist()}${G.map(g => `<datalist id="curr${g}">${currList(g).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>`).join('')}
-  ${setChooser()}
+  ${typeof semSwitch === 'function' ? semSwitch() : ''}
+  <details class="setadv"><summary>خيارات متقدمة للحفظ: الأسماء والفصل والنسخ والحفظ المشترك</summary>${setChooser()}</details>
   <section class="card">
     <h2>ملف الإسناد</h2>
     <p class="hint">الإسناد هو الأساس الذي تُبنى عليه: تكليفات وضع الأسئلة، بيان استلام الأسئلة، محضر فتح المظاريف، محضر اتفاقية التصحيح، إقرار إنهاء المقرر، وتوزيع التصحيح. يقبل الموقع ملف PDF أو Word (‎.docx و‎.doc) أو Excel، وتُتجاوز تلقائياً إسنادات العوق البصري والتربية الفكرية وحصص النشاط.</p>

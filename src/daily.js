@@ -142,7 +142,7 @@ function vWait(iso) {
     const rows = []; for (let p = 1; p <= 7; p++) {
       const sc = d >= 0 ? ttSecs(b.abs, d, p) : [], has = sc.length > 0 || !tt0(), r = (b.rows || {})[p] || {}, iss = subIssue(iso, bi, p, r.t);
       rows.push(`<tr class="${has ? '' : 'nocls'}${iss ? ' bad' : ''}"><td class="pn">${p}</td><td>${sc.length ? [...new Set(sc.map(s => GSHORT[secGrade(s)] || ''))].join('/') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.g`, r.g || '', { ph: 'الفصل' }) : '—')}</td><td>${sc.length ? sc.join('، ') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.s`, r.s || '', { ph: 'الشعبة' }) : '')}</td>
-        <td>${has ? pickSel(`daily.wait.${iso}.blocks.${bi}.rows.${p}.t`, r.t || '', subOptsFor(iso, bi, p), { ph: '— اختر المنتظر —' }) + (iss ? `<span class="cf">⚠ ${esc(iss)}</span>` : '') : '<span class="hint">لا حصة</span>'}</td>
+        <td>${has ? waitChips(iso, bi, p, r) + (iss ? `<span class="cf">⚠ ${esc(iss)}</span>` : '') : '<span class="hint">لا حصة</span>'}</td>
         <td>${has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.note`, r.note || '', { ph: 'ما تم تنفيذه' }) : ''}</td></tr>`);
     }
     const n = d >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(p => ttCell(b.abs, d, p)).length : 0;
@@ -152,7 +152,7 @@ function vWait(iso) {
   const issues = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => subIssue(iso, bi, p, ((b.rows || {})[p] || {}).t)).length, 0);
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">أضف المعلم الغائب فتظهر حصصه وشعبه لهذا اليوم من الجدول المدرسي، ثم اختر المنتظر: القائمة تعرض <b>المتاحين في تلك الحصة بالضبط</b> (الأقل انتظاراً أولاً)، وينبّهك النظام عند أي تعارض.</p>
+    <p class="hint">أضف المعلم الغائب فتظهر حصصه وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b> — الأسماء مرتبة هجائياً، والمميَّزة بنجمة هي الأقل انتظاراً. تُطبع الاستمارة في ورقة واحدة لكل الغائبين.</p>
     <div class="acts wrap">${pickSel(`daily.ui.addAbs`, '', [{ items: ttNames().filter(n => !absentSet(iso).has(normName(n))) }], { ph: '+ إضافة معلم غائب' })}
       ${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
@@ -160,6 +160,17 @@ function vWait(iso) {
     <div class="wblks">${blocks}</div></section>`;
 }
 function tt0() { return !!D().tt; }
+/* اختيار المنتظر بلمسة: المتاحون في الحصة نفسها أمامك مباشرة، مرتبين هجائياً، والأقل انتظاراً مميزون */
+function waitChips(iso, bi, p, r) {
+  const path = `daily.wait.${iso}.blocks.${bi}.rows.${p}.t`;
+  if (r.t) return `<div class="wpick done"><span class="wname">${esc(r.t)}</span><button class="btn sm ghost" data-act="wClr" data-bi="${bi}" data-p="${p}" type="button">تغيير</button></div>`;
+  const g = subOptsFor(iso, bi, p), free = g[0].items.slice().sort((a, b) => AR.compare(normName(a), normName(b)));
+  if (!tt0()) return pickSel(path, '', g, { ph: '— اختر المنتظر —' });
+  const ld = waitLoad(iso), wk = weekLoad(), sc = n => (ld[normName(n)] || 0) * 100 + (wk[normName(n)] || 0);
+  const sug = new Set(free.slice().sort((a, b) => sc(a) - sc(b) || AR.compare(normName(a), normName(b))).slice(0, 3));
+  return `<div class="wpick"><small>المتاحون في الحصة ${p} (${free.length}) — اضغط الاسم:</small><div class="wchips">${free.map(n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}"${sug.has(n) ? ' title="الأقل انتظاراً"' : ''}>${esc(n)}</button>`).join('') || '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}</div>
+    <details class="wother"><summary>اسم آخر…</summary>${pickSel(path, '', g, { ph: '— كل المعلمين —' })}</details></div>`;
+}
 function vDuty(iso) {
   const u = U(iso), cfg = D().cfg, saved = !!D().duty[iso], P = `daily.duty.${iso}`, opt = dutyOpts(iso);
   const sel = (path, v, where) => { const is = dutyIssue(iso, v, where); return pickSel(path, v, opt, { ph: '— اختر —' }) + (is ? `<span class="cf">⚠ ${esc(is)}</span>` : ''); };
@@ -194,18 +205,21 @@ function vLog() {
 }
 
 /* ---------- الطباعة ---------- */
-function waitBlockHtml(iso, b) {
-  const d = wdOf(iso), rows = [[H('الحصة', { w: '8%' }), H('الفصل', { w: '10%' }), H('الشعبة', { w: '10%' }), H('المعلم المنتظر', { w: '24%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '14%' })]];
-  for (let p = 1; p <= 7; p++) { const sc = b && d >= 0 ? ttSecs(b.abs, d, p) : [], r = b && b.rows && b.rows[p] || {};
-    rows.push([`<b>${p}</b>`, sc.length ? [...new Set(sc.map(s => GSHORT[secGrade(s)] || ''))].join('/') : esc(r.g || '/'), sc.length ? sc.join('، ') : esc(r.s || ''), esc(r.t || ''), esc(r.note || ''), '']); }
-  return `<p class="wl">إخواني المعلمين / نظراً لغياب الزميل: <b>${b && b.abs ? esc(b.abs) : '..................................'}</b></p><p class="wl">هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد مكانه حسب الجدول الموضح والتوقيع بالعلم، ولكم جزيل الشكر.</p>` + T(rows, { cls: 'dense' });
+function waitRows(iso) {
+  const d = wdOf(iso), out = [];
+  (D().wait[iso] || { blocks: [] }).blocks.forEach(b => { if (!b.abs) return; for (let p = 1; p <= 7; p++) { const sc = d >= 0 ? ttSecs(b.abs, d, p) : [], r = (b.rows || {})[p] || {}; if (!sc.length && !r.t && !r.g && !r.s) continue;
+    const cls = sc.length ? `${[...new Set(sc.map(x => GSHORT[secGrade(x)] || ''))].join('/')} / ${sc.join('، ')}` : [r.g, r.s].filter(Boolean).join(' / '); out.push({ p, cls, abs: b.abs, t: r.t || '', note: r.note || '' }); } });
+  return out.sort((a, b) => a.p - b.p);
 }
 function waitPages(iso) {
-  const bl = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs); const list = bl.length ? bl : [null, null, null];
-  const pages = []; for (let i = 0; i < list.length; i += 3) {
-    const part = list.slice(i, i + 3);
-    pages.push(title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`) + part.map(b => waitBlockHtml(iso, b)).join(sp(8)) + sp(8) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]]));
-  }
+  const bl = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs), names = bl.map(b => b.abs), rows = waitRows(iso);
+  const many = names.length > 1;
+  const intro = `<p class="wl">إخواني المعلمين / نظراً لغياب ${many ? 'الزملاء' : 'الزميل'}: <b>${names.length ? names.map(esc).join('، ') : '..................................................'}</b></p><p class="wl">هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد ${many ? 'حصصهم' : 'حصصه'} حسب الجدول الموضح والتوقيع بالعلم، ولكم جزيل الشكر.</p>`;
+  const hd = [H('الحصة', { w: '8%' }), H('الفصل / الشعبة', { w: '15%' }), H('المعلم الغائب', { w: '19%' }), H('المعلم المنتظر', { w: '21%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
+  const body = rows.length ? rows.map(r => [`<b>${r.p}</b>`, esc(r.cls), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), '']) : Array.from({ length: 14 }, () => ['', '', '', '', '', '']);
+  const pages = [], per = 22;
+  for (let i = 0; i < body.length; i += per) { const last = i + per >= body.length;
+    pages.push(title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`) + (i ? `<p class="ds">تابع — ${names.map(esc).join('، ')}</p>` : intro) + T([hd, ...body.slice(i, i + per)], { cls: 'dense' }) + (last ? sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]]) : '')); }
   return pages;
 }
 function dutyPages(iso) {
@@ -247,6 +261,8 @@ document.addEventListener('click', async e => {
   if (a === 'ttnApply') { const n = D().ttNext; if (n && await confirmBox(`اعتماد جدول الفصل القادم (${n.teachers.length} معلماً) جدولاً حالياً؟ تُبنى عليه حصص الانتظار من الآن، ويُحفظ الجدول الحالي لاسترجاعه عند الحاجة.`)) { D().ttPrev = D().tt; D().tt = n; delete D().ttNext; TT_WHICH = 'cur'; S.uploads.tt = { name: n.src, at: stamp(), info: `${n.teachers.length} معلماً` }; save(); render(); toast('اعتُمد جدول الفصل الجديد ✓'); } return; }
   if (a === 'ttPrev') { const p = D().ttPrev; if (p && await confirmBox(`استرجاع الجدول السابق (${p.src || ''})؟ يحل محل الجدول الحالي، ويُحفظ الحالي بدلاً منه.`)) { D().ttPrev = D().tt; D().tt = p; save(); render(); toast('استُرجع الجدول السابق'); } return; }
   if (a === 'wDel') { if (await confirmBox('حذف هذا المعلم الغائب واستمارته لهذا اليوم؟')) { W(iso).blocks.splice(+b.dataset.v, 1); save(); render(); } return; }
+  if (a === 'wSet') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, b.dataset.n); save(); render(); return; }
+  if (a === 'wClr') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, ''); save(); render(); return; }
   if (a === 'wAuto') { const n = autoFill(iso); save(); render(); return toast(n ? `عُبّئت ${n} حصة بالمعلمين المتاحين الأقل انتظاراً` : 'لا توجد حصص فارغة تحتاج تعبئة'); }
   if (a === 'dRow') { const u = D().duty[iso] = U(iso); if (b.dataset.v === 'duty') u.duty.push({ n: '', note: '' }); else u.b[+b.dataset.v].rows.push({ n: '', loc: '', note: '' }); save(); return render(); }
   if (a === 'dWeek') { const w = wdOf(iso); if (w < 0) return toast('اختر يوماً دراسياً', true); D().week[w] = clone(U(iso)); save(); return toast(`حُفظ كجدول ثابت — سيُعبّأ تلقائياً في كل يوم ${TT_DAYS[w]}`); }
