@@ -1340,7 +1340,13 @@ function ttCard(n) {
   const t = S.daily && S.daily.tt, tot = t ? t.teachers.reduce((a, x) => a + Object.keys(x.c).length, 0) : 0;
   return fileCard('tt', { n, c: '#0e7490', t: 'الجدول المدرسي العام', d: 'جدول حصص المعلمين (الأيام والحصص والشعب) — تُبنى عليه حصص الانتظار والمناوبة ومعرفة المتاحين.', has: !!t, fmt: 'PDF أو Excel أو Word (تصدير aSc أو غيره)', accept: '.pdf,.xlsx,.xls,.csv,.docx,.doc',
     facts: t ? `<b>${t.teachers.length}</b><span>معلماً</span><em>${tot} حصة أسبوعياً</em>` : '<span class="fnone">لم يُرفع بعد</span>',
-    out: t ? `<button class="btn sm" data-act="ttOpen" type="button">عرض الجدول</button><button class="btn sm" data-tab="daily" type="button">الانتظار والمناوبة ←</button>` : '' });
+    out: (t ? `<button class="btn sm" data-act="ttOpen" type="button">عرض الجدول</button><button class="btn sm" data-tab="daily" type="button">الانتظار والمناوبة ←</button>` : '') + ttNextBox() });
+}
+function ttNextBox() {
+  const d = S.daily || {}, n = d.ttNext, p = d.ttPrev;
+  return `<div class="ttnext"><b>جدول الفصل القادم</b>${n ? `<p class="hint">${n.teachers.length} معلماً — ${esc(n.src || '')} · محفوظ للمراجعة، ولا يؤثر على الانتظار الحالي.</p><div class="acts wrap" style="margin:0"><button class="btn sm" data-act="ttnView" type="button">عرضه</button><button class="btn sm pri" data-act="ttnApply" type="button">اعتماده الآن</button><button class="btn sm ghost" data-act="ttnDel" type="button">حذفه</button></div>`
+    : `<p class="hint">جهّز جدول الفصل القادم مسبقاً دون أن يمس الجدول الحالي، ثم اعتمده بضغطة عند بداية الفصل.</p>${dropZone('ttn', 'رفع جدول الفصل القادم', 'PDF أو Excel أو Word', '.pdf,.xlsx,.xls,.csv,.docx,.doc')}`}
+    ${p ? `<p class="hint" style="margin-top:6px">الجدول السابق محفوظ (${esc(p.src || '')}). <button class="btn sm ghost" data-act="ttPrev" type="button">استرجاعه</button></p>` : ''}<div id="upMsg_ttn"></div></div>`;
 }
 function vFiles() {
   const t = stuTotals(), n = S.students.length, gm = S.guide.filter(x => x.g).length;
@@ -1416,7 +1422,7 @@ function vStudents(noUpload) {
 }
 function dropZone(slot, ttl, desc, accept) {
   const u = S.uploads[slot];
-  const ic = slot === 'tt' ? '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12"/>' : slot === 'tch' ? '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18 14.5c1.8.7 3 2.6 3 5"/>' : slot === 'ta' ? '<path d="M8 7h8M8 11h8M8 15h5"/><rect x="4" y="3" width="16" height="18" rx="2"/>' : '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/>';
+  const ic = slot === 'tt' || slot === 'ttn' ? '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12"/>' : slot === 'tch' ? '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18 14.5c1.8.7 3 2.6 3 5"/>' : slot === 'ta' ? '<path d="M8 7h8M8 11h8M8 15h5"/><rect x="4" y="3" width="16" height="18" rx="2"/>' : '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/>';
   return `<div class="drop${u ? ' done' : ''}" data-slot="${slot}">
     <div class="dic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></div>
     <div class="dtx"><b>${ttl}</b><small>${desc}</small>
@@ -1452,15 +1458,20 @@ async function processSlot(slot, file) {
       S.s.gs = Object.assign({}, S.s.gs, { file: f, src: 'file', include: true });
       S.uploads.gs = { name: file.name, at: stamp(), info: f.kind === 'img' ? `${f.imgs.length} صفحة` : 'جدول' };
       msg = `تم رفع بيان توزيع الدرجات الجديد (${file.name}) وأصبح هو المستخدم في خطابات التكليف. يمكنك العودة للبيان المعتمد من خانة «المصدر».`;
-    } else if (slot === 'tt') {
+    } else if (slot === 'tt' || slot === 'ttn') {
+      const nxt = slot === 'ttn';
       const list = await readTimetable(file);
       const tot = list.reduce((a, x) => a + Object.keys(x.c).length, 0);
       if (list.length < 3 || tot < 10) throw new Error('لم أتمكن من قراءة الجدول. تأكد أن الملف هو «الجدول العام للمعلمين» (صف لكل معلم، وأعمدة الأيام والحصص).');
       const smp = list.slice(0, 3).map(x => `${x.n}: ${Object.keys(x.c).length} حصة`).join('، ');
-      if (!(await choiceBox(`قُرئ الجدول: ${list.length} معلماً و${tot} حصة أسبوعياً (مثل: ${smp}). اعتماده جدولاً مدرسياً؟`, 'اعتماد الجدول', 'إلغاء'))) { toast('أُلغي الرفع'); return; }
-      D().tt = { teachers: list, src: file.name, at: stamp() };
-      S.uploads.tt = { name: file.name, at: stamp(), info: `${list.length} معلماً` };
-      msg = `اعتُمد الجدول المدرسي العام: ${list.length} معلماً و${tot} حصة. تظهر الآن الحصص والمتاحون في «الانتظار والمناوبة».`;
+      if (!(await choiceBox(`قُرئ ${nxt ? 'جدول الفصل القادم' : 'الجدول'}: ${list.length} معلماً و${tot} حصة أسبوعياً (مثل: ${smp}). ${nxt ? 'حفظه جدولاً للفصل القادم دون التأثير على الجدول الحالي؟' : 'اعتماده جدولاً مدرسياً؟'}`, nxt ? 'حفظ للفصل القادم' : 'اعتماد الجدول', 'إلغاء'))) { toast('أُلغي الرفع'); return; }
+      if (nxt) { D().ttNext = { teachers: list, src: file.name, at: stamp() }; msg = `حُفظ جدول الفصل القادم (${list.length} معلماً). الجدول الحالي والانتظار لم يتأثرا — اعتمده بضغطة عند بداية الفصل.`; }
+      else {
+        if (D().tt) D().ttPrev = D().tt;
+        D().tt = { teachers: list, src: file.name, at: stamp() };
+        S.uploads.tt = { name: file.name, at: stamp(), info: `${list.length} معلماً` };
+        msg = `اعتُمد الجدول المدرسي العام: ${list.length} معلماً و${tot} حصة. تظهر الآن الحصص والمتاحون في «الانتظار والمناوبة».`;
+      }
     } else if (slot === 'tch') {
       const found = await readTeacherFile(file);
       if (!found.length) throw new Error('لم يُعثر على أسماء معلمين في الملف. اجعل الأسماء في عمود عنوانه «اسم المعلم» أو اسماً في كل سطر، أو نزّل القالب واملأه.');
@@ -2782,7 +2793,7 @@ function choiceBox(msg, yes, no) {
     const fin = v => { m.hidden = true; Y.textContent = oy; N.textContent = on; Y.className = 'btn danger'; res(v); };
     Y.onclick = () => fin(true); N.onclick = () => fin(false); });
 }
-const SLOT_NAMES = { tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
+const SLOT_NAMES = { ttn: 'جدول الفصل القادم', tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
 /* يُطلب الرمز مرة واحدة في الجلسة؛ اختيار الملف يتم أولاً بلمسة مباشرة (متطلب سفاري في الآيفون) ثم التحقق */
 let UNLOCKED = (() => { try { return sessionStorage.getItem('balat-unlock') === '1' || !!localStorage.getItem('balat-exams-v1-code'); } catch (e) { return false; } })();
 async function unlock(reason) {

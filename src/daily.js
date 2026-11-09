@@ -1,7 +1,7 @@
 /* =====================================================================
    الأعمال اليومية: الجدول المدرسي العام، حصص الانتظار، الإشراف والمناوبة
    ===================================================================== */
-var DAILY_DATE = null, DAILY_TAB = 'wait', TT_DAY = null;
+var DAILY_DATE = null, DAILY_TAB = 'wait', TT_DAY = null, TT_WHICH = 'cur';
 var TT_DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 var DUTY_DEF = {
   no: '9', code: 'و.ت.ع.ن-01-02', name: 'تقرير الإشراف والمناوبة اليومي',
@@ -176,14 +176,16 @@ function vDuty(iso) {
     <details class="sub"><summary>إعدادات النموذج (الفسح والمواقع)</summary><div class="grid2">${cfg.b.map((b, i) => `<label>اسم ${i + 1} ${inp(`daily.cfg.b.${i}.t`, b.t)}</label><label>الصفوف ${inp(`daily.cfg.b.${i}.g`, b.g)}</label>`).join('')}<label>رقم النموذج ${inp('daily.cfg.no', cfg.no)}</label><label>رمز النموذج ${inp('daily.cfg.code', cfg.code)}</label></div></details>
   </section>`;
 }
+function ttSrc() { return TT_WHICH === 'next' && D().ttNext ? D().ttNext : D().tt; }
 function vTT(iso) {
-  const t = D().tt; if (!t) return `<section class="card empty"><h2>لم يُرفع الجدول المدرسي العام</h2><p class="hint">ارفعه من «الملفات الأساسية» بصيغة PDF أو Excel أو Word (تصدير برنامج الجدول aSc أو غيره).</p><button class="btn pri" data-tab="files" type="button">رفع الجدول</button></section>`;
+  const t = ttSrc(); if (!t) return `<section class="card empty"><h2>لم يُرفع الجدول المدرسي العام</h2><p class="hint">ارفعه من «الملفات الأساسية» بصيغة PDF أو Excel أو Word (تصدير برنامج الجدول aSc أو غيره).</p><button class="btn pri" data-tab="files" type="button">رفع الجدول</button></section>`;
   if (TT_DAY == null) TT_DAY = Math.max(0, wdOf(iso));
   const dd = TT_DAY, free = [1, 2, 3, 4, 5, 6, 7].map(p => t.teachers.filter(x => !x.c[dd + '-' + p]).length);
-  return `<section class="card"><h2>الجدول المدرسي العام — ${esc(TT_DAYS[dd])}</h2>
+  const sw = D().ttNext ? `<div class="dtabs sm" style="margin-bottom:8px"><button type="button" class="${TT_WHICH !== 'next' ? 'on' : ''}" data-act="ttWhich" data-v="cur">الجدول الحالي</button><button type="button" class="${TT_WHICH === 'next' ? 'on' : ''}" data-act="ttWhich" data-v="next">جدول الفصل القادم</button></div>` : '';
+  return `<section class="card"><h2>${TT_WHICH === 'next' && D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام'} — ${esc(TT_DAYS[dd])}</h2>${sw}
     <div class="acts wrap"><div class="dtabs sm">${TT_DAYS.map((n, i) => `<button type="button" class="${i === dd ? 'on' : ''}" data-act="ttDay" data-v="${i}">${n}</button>`).join('')}</div><span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="tt" type="button">طباعة جدول اليوم</button><button class="btn" data-act="dPdf" data-v="tt" type="button">PDF</button><button class="btn" data-act="dXls" data-v="tt" type="button">Excel</button></div>
     <p class="hint">${t.teachers.length} معلماً — ${esc(t.src || '')}. الخانة الفارغة تعني أن المعلم متاح في تلك الحصة.</p>
-    <div class="tw"><table class="et ttg"><tr><th>المعلم</th>${[1, 2, 3, 4, 5, 6, 7].map(p => `<th>${p}</th>`).join('')}<th>حصص</th></tr>${t.teachers.map(x => `<tr><td class="tn">${esc(x.n)}</td>${[1, 2, 3, 4, 5, 6, 7].map(p => { const v = x.c[dd + '-' + p]; return `<td class="${v ? 'g' + secGrade(String(v).split('،')[0]) : 'fr'}">${v ? esc(v) : ''}</td>`; }).join('')}<td>${ttDayLoad(x.n, dd)}</td></tr>`).join('')}
+    <div class="tw"><table class="et ttg"><tr><th>المعلم</th>${[1, 2, 3, 4, 5, 6, 7].map(p => `<th>${p}</th>`).join('')}<th>حصص</th></tr>${t.teachers.map(x => `<tr><td class="tn">${esc(x.n)}</td>${[1, 2, 3, 4, 5, 6, 7].map(p => { const v = x.c[dd + '-' + p]; return `<td class="${v ? 'g' + secGrade(String(v).split('،')[0]) : 'fr'}">${v ? esc(v) : ''}</td>`; }).join('')}<td>${[1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length}</td></tr>`).join('')}
     <tr class="tot"><td>المتاحون</td>${free.map(f => `<td>${f}</td>`).join('')}<td></td></tr></table></div></section>`;
 }
 function vLog() {
@@ -221,10 +223,10 @@ function dutyPages(iso) {
   return [title(esc(cfg.name || DUTY_DEF.name)) + head + cfg.b.map(blk).join(sp(8)) + sp(8) + dt + sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]])];
 }
 function ttPages(dd) {
-  const t = D().tt; if (!t) return [];
-  const rows = t.teachers.map((x, i) => [i + 1, { v: esc(x.n), al: 'right' }, ...[1, 2, 3, 4, 5, 6, 7].map(p => esc(x.c[dd + '-' + p] || '')), ttDayLoad(x.n, dd)]);
+  const t = ttSrc(); if (!t) return [];
+  const rows = t.teachers.map((x, i) => [i + 1, { v: esc(x.n), al: 'right' }, ...[1, 2, 3, 4, 5, 6, 7].map(p => esc(x.c[dd + '-' + p] || '')), [1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length]);
   const hd = [H('م', { w: '5%' }), H('المعلم', { w: '22%' }), ...[1, 2, 3, 4, 5, 6, 7].map(p => H('الحصة ' + p)), H('المجموع', { w: '8%' })];
-  const out = []; const per = 34; for (let i = 0; i < rows.length; i += per) out.push(title('الجدول المدرسي العام — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
+  const out = []; const per = 34; for (let i = 0; i < rows.length; i += per) out.push(title((t === D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام') + ' — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
   return out;
 }
 function statsPages() {
@@ -247,6 +249,11 @@ document.addEventListener('click', async e => {
   if (a === 'dDay') { const v = +b.dataset.v; DAILY_DATE = v === 0 ? todayIso() : dateToIso(new Date(isoToDate(iso).getTime() + v * 864e5)); return render(); }
   if (a === 'dOpen') { DAILY_DATE = b.dataset.v; DAILY_TAB = 'wait'; return render(); }
   if (a === 'ttDay') { TT_DAY = +b.dataset.v; return render(); }
+  if (a === 'ttWhich') { TT_WHICH = b.dataset.v; return render(); }
+  if (a === 'ttnView') { TT_WHICH = 'next'; DAILY_TAB = 'tt'; return go('daily'); }
+  if (a === 'ttnDel') { if (await confirmBox('حذف جدول الفصل القادم؟')) { delete D().ttNext; TT_WHICH = 'cur'; save(); render(); } return; }
+  if (a === 'ttnApply') { const n = D().ttNext; if (n && await confirmBox(`اعتماد جدول الفصل القادم (${n.teachers.length} معلماً) جدولاً حالياً؟ تُبنى عليه حصص الانتظار من الآن، ويُحفظ الجدول الحالي لاسترجاعه عند الحاجة.`)) { D().ttPrev = D().tt; D().tt = n; delete D().ttNext; TT_WHICH = 'cur'; S.uploads.tt = { name: n.src, at: stamp(), info: `${n.teachers.length} معلماً` }; save(); render(); toast('اعتُمد جدول الفصل الجديد ✓'); } return; }
+  if (a === 'ttPrev') { const p = D().ttPrev; if (p && await confirmBox(`استرجاع الجدول السابق (${p.src || ''})؟ يحل محل الجدول الحالي، ويُحفظ الحالي بدلاً منه.`)) { D().ttPrev = D().tt; D().tt = p; save(); render(); toast('استُرجع الجدول السابق'); } return; }
   if (a === 'wDel') { if (await confirmBox('حذف هذا المعلم الغائب واستمارته لهذا اليوم؟')) { W(iso).blocks.splice(+b.dataset.v, 1); save(); render(); } return; }
   if (a === 'wAuto') { const n = autoFill(iso); save(); render(); return toast(n ? `عُبّئت ${n} حصة بالمعلمين المتاحين الأقل انتظاراً` : 'لا توجد حصص فارغة تحتاج تعبئة'); }
   if (a === 'dRow') { const u = D().duty[iso] = U(iso); if (b.dataset.v === 'duty') u.duty.push({ n: '', note: '' }); else u.b[+b.dataset.v].rows.push({ n: '', loc: '', note: '' }); save(); return render(); }
