@@ -1663,11 +1663,27 @@ function openPicker(sel) {
     <div class="pickl"></div>
     <div class="pickf"><button type="button" class="btn sm ghost" data-pk="clear">${isSub ? 'بدون مادة' : 'بدون اسم'}</button><button type="button" class="btn sm" data-pk="other">✎ ${isSub ? 'كتابة مادة أخرى' : 'كتابة اسم آخر'}</button></div></div>`;
   const q = $('.pickq', m), list = $('.pickl', m), curV = sel.value;
+  /* ترتيب هجائي (تُهمل «ال» في المواد)، والبحث يبدأ بالحرف الأول */
+  const key = v => { let k = normName(v); if (isSub) k = k.replace(/^ال/, ''); return k; };
+  const cmp = (a, b) => AR.compare(key(a), key(b));
+  groups.forEach(g => g.items.sort(cmp));
+  const item = v => `<button type="button" class="picki${v === curV ? ' on' : ''}" data-v="${esc(v)}">${esc(v)}</button>`;
   const draw = () => {
-    const words = normName(q.value).split(' ').filter(Boolean), seen = new Set(); let html = '', n = 0;
-    groups.forEach(g => { const it = g.items.filter(v => { const k = normName(v); if (seen.has(k) && !g.label) return false; return words.every(w => k.includes(w)); }); if (!it.length) return;
-      it.forEach(v => seen.add(normName(v)));
-      html += (g.label ? `<div class="pickg">${esc(g.label)}</div>` : '') + it.map(v => { n++; return `<button type="button" class="picki${v === curV ? ' on' : ''}" data-v="${esc(v)}">${esc(v)}</button>`; }).join(''); });
+    const qs = normName(q.value).trim(), qk = isSub ? qs.replace(/^ال/, '') : qs, seen = new Set(); let html = '';
+    if (!qs) {
+      groups.forEach(g => { const it = g.items.filter(v => { const k = normName(v); if (seen.has(k)) return false; seen.add(k); return true; }); if (it.length) html += (g.label ? `<div class="pickg">${esc(g.label)}</div>` : '') + it.map(item).join(''); });
+    } else {
+      const all = []; groups.forEach(g => g.items.forEach(v => { const k = normName(v); if (!seen.has(k)) { seen.add(k); all.push(v); } }));
+      const words = qk.split(' ').filter(Boolean);
+      const rank = v => { const k = key(v), ws = k.split(' ');
+        if (k.startsWith(qk)) return 0;                                   /* يبدأ الاسم بما كُتب */
+        if (words.length === 1 && ws.some(w => w.startsWith(qk) || w.replace(/^ال/, '').startsWith(qk))) return 1; /* يبدأ أحد أجزاء الاسم به (مثل اسم العائلة) */
+        if (words.every(w => ws.some(x => x.startsWith(w) || x.replace(/^ال/, '').startsWith(w)))) return 2;
+        return qk.length > 1 && words.every(w => k.includes(w)) ? 3 : 9; };
+      const r = all.map(v => [v, rank(v)]).filter(x => x[1] < 9).sort((a, b) => a[1] - b[1] || cmp(a[0], b[0]));
+      const lbl = ['يبدأ بـ «' + q.value.trim() + '»', isSub ? 'كلمة في اسم المادة تبدأ به' : 'اسم العائلة أو جزء من الاسم يبدأ به', 'مطابقة جزئية', 'يحتوي على ما كُتب'];
+      let last = -1; r.forEach(([v, k]) => { if (k !== last && (k > 0 || r.some(x => x[1] > 0))) { html += `<div class="pickg">${esc(lbl[k])}</div>`; } last = k; html += item(v); });
+    }
     list.innerHTML = html || `<p class="hint pickn">لا توجد نتيجة${q.value.trim() ? ` — اضغط «${isSub ? 'كتابة مادة أخرى' : 'كتابة اسم آخر'}» لإضافة «${esc(q.value.trim())}»` : ''}</p>`;
   };
   const sc = getComputedStyle($('#main')).getPropertyValue('--sc').trim(); if (sc) m.style.setProperty('--accent', sc);
