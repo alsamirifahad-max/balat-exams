@@ -400,7 +400,7 @@ const CURR = {
        2: ['الرياضيات 3-2', 'اللغة الإنجليزية 3-2', 'الفقه', 'علوم الأرض والفضاء', 'الدراسات الأدبية', 'المجال الاختياري', 'الفيزياء 3', 'الدراسات النفسية والاجتماعية', 'المواطنة الرقمية', 'الجغرافيا', 'المهارات الحياتية'] }
 };
 const CURR_TRACKS = ['الذكاء الاصطناعي', 'هندسة البرمجيات', 'علم البيانات', 'إنترنت الأشياء', 'الأمن السيبراني', 'التصميم الهندسي', 'مبادئ العلوم الصحية', 'أنظمة جسم الإنسان', 'الرعاية الصحية', 'مبادئ الإدارة', 'مبادئ الاقتصاد', 'المهارات الإدارية', 'التنمية المستدامة', 'مبادئ القانون', 'السلامة والصحة المهنية', 'التفسير', 'التجويد', 'أصول الفقه', 'الفرائض', 'مصطلح الحديث', 'الأدب العربي', 'البلاغة والنقد'];
-function semNo() { return /الثاني|2/.test(S.s.sem) ? 2 : 1; }
+function semNo() { const s = (typeof TAB !== 'undefined' && TAB === 'assign' && typeof setMeta === 'function' && typeof ACTIVE !== 'undefined') ? setMeta(ACTIVE).sem : S.s.sem; return /الثاني|2/.test(s) ? 2 : 1; }
 function currList(g) { const a = CURR[g][semNo()], b = CURR[g][semNo() === 1 ? 2 : 1]; return [...a, ...b.filter(x => !a.includes(x)), ...(g > 1 ? CURR_TRACKS : [])]; }
 
 /* ===================== بيان توزيع الدرجات ===================== */
@@ -1042,7 +1042,7 @@ function stageDone(k) {
   return { files: S.students.length > 0 && S.teachers.length > 0, assign: S.ta.length > 0, schedule: S.days.length > 0 && S.days.some(d => d.p.some(p => G.some(g => (p.s[g] || '').trim()))), committees: !!S.distributed, staff: Object.values(S.obs || {}).some(l => (l || []).some(Boolean)), forms: null }[k];
 }
 const svgI = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-function updSetChip() { const c = $('#setChip'); if (!c) return; c.textContent = setMeta(ACTIVE).n; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
+function updSetChip() { const c = $('#setChip'); if (!c) return; const m = setMeta(ACTIVE); c.textContent = m.n + ' · ' + semShort(m.sem); c.title = `الإسناد الذي تعمل عليه: ${m.n} — الفصل الدراسي ${m.sem} ${m.y}`; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
 function roleFlow() { return FLOW.filter(s => typeof roleAllows !== 'function' || roleAllows(s.k)).map((s, i) => Object.assign({}, s, { n: i + 1 }, (typeof ROLE !== 'undefined' && ROLE === 'agent' && s.k === 'files') ? { t: 'المعلمون', d: 'قائمة معلمي المدرسة — ترفعها من Excel أو Word أو PDF وتنعكس في الإسناد' } : {})); }
 function renderNav() { updSetChip(); if (typeof updRoleChip === 'function') updRoleChip();
   const RF = roleFlow();
@@ -1108,7 +1108,8 @@ function pickSel(path, val, groups, o = {}) {
   if (!Array.isArray(groups[0] && groups[0].items)) groups = [{ items: groups }];
   const seen = new Set(), nv = normName(val), pk = o.kind === 's' ? null : personKey(val); let found = false;
   const same = x => val && (normName(x) === nv || (pk && personKey(x) === pk));
-  const grp = groups.map(g => { const it = g.items.filter(x => { const k = normName(x); if (!x || seen.has(k)) return false; seen.add(k); return true; });
+  const sk = x => { let k = normName(x); if (o.kind === 's') k = k.replace(/^ال/, ''); return k; };
+  const grp = groups.map(g => { const it = g.items.filter(x => { const k = normName(x); if (!x || seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => AR.compare(sk(a), sk(b)) || AR.compare(a, b));
     const opts = it.map(x => { const sel = !found && same(x); if (sel) found = true; return `<option value="${esc(x)}"${sel ? ' selected' : ''}>${esc(x)}</option>`; }).join('');
     return it.length ? (g.label ? `<optgroup label="${esc(g.label)}">${opts}</optgroup>` : opts) : ''; }).join('');
   const extra = val && !found ? `<option value="${esc(val)}" selected>${esc(val)}</option>` : '';
@@ -1140,7 +1141,9 @@ function openPicker(sel) {
   const draw = () => {
     const qs = normName(q.value).trim(), qk = isSub ? qs.replace(/^ال/, '') : qs, seen = new Set(); let html = '';
     if (!qs) {
-      groups.forEach(g => { const it = g.items.filter(v => { const k = normName(v); if (seen.has(k)) return false; seen.add(k); return true; }); if (it.length) html += (g.label ? `<div class="pickg">${esc(g.label)}</div>` : '') + it.map(item).join(''); });
+      groups.forEach(g => { const it = g.items.filter(v => { const k = normName(v); if (seen.has(k)) return false; seen.add(k); return true; }); if (!it.length) return;
+        html += g.label ? `<div class="pickg">${esc(g.label)}</div>` : ''; let L = '';
+        it.forEach(v => { const l = key(v).charAt(0); if (it.length > 8 && l !== L) { L = l; html += `<div class="pickl1">${esc(l)}</div>`; } html += item(v); }); });
     } else {
       const all = []; groups.forEach(g => g.items.forEach(v => { const k = normName(v); if (!seen.has(k)) { seen.add(k); all.push(v); } }));
       const words = qk.split(' ').filter(Boolean);
@@ -1637,10 +1640,12 @@ function setChooser() {
   return `<section class="card sets" id="setsCard">
     <h2>أي إسناد تعمل عليه؟</h2>
     <p class="hint">ثلاثة حفظ مستقلة تماماً، لا يتداخل أحدها مع الآخر، وكلها محفوظة على السحابة. اختر الحفظ الذي تعمل عليه على هذا الجهاز؛ <b>الاختبارات والتكليفات والملاحظة تُبنى على الحفظ النشط</b>. يمكنك تعديل الاسم والوصف بالضغط عليهما.</p>
+    <div class="setnow" style="--sc2:${SET_DEF[ACTIVE].c}"><span class="setic">${SET_DEF[ACTIVE].ic}</span><div><small>تعمل الآن على</small><b>${esc(setMeta(ACTIVE).n)} — الفصل الدراسي ${esc(setMeta(ACTIVE).sem)} ${esc(setMeta(ACTIVE).y)}</b><span>كشوف الإسناد ونصاب المعلمين تُطبع بهذا الفصل، وقائمة المواد تُقترح من خطته. بقية النظام (الاختبارات والانتظار والمناوبة) يبقى على الفصل ${esc(S.s.sem)}.</span></div></div>
     ${chosen ? '' : `<p class="setcall">هذه أول مرة على هذا الجهاز — اختر الحفظ الذي ستعمل عليه: فهد يعمل على «حفظ فهد»، والوكيل على «حفظ الوكيل». <button class="btn sm" data-act="setUse" data-v="${ACTIVE}" type="button">متابعة على «${esc(setMeta(ACTIVE).n)}»</button></p>`}
     <div class="setgrid">${TA_SETS.map(id => { const d = secData(id), m = setMeta(id), on = id === ACTIVE, sy = SYNC[id], tc = new Set((d.ta || []).map(x => normName(x.t))).size;
       return `<article class="setc${on ? ' on' : ''}" style="--sc2:${SET_DEF[id].c}">
         <div class="seth"><span class="setic">${SET_DEF[id].ic}</span><div><input class="setn" data-setmeta="${id}" data-f="n" value="${esc(m.n)}" aria-label="اسم الحفظ" maxlength="30"><input class="setd" data-setmeta="${id}" data-f="d" value="${esc(m.d)}" placeholder="وصف، مثل: إسناد الفصل الثاني 1447" aria-label="وصف الحفظ" maxlength="60"></div></div>
+        <div class="semchips" role="group" aria-label="الفصل الدراسي لهذا الحفظ">${['الأول', 'الثاني'].map(s => `<button type="button" class="${m.sem === s ? 'on' : ''}" data-act="setSem" data-v="${id}" data-s="${s}">الفصل ${s}</button>`).join('')}<input class="in sy" data-setmeta="${id}" data-f="y" value="${esc(m.y)}" aria-label="العام الدراسي" maxlength="12"></div>
         <div class="setst"><b>${(d.ta || []).length}</b> سطراً · <b>${tc}</b> معلماً في الإسناد · ${(d.teachers || []).length} في القائمة</div>
         <small>${sy && sy.at ? 'آخر حفظ على السحابة: ' + esc(fmtAt(sy.at)) : SYNC_CODE ? 'بانتظار أول حفظ' : 'محفوظ على هذا الجهاز فقط — فعّل المزامنة'}</small>
         ${on ? '<span class="setbadge">✓ تعمل عليه الآن</span>' : (ROLE === 'agent' && id === 'ta') ? `<button class="btn" data-act="setView" data-v="${id}" type="button">عرض كشف الإسناد (اطلاع فقط)</button>` : `<button class="btn pri" data-act="setUse" data-v="${id}" type="button">العمل على هذا الحفظ</button><button class="btn sm ghost" data-act="setView" data-v="${id}" type="button">عرض الكشف</button>`}
@@ -2566,7 +2571,30 @@ let ACTIVE = (() => { try { const v = localStorage.getItem(LS_KEY + '-taset'); r
 function setStore(id) { try { return JSON.parse(localStorage.getItem(LS_KEY + '-set-' + id) || 'null'); } catch (e) { return null; } }
 function setStoreSave(id, d) { try { localStorage.setItem(LS_KEY + '-set-' + id, JSON.stringify(d)); } catch (e) { } }
 function emptySet(id) { return { ta: [], teachers: [], taPrint: clone(DEFAULT_STATE.s.taPrint), up: { ta: null, tch: null }, meta: { n: SET_DEF[id].n, d: SET_DEF[id].d } }; }
-function setMeta(id) { const d = id === ACTIVE ? { meta: S.taMeta } : setStore(id); const m = (d && d.meta) || {}; return { n: m.n || SET_DEF[id].n, d: m.d != null ? m.d : SET_DEF[id].d }; }
+const SET_SEM_DEF = { ta: null, 'ta-agent': 'الثاني', 'ta-shared': null };
+function setMeta(id) { const d = id === ACTIVE ? { meta: S.taMeta } : setStore(id); const m = (d && d.meta) || {}; return { n: m.n || SET_DEF[id].n, d: m.d != null ? m.d : SET_DEF[id].d, sem: m.sem || SET_SEM_DEF[id] || S.s.sem, y: m.y || S.s.yearTxt }; }
+function updSetMeta(id, patch) { if (id === ACTIVE) { S.taMeta = Object.assign({}, setMeta(id), S.taMeta || {}, patch); save(); } else { const d = secData(id); d.meta = Object.assign({}, setMeta(id), d.meta || {}, patch); setStoreSave(id, d); syncSoon(); } }
+const semShort = s => /الثاني|2/.test(s) ? 'ف2' : /الثالث|3/.test(s) ? 'ف3' : 'ف1';
+/* نماذج الإسناد تُطبع بفصل وعام الحفظ الذي بُنيت منه، دون تغيير إعدادات بقية النظام */
+const TA_FORMS = ['taSheet', 'taLoad'];
+/* للطباعة والتحميل: يبقى الفصل الخاص بالحفظ حتى تُغلق المعاينة أو ينتهي التحميل */
+async function withSetSemAsync(id, fn) {
+  const m = setMeta(id), keep = { sem: S.s.sem, y: S.s.yearTxt };
+  if (m.sem === keep.sem && m.y === keep.y) return fn();
+  S.s.sem = m.sem; S.s.yearTxt = m.y; await drawBrand();
+  const restore = async () => { S.s.sem = keep.sem; S.s.yearTxt = keep.y; await drawBrand(); };
+  try { await fn(); } catch (e) { console.error(e); }
+  if (PV) { const iv = setInterval(async () => { if (!PV) { clearInterval(iv); await restore(); } }, 400); } else await restore();
+}
+async function withSetSem(id, fn) {
+  const m = setMeta(id), keep = { sem: S.s.sem, y: S.s.yearTxt };
+  if (m.sem === keep.sem && m.y === keep.y) return fn();
+  S.s.sem = m.sem; S.s.yearTxt = m.y; await drawBrand();
+  let out; try { out = fn(); } finally { S.s.sem = keep.sem; S.s.yearTxt = keep.y; await drawBrand(); }
+  return out;
+}
+const freezeHdr = groups => groups.map(g => Object.assign({}, g, { pages: g.pages.map(p => p.replace(/class="brand-hdr phdr"/g, 'class="phdr"').replace(/class="brand-ftr pftr"/g, 'class="pftr"')) }));
+
 const SYNC_SECS = new Proxy({ ex: 'الاختبارات', daily: 'الانتظار والمناوبة والجدول المدرسي' }, { get: (o, k) => isSet(k) ? 'إسناد ' + setMeta(k).n : o[k] });
 let SYNC = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY + '-sync') || '{}'); } catch (e) { return {}; } })();
 let SYNC_CODE = (() => { try { return localStorage.getItem(LS_KEY + '-code') || ''; } catch (e) { return ''; } })();
@@ -2617,9 +2645,10 @@ async function setActive(id) {
 }
 function buildStFromTaSafe() { try { if (S.ta.length && typeof buildStFromTa === 'function') buildStFromTa(); } catch (e) { } }
 function previewSet(id) {
-  const keep = { ta: S.ta, teachers: S.teachers }; const d = secData(id);
-  try { S.ta = d.ta || []; S.teachers = d.teachers || []; const pages = buildForm(FORMS.find(x => x.id === 'taSheet'), {}); openPreview([{ land: false, pages, t: 'كشف الإسناد' }], fname('كشف الإسناد - ' + setMeta(id).n)); }
+  const keep = { ta: S.ta, teachers: S.teachers }; const d = secData(id); let pages;
+  try { S.ta = d.ta || []; S.teachers = d.teachers || []; pages = buildForm(FORMS.find(x => x.id === 'taSheet'), {}); }
   finally { S.ta = keep.ta; S.teachers = keep.teachers; }
+  return withSetSemAsync(id, () => openPreview([{ land: false, pages, t: 'كشف الإسناد' }], fname('كشف الإسناد - ' + setMeta(id).n + ' - الفصل ' + setMeta(id).sem)));
 }
 function copySet(from, to) {
   const d = clone(secData(from)); d.meta = clone(secData(to).meta || { n: SET_DEF[to].n, d: SET_DEF[to].d });
@@ -2822,7 +2851,7 @@ function confirmBox(msg) {
 /* ===================== الأحداث ===================== */
 document.addEventListener('input', e => {
   const el = e.target;
-  if (el.dataset.setmeta) { const id = el.dataset.setmeta, f = el.dataset.f; if (id === ACTIVE) { S.taMeta = Object.assign({}, setMeta(id), S.taMeta || {}, { [f]: el.value }); save(); } else { const d = secData(id); d.meta = Object.assign({}, setMeta(id), { [f]: el.value }); setStoreSave(id, d); syncSoon(); } updSetChip(); return; }
+  if (el.dataset.setmeta) { updSetMeta(el.dataset.setmeta, { [el.dataset.f]: el.value }); updSetChip(); return; }
   if (el.dataset.pick && el.value === '__other') return;
   if (el.dataset.k) {
     let v = el.type === 'checkbox' ? el.checked : el.value;
@@ -2909,6 +2938,7 @@ document.addEventListener('click', async e => {
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
     case 'tchTpl': tchTemplate(); return;
     case 'setUse': return setActive(b.dataset.v);
+    case 'setSem': updSetMeta(b.dataset.v, { sem: b.dataset.s }); renderNav(); render(); return toast(`«${setMeta(b.dataset.v).n}» على الفصل الدراسي ${b.dataset.s}`);
     case 'ttOpen': DAILY_TAB = 'tt'; return go('daily');
     case 'todayDay': TODAY_DI = +b.dataset.v; return render();
     case 'todayForm': { const g = todayGroups(b.dataset.f); if (!g.length) return toast('لا توجد صفحات لهذا النموذج — تحقق من البيانات', true); const nm = fname(g[0].t + ' - ' + dayName(S.days[TODAY_DI]) + ' ' + dateShort(S.days[TODAY_DI]).replace(/\//g, '-')); return b.dataset.op === 'pdf' ? downloadPdf(g, nm) : openPreview(g, nm); }
@@ -2923,10 +2953,11 @@ document.addEventListener('click', async e => {
     case 'pickOpen': { const s = b.parentElement.querySelector('select'); if (s) openPicker(s); return; }
     case 'sortTeachers': S.teachers = arSort(S.teachers); toast('رُتبت القائمة هجائياً'); return re();
     case 'mergeTeachers': { const have = new Set(S.teachers.map(normName)); let n = 0; allTeachers().forEach(t => { if (!have.has(normName(t))) { S.teachers.push(t); n++; } }); S.teachers = arSort(S.teachers); toast(n ? `أضيف ${n} معلماً` : 'القائمة مكتملة'); return re(); }
-    case 'qprint': return printPages(groupsOf(b.dataset.form, qopts(b)));
-    case 'qword': return wordDoc(groupsOf(b.dataset.form, qopts(b)), fname(FORMS.find(x => x.id === b.dataset.form).t));
-    case 'qpdf': return downloadPdf(groupsOf(b.dataset.form, qopts(b)), fname(FORMS.find(x => x.id === b.dataset.form).t));
-    case 'qopen': return openPreview(groupsOf(b.dataset.form, qopts(b)), fname(FORMS.find(x => x.id === b.dataset.form).t));
+    case 'qprint': case 'qword': case 'qpdf': case 'qopen': {
+      const f = b.dataset.form, o = qopts(b), nm = fname(FORMS.find(x => x.id === f).t + (TA_FORMS.includes(f) ? ' - ' + setMeta(ACTIVE).n + ' - الفصل ' + setMeta(ACTIVE).sem : ''));
+      const run = () => { const g = groupsOf(f, o); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : openPreview(g, nm); };
+      return TA_FORMS.includes(f) ? withSetSemAsync(ACTIVE, run) : run();
+    }
     case 'qedit': FORM = b.dataset.form; FO = {}; return go('forms');
     case 'pvOpen': { const g = currentGroups(); return openPreview(g, fname(formDef().t)); }
     case 'stuExcelAll': { const k = clone(SF); Object.assign(SF, { src: 'noor', g: 'all', sec: 'all', q: '', cols: ['i', 'n', 'id', 'g', 'sec', 'ph', 'ph2', 'seat', 'com'].filter(c => c !== 'ph2' || S.guide.length), title: 'طلاب المدرسة - ملف نور' }); stuExcel(); SF = k; return; }

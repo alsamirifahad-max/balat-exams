@@ -96,13 +96,12 @@ function subOptsFor(iso, bi, p) {
   const d = wdOf(iso), abs = absentSet(iso), taken = subsAt(iso, p, [bi]), load = waitLoad(iso), wk = weekLoad();
   const names = ttNames(); const free = [], busy = [], away = [];
   names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if ((d >= 0 && ttCell(n, d, p)) || taken[k]) busy.push(n); else free.push(n); });
-  free.sort((a, b) => (load[normName(a)] || 0) - (load[normName(b)] || 0) || (wk[normName(a)] || 0) - (wk[normName(b)] || 0) || AR.compare(a, b));
-  return [{ label: `✓ متاحون في الحصة ${p} (${free.length}) — الأقل انتظاراً أولاً`, items: free }, { label: '⚠ لديهم حصة أو انتظار في نفس الوقت', items: busy }, { label: '✕ غائبون اليوم', items: away }];
+  return [{ label: `✓ متاحون في الحصة ${p} (${free.length})`, items: free }, { label: '⚠ لديهم حصة أو انتظار في نفس الوقت', items: busy }, { label: '✕ غائبون اليوم', items: away }];
 }
 function autoFill(iso) {
   const w = W(iso), d = wdOf(iso); let n = 0;
   w.blocks.forEach((b, bi) => { for (let p = 1; p <= 7; p++) { if (!(d >= 0 && ttCell(b.abs, d, p))) continue; b.rows = b.rows || {}; const r = b.rows[p] = b.rows[p] || {}; if (r.t) continue;
-    const g = subOptsFor(iso, bi, p)[0].items; if (g.length) { r.t = g[0]; n++; } } });
+    const ld = waitLoad(iso), wk = weekLoad(); const g = subOptsFor(iso, bi, p)[0].items.slice().sort((a, b) => (ld[normName(a)] || 0) - (ld[normName(b)] || 0) || (wk[normName(a)] || 0) - (wk[normName(b)] || 0) || AR.compare(normName(a), normName(b))); if (g.length) { r.t = g[0]; n++; } } });
   return n;
 }
 
