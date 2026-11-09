@@ -122,7 +122,7 @@ function termBanner(tab) {
     if (!arc || !isAdmin() || daysTo(arc.day) < -30) return '';
     return `<div class="tbar done"><div><b>النظام على الفصل الدراسي الثاني</b><span>انتقلت في ${esc(arc.at)}. أعمال الفصل الأول مؤرشفة على هذا الجهاز.</span></div><div class="tba"><button class="btn sm ghost" data-tact="termUndo" type="button">تراجع عن الانتقال</button></div></div>`;
   }
-  const dd = daysTo(c.t2), R = t2Check(), near = dd <= 14;
+  const dd = daysTo(c.t2), R = t2Check(), exDone = todayIso() > c.ex1b, near = exDone && dd <= 14;
   if (!R.ta.length && !R.tt && dd > 45) return '';
   const col = R.pct >= 90 ? 'g' : R.pct >= 60 ? 'w' : 'b';
   return `<div class="tbar${near ? ' near' : ''}"><div class="tbi">٢</div><div><b>${dd > 0 ? `الفصل الدراسي الثاني يبدأ بعد ${dd} يوماً` : dd === 0 ? 'الفصل الدراسي الثاني يبدأ اليوم' : `بدأ الفصل الدراسي الثاني منذ ${-dd} يوماً`}</b><span>${calTxt(c.t2)} · «${esc(setMeta('ta-agent').n)}» جاهز بنسبة <em class="tp ${col}">${R.pct}%</em>${R.issues.length ? ` · ${R.issues.length} ملاحظات` : ''}</span></div>
@@ -138,6 +138,7 @@ function htmlBox(title, html, yes, no) {
 async function termGo() {
   if (!isAdmin()) return toast('الانتقال بين الفصلين من صلاحية مدير النظام', true);
   const R = t2Check(), c = CAL(), n = D().ttNext;
+  if (todayIso() <= c.ex1b && !await confirmBox(`تنبيه: اختبارات الفصل الأول لم تنتهِ بعد (تنتهي ${calTxt(c.ex1b)}). الانتقال الآن يجعل الاختبارات تُبنى على إسنادات الفصل الثاني. هل أنت متأكد أنك تريد المتابعة؟`)) return;
   const ok = await htmlBox('بدء الفصل الدراسي الثاني', `<p class="hint">سيتم بضغطة واحدة:</p><ol class="tsteps">
     <li>تحويل النظام كله إلى <b>الفصل الدراسي الثاني</b> (الكليشة والاختبارات والانتظار والمناوبة).</li>
     <li>اعتماد إسنادات «${esc(setMeta('ta-agent').n)}» (${R.ta.length} سطراً) مصدراً للاختبارات والتكليفات.</li>
