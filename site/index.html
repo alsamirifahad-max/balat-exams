@@ -2560,9 +2560,9 @@ function vBackup() {
   const conf = ALL_SECS.map(s => { try { const c = JSON.parse(localStorage.getItem(LS_KEY + '-conflict-' + s) || 'null'); return c ? [s, c] : null; } catch (e) { return null; } }).filter(Boolean);
   return `<section class="card">
     <h2>الحفظ والمزامنة بين الأجهزة</h2>
-    <p class="hint">كل قسم يُحفظ مستقلاً: <b>قسم الإسناد</b> (الإسناد وقائمة المعلمين) و<b>قسم الاختبارات</b> (الجدول واللجان والطلاب والملاحظون والإعدادات). عند تفعيل المزامنة بالرمز تُحفظ البيانات تلقائياً على هذا الجهاز وعلى السحابة، وتظهر على أي جهاز تدخل منه بالرمز — فما يحفظه وكيل المعلمين في الإسناد يظهر عندك مباشرة.</p>
+    <p class="hint">كل قسم يُحفظ مستقلاً: <b>قسم الإسناد</b> (الإسناد وقائمة المعلمين) و<b>قسم الاختبارات</b> (الجدول واللجان والطلاب والملاحظون والإعدادات). عند تفعيل المزامنة بالرمز تُحفظ البيانات تلقائياً على هذا الجهاز وعلى السحابة، وتظهر على أي جهاز تدخل منه بالرمز — فما يحفظه وكيل شؤون المعلمين في الإسناد يظهر عندك مباشرة.</p>
     <div class="syncgrid">${ALL_SECS.map(s => `<div class="synccard"><b>${s === 'ex' ? 'قسم الاختبارات' : esc(SYNC_SECS[s])}${s === ACTIVE ? ' <em class="tg new">نشط على هذا الجهاز</em>' : ''}</b><span>${SYNC[s] && SYNC[s].at ? 'آخر مزامنة: ' + esc(fmtAt(SYNC[s].at)) : SYNC_CODE ? 'بانتظار أول مزامنة' : 'محفوظ على هذا الجهاز فقط'}</span>${SYNC_CODE && syncDirty(s) ? '<em class="tg del">تعديلات لم تُرفع بعد</em>' : SYNC_CODE ? '<em class="tg new">متزامن</em>' : ''}<label class="inl mode">تعديلات الأجهزة الأخرى <select class="in" data-mode="${s}" id="mode_${s}"><option value="ask"${syncMode(s) === 'ask' ? ' selected' : ''}>اسألني قبل تطبيقها</option><option value="auto"${syncMode(s) === 'auto' ? ' selected' : ''}>طبّقها تلقائياً</option></select></label><div class="acts wrap" style="margin:0">${SYNC_CODE ? `<button class="btn sm" data-act="hist" data-v="${s}" type="button">سجل النسخ</button>` : ''}<button class="btn sm ghost" data-act="exportSec" data-v="${s}" type="button">تصدير هذا القسم فقط</button></div></div>`).join('')}</div>
-    <div class="acts wrap"><label class="inl">اسم هذا الجهاز <input class="in" id="devName" value="${esc(devName())}" placeholder="مثل: جوال وكيل المعلمين" style="width:14rem" maxlength="24"></label></div>
+    <div class="acts wrap"><label class="inl">اسم هذا الجهاز <input class="in" id="devName" value="${esc(devName())}" placeholder="مثل: جوال وكيل شؤون المعلمين" style="width:14rem" maxlength="24"></label></div>
     <div class="acts wrap">${SYNC_CODE ? `<button class="btn pri" data-act="syncNow" type="button">مزامنة الآن</button><button class="btn ghost" data-act="syncOff" type="button">إيقاف المزامنة على هذا الجهاز</button>` : `<button class="btn pri" data-act="syncOn" type="button">تفعيل المزامنة بالرمز</button>`}</div>
     ${conf.length ? `<div class="sub"><b>نسخ محفوظة من تعارض سابق</b><p class="hint">حين يُعدَّل القسم نفسه من جهازين في الوقت نفسه، تُعتمد النسخة الأحدث على السحابة وتُحفظ تعديلاتك هنا لتستعيدها إن احتجت.</p>${conf.map(([s, c]) => `<div class="acts wrap"><span>${SYNC_SECS[s]} — ${esc(fmtAt(c.at))}</span><button class="btn sm" data-act="restoreConf" data-v="${s}" type="button">استعادة هذه النسخة</button><button class="btn sm ghost" data-act="dropConf" data-v="${s}" type="button">حذفها</button></div>`).join('')}</div>` : ''}
   </section>
@@ -3400,7 +3400,7 @@ async function sha(s) { const b = await crypto.subtle.digest('SHA-256', new Text
 const API = '/api/sync';
 /* ===== ثلاثة حفظ مستقلة للإسناد + قسم الاختبارات ===== */
 const TA_SETS = ['ta', 'ta-agent', 'ta-shared'];
-const SET_DEF = { ta: { n: 'حفظ فهد', d: 'الإسناد الذي تُبنى عليه الاختبارات', c: '#2563eb', ic: 'ف' }, 'ta-agent': { n: 'حفظ الوكيل', d: 'إسناد يُحضّره وكيل المعلمين', c: '#ea580c', ic: 'و' }, 'ta-shared': { n: 'المشاركة معاً', d: 'إسناد مشترك يعدّله الجميع', c: '#059669', ic: 'م' } };
+const SET_DEF = { ta: { n: 'حفظ فهد', d: 'الإسناد الذي تُبنى عليه الاختبارات', c: '#2563eb', ic: 'ف' }, 'ta-agent': { n: 'حفظ الوكيل', d: 'إسناد يُحضّره وكيل شؤون المعلمين', c: '#ea580c', ic: 'و' }, 'ta-shared': { n: 'المشاركة معاً', d: 'إسناد مشترك يعدّله الجميع', c: '#059669', ic: 'م' } };
 const ALL_SECS = ['ex', ...TA_SETS, 'daily'];
 const isSet = s => TA_SETS.includes(s);
 let ACTIVE = (() => { try { const v = localStorage.getItem(LS_KEY + '-taset'); return TA_SETS.includes(v) ? v : 'ta'; } catch (e) { return 'ta'; } })();
@@ -4087,7 +4087,7 @@ async function runBag(op, kind, arg) {
    ===================================================================== */
 var PEOPLE = {
   admin: { n: 'مسؤول الاختبارات', who: 'فهد', c: '#2563eb', d: 'كل مراحل العمل: الملفات والإسناد والجدول واللجان والتكليفات والمطبوعات', ic: 'ف', set: 'ta', home: 'files' },
-  agent: { n: 'وكيل المعلمين', who: 'الوكيل', c: '#ea580c', d: 'المعلمون والإسناد بحفظه الخاص، وحصص الانتظار والمناوبة اليومية — دون المساس بالاختبارات', ic: 'و', set: 'ta-agent', home: 'daily' },
+  agent: { n: 'وكيل شؤون المعلمين', who: 'الوكيل', c: '#ea580c', d: 'المعلمون والإسناد بحفظه الخاص، وحصص الانتظار والمناوبة اليومية — دون المساس بالاختبارات', ic: 'و', set: 'ta-agent', home: 'daily' },
   sup: { n: 'مشرف دور / لجنة', who: 'المشرف', c: '#ca8a04', d: 'شاشة «يوم الاختبار» ومطبوعات اليوم بضغطة واحدة — للاطلاع والطباعة', ic: 'م', set: 'ta', home: 'today' }
 };
 var BOTH_C = '#059669';
@@ -5378,7 +5378,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794252759';
+var BUILD_ID = '1794254752';
 async function checkVersion() {
   try { const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; const v = (await r.text()).trim(); if (!v || v === BUILD_ID || BUILD_ID.startsWith('__')) return;
     if ($('#newVer')) return; const d = document.createElement('div'); d.id = 'newVer'; d.className = 'newver'; d.innerHTML = '<span>✨ تحديث جديد للموقع متاح</span><button class="btn sm pri" type="button">تحديث الآن</button>'; d.querySelector('button').onclick = () => location.reload(); document.body.appendChild(d);
