@@ -413,6 +413,13 @@ main#main{--accent:var(--sc,#1f9d66)}
 .pickf{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
 body.nosc{overflow:hidden}
 @media (max-width:600px){.pickm{align-items:flex-end;padding:0}.pickbox{width:100%;max-height:82vh;border-radius:16px 16px 0 0;padding-bottom:max(14px,env(safe-area-inset-bottom))}}
+.gchips{display:inline-flex;flex-wrap:wrap;gap:4px;vertical-align:middle}
+.gchip{font:inherit;font-size:.8rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.gchip:not(.all){background:color-mix(in srgb,var(--gc) 45%,var(--surface))}
+.gchip.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent);color:#fff}
+.gchip:not(.all).on{background:var(--gc);color:#15262b;border-color:var(--accent)}
+.gchip:not(.all).on::before{content:"✓ "}
+@media (max-width:600px){.gchips{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;width:100%}.qbar .gchips{flex-basis:100%}.gchip{padding:7px 4px;font-size:.78rem;text-align:center}}
 </style>
 </head>
 <body>
@@ -2229,7 +2236,7 @@ function sesInfo(se) {
 const OPT = {
   ses: o => `<label class="inl">الفترة <select class="in fo" data-o="ses" id="fo_ses"><option value="all">جميع الأيام والفترات</option>${sessions().map(x => `<option value="${x.key}"${o.ses === x.key ? ' selected' : ''}>${dayName(x.day)} ${dateShort(x.day)} – ${esc(x.per.n)}</option>`).join('')}</select></label>`,
   com: o => `<label class="inl">من لجنة <input class="in fo" type="number" data-o="from" id="fo_from" value="${o.from || 1}" style="width:4.5rem"></label><label class="inl">إلى <input class="in fo" type="number" data-o="to" id="fo_to" value="${o.to || S.com.length}" style="width:4.5rem"></label>`,
-  grade: o => `<label class="inl">الصف <select class="in fo" data-o="g" id="fo_g"><option value="all">جميع الصفوف</option>${G.map(g => `<option value="${g}"${o.g == g ? ' selected' : ''}>${GNAME[g]}</option>`).join('')}</select></label>`,
+  grade: o => `<span class="inl">الصفوف ${gradeChips(o.g, 'foG', '')}</span>`,
   copies: o => `<label class="inl">عدد النسخ <input class="in fo" type="number" min="1" max="60" data-o="copies" id="fo_copies" value="${o.copies || 1}" style="width:4.5rem"></label>`
 };
 const FORMS = [
@@ -2258,7 +2265,7 @@ const FORMS = [
   // ===== المعلمون
   { id: 'taSheet', grp: 'المعلمون والأسئلة', t: 'كشف إسناد المعلمين', opts: ['grade', 'taopts'], build: o => taSheetPages(o) },
   { id: 'taLoad', grp: 'المعلمون والأسئلة', t: 'نصاب المعلمين', opts: ['dens'], build: () => taLoadPages() },
-  { id: 'stList', grp: 'المعلمون والأسئلة', t: 'معلمو المواد المختبرة (واضعو الأسئلة)', opts: ['dens'], build: () => stListPages() },
+  { id: 'stList', grp: 'المعلمون والأسئلة', t: 'معلمو المواد المختبرة (واضعو الأسئلة)', opts: ['grade', 'dens'], build: o => stListPages(o) },
   { id: 'tList', grp: 'المعلمون والأسئلة', t: 'كشف بأسماء المعلمين مع التوقيع', opts: ['dens'], build: () => tListPages() },
   { id: 'receipt', grp: 'المعلمون والأسئلة', t: 'بيان استلام أسئلة الاختبارات من المعلمين', build: () => [title('بيان استلام أسئلة الاختبارات من المعلمين', yearLine()) + receiptTable()] },
   { id: 'assign', grp: 'المعلمون والأسئلة', t: 'تكليف وضع أسئلة الاختبارات', opts: ['grade', 'gs'], build: o => assignPages(o) },
@@ -2466,7 +2473,7 @@ function receiptTable() {
 }
 function assignPages(o) {
   const tot = gradeTotals(); const gs = S.s.gs || {};
-  return S.st.filter(x => o.g === 'all' || !o.g || +x.g === +o.g).flatMap(x => { const letter =
+  return S.st.filter(x => gOk(o, x.g)).flatMap(x => { const letter =
     T([[{ v: `<b style="font-size:15pt">تكليف وضع أسئلة الاختبارات النهائية</b><br>للعام الدراسي ${esc(S.s.yearTxt)} ( الفصل الدراسي ${esc(S.s.sem)} )`, bg: HCOL, cs: 3 }], [L('الأخ المعلم', { w: '25%' }), { v: `<b style="font-size:14pt">${esc(x.t)}</b>` }, L('وفقه الله', { w: '20%' })]]) + sp(10) +
     `<p class="txt">السلام عليكم ورحمة الله وبركاته</p><p class="txt">نظراً لقرب موعد الاختبارات النهائية للفصل الدراسي ${esc(S.s.sem)}، وبناءً على الصلاحيات الممنوحة لمدير المدرسة، وبناءً على ما تقتضيه مصلحة العمل، واستناداً إلى ما ورد في الدليل التنظيمي للاختبارات النهائية،</p>
     <p class="txt">عليه فقد تم تكليفكم بوضع أسئلة الاختبار الموضحة أدناه بالجدول ( ورقياً ) مع مراعاة شروط إعداد أسئلة الاختبارات ووضع نماذج الإجابة وتسليمها لإدارة المدرسة في موعد أقصاه ${S.s.deadline ? `<b>${esc(S.s.deadline)}</b>` : 'يوم ........................ الموافق &nbsp;&nbsp; / &nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; هـ'} أسئلة ( الدور الأول + الدور الثاني + نموذج الإجابة ).</p><p class="txt">وتقبلوا تحياتنا ...</p>` +
@@ -2479,7 +2486,7 @@ function assignPages(o) {
   });
 }
 function completePages(o) {
-  return G.filter(g => o.g === 'all' || !o.g || +o.g === g).map(g => {
+  return G.filter(g => gOk(o, g)).map(g => {
     const l = S.ta.filter(x => +x.g === g);
     const runs = groupRuns(l, x => x.sub);
     const rows = [[H('المقرر'), H('الشعبة'), H('المعلم'), H('التوقيع', { w: '20%' })]];
@@ -2489,7 +2496,7 @@ function completePages(o) {
   });
 }
 function correctPages(o) {
-  return G.filter(g => o.g === 'all' || !o.g || +o.g === g).map(g => {
+  return G.filter(g => gOk(o, g)).map(g => {
     const subs = []; S.days.forEach(d => d.p.forEach(p => { const s = (p.s[g] || '').trim(); if (s && !subs.includes(s)) subs.push(s); }));
     const coms = S.com.filter(c => +c.c[g] > 0);
     const k = Math.max(1, subs.length), per = Math.ceil(coms.length / k);
@@ -2510,7 +2517,7 @@ function taSheetPages(o) {
   const ncol = 3 + (showH ? 1 : 0) + (showS ? 1 : 0) + (showN ? 1 : 0);
   const head = [H('المقرر', { w: '24%' })]; if (showH) head.push(H('عدد الحصص', { w: '8%' })); head.push(H('الشعبة', { w: '19%' }), H('المعلم')); if (showS) head.push(H('التوقيع', { w: '15%' })); if (showN) head.push(H('ملاحظات', { w: '13%' }));
   // وحدات الطباعة: شريط الصف ثم مجموعات المواد (لا تُقسم المادة بين صفحتين)
-  const grades = G.filter(g => (o.g === 'all' || !o.g || +o.g === g) && S.ta.some(x => +x.g === g));
+  const grades = G.filter(g => gOk(o, g) && S.ta.some(x => +x.g === g));
   const pages = []; let cur = [], used = 0;
   const flush = () => { if (cur.length) pages.push(cur); cur = []; used = 0; };
   grades.forEach(g => {
@@ -2536,9 +2543,9 @@ function taSheetPages(o) {
   });
 }
 function packWeighted(list, cap, wf) { const pages = []; let cur = [], u = 0; list.forEach(x => { const w = wf(x); if (cur.length && u + w > cap) { pages.push(cur); cur = []; u = 0; } cur.push(x); u += w; }); if (cur.length) pages.push(cur); return pages.length ? pages : [[]]; }
-function stListPages() {
+function stListPages(o = {}) {
   const D = densOf(), op = S.s.taPrint || {}, out = [];
-  const list = S.st.slice().sort((a, b) => a.g - b.g); let k = 0;
+  const list = S.st.filter(x => gOk(o, x.g)).sort((a, b) => a.g - b.g); let k = 0;
   packWeighted(list, D.per, x => Math.max(1, Math.ceil(teachersOfSubject(x.sub, x.g).join('، ').length / 44))).forEach(part => {
     const rows = [[H('م', { w: '4%' }), H('المادة', { w: '17%' }), H('الصف', { w: '7%' }), H('المعلم المكلف بوضع الأسئلة', { w: '22%' }), H('معلمو المادة في الإسناد'), H('الدرجة', { w: '6%' }), ...(op.sign !== false ? [H('التوقيع', { w: '12%' })] : [])]];
     part.forEach((x, i) => rows.push([k + i + 1, Gc(x.g, `<b>${esc(x.sub)}</b>`), Gc(x.g, GSHORT[x.g]), { v: `<b>${esc(x.t)}</b>`, al: 'right' }, { v: esc(teachersOfSubject(x.sub, x.g).join('، ')), al: 'right', fs: '8.5pt' }, esc(x.mark || S.s.mark), ...(op.sign !== false ? [''] : [])]));
@@ -2660,7 +2667,7 @@ function errPage(what) {
     `<p class="lbl">لجنة التصحيح والمراجعة:</p>` + T(['رئيس اللجنة', 'عضواً', 'عضواً'].map(r => [{ v: 'الاسم:', al: 'right', h: '28px' }, { v: 'الصفة: ' + r, al: 'right' }, { v: 'التوقيع:', al: 'right' }])) +
     `<ul class="ins small"><li>وفق ما ورد في الفصل السابع من دليل نظم وإجراءات الاختبارات.</li></ul>`;
 }
-function subjectPages(o, fn) { return S.st.filter(x => o.g === 'all' || !o.g || +x.g === +o.g).map(fn); }
+function subjectPages(o, fn) { return S.st.filter(x => gOk(o, x.g)).map(fn); }
 function qDataPage(x) {
   return title('البيانات الأولية لورقة الأسئلة') + yearRow() + sp(8) +
     T([[L('الصف', { w: '30%' }), `<b>${GNAME[x.g]}</b>`], [L('الشعبة'), 'جميع الشعب'], [L('المادة'), `<b>${esc(x.sub)}</b>`], [L('الزمن'), ''], [L('عدد الأسئلة'), ''], [L('عدد الأوراق'), ''], [L('اسم المعلم'), `<b>${esc(x.t)}</b>`], [L('التوقيع'), '']], { cls: 'xtall' });
@@ -2681,6 +2688,7 @@ function stuGuidePage() {
 /* ----- عرض النماذج ----- */
 function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
+  const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   return `<div class="qbar"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn sm pri" data-act="qopen" data-form="${id}"${od} type="button">معاينة قبل الطباعة</button><button class="btn sm" data-act="qprint" data-form="${id}"${od} type="button">طباعة</button><button class="btn sm" data-act="qpdf" data-form="${id}"${od} type="button">PDF</button><button class="btn sm" data-act="qword" data-form="${id}"${od} type="button">Word</button></div>`;
 }
 let PV = null;
@@ -2701,7 +2709,22 @@ function pvFit() {
   $$('#pvBody .page').forEach(p => { const pw = p.classList.contains('land') ? 1123 : 794; const sc = Math.min(PV.z ? PV.z : 1, PV.z ? 9 : (w / pw)); const f = +(p.dataset.fit || 1); p.style.zoom = sc * (f < 1 ? f : 1); });
 }
 function closePreview() { $('#pvModal').hidden = true; $('#pvBody').innerHTML = ''; document.body.classList.remove('noscroll'); PV = null; }
-function qopts(b) { try { return b.dataset.o ? JSON.parse(b.dataset.o) : {}; } catch (e) { return {}; } }
+function qopts(b) { let o = {}; try { o = b.dataset.o ? JSON.parse(b.dataset.o) : {}; } catch (e) { o = {}; } const id = b.dataset.form; if (id && QG[id] && QG[id].length) o.g = QG[id]; return o; }
+/* اختيار الصفوف للطباعة: جميع الصفوف أو أي مجموعة منها */
+const QG = {};
+function gSel(o) { const v = o && o.g; if (v == null || v === '' || v === 'all') return G.slice(); const r = (Array.isArray(v) ? v : String(v).split(',')).map(Number).filter(g => G.includes(g)); return r.length ? r : G.slice(); }
+function gOk(o, g) { return gSel(o).includes(+g); }
+const GORD = { 1: 'الأول', 2: 'الثاني', 3: 'الثالث' };
+function gradeChips(cur, act, id) {
+  const sel = cur && cur.length && cur !== 'all' ? gSel({ g: cur }) : [], all = !sel.length || sel.length === G.length;
+  return `<span class="gchips" role="group" aria-label="الصفوف المطبوعة" data-form="${id}"><button type="button" class="gchip all${all ? ' on' : ''}" data-act="${act}" data-v="all" data-form="${id}" aria-pressed="${all}">جميع الصفوف</button>${G.map(g => { const on = !all && sel.includes(g); return `<button type="button" class="gchip${on ? ' on' : ''}" style="--gc:${GCOL[g]}" data-act="${act}" data-v="${g}" data-form="${id}" aria-pressed="${on}">${GORD[g]}</button>`; }).join('')}</span>`;
+}
+function toggleG(cur, v) {
+  if (v === 'all') return [];
+  let s = cur && cur.length && cur !== 'all' ? gSel({ g: cur }) : []; if (s.length === G.length) s = [];
+  s = s.includes(+v) ? s.filter(x => x !== +v) : [...s, +v].sort();
+  return s.length === G.length ? [] : s;
+}
 function groupsOf(id, o) { const f = FORMS.find(x => x.id === id); return [{ land: f.land, pages: buildForm(f, o || {}), t: f.t }]; }
 function formDef() { return FORMS.find(f => f.id === FORM) || FORMS[0]; }
 function vForms() {
@@ -3259,6 +3282,8 @@ document.addEventListener('click', async e => {
     case 'palette': return openPalette();
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
     case 'tchTpl': tchTemplate(); return;
+    case 'qG': { const id = b.dataset.form; QG[id] = toggleG(QG[id], b.dataset.v); $$(`.gchips[data-form="${id}"]`).forEach(s => s.outerHTML = gradeChips(QG[id], 'qG', id)); return; }
+    case 'foG': FO.g = toggleG(FO.g, b.dataset.v); $$('.gchips[data-form=""]').forEach(s => s.outerHTML = gradeChips(FO.g, 'foG', '')); return renderPreview();
     case 'pickOpen': { const s = b.parentElement.querySelector('select'); if (s) openPicker(s); return; }
     case 'sortTeachers': S.teachers = arSort(S.teachers); toast('رُتبت القائمة هجائياً'); return re();
     case 'mergeTeachers': { const have = new Set(S.teachers.map(normName)); let n = 0; allTeachers().forEach(t => { if (!have.has(normName(t))) { S.teachers.push(t); n++; } }); S.teachers = arSort(S.teachers); toast(n ? `أضيف ${n} معلماً` : 'القائمة مكتملة'); return re(); }

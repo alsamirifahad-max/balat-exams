@@ -413,6 +413,13 @@ main#main{--accent:var(--sc,#1f9d66)}
 .pickf{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
 body.nosc{overflow:hidden}
 @media (max-width:600px){.pickm{align-items:flex-end;padding:0}.pickbox{width:100%;max-height:82vh;border-radius:16px 16px 0 0;padding-bottom:max(14px,env(safe-area-inset-bottom))}}
+.gchips{display:inline-flex;flex-wrap:wrap;gap:4px;vertical-align:middle}
+.gchip{font:inherit;font-size:.8rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.gchip:not(.all){background:color-mix(in srgb,var(--gc) 45%,var(--surface))}
+.gchip.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent);color:#fff}
+.gchip:not(.all).on{background:var(--gc);color:#15262b;border-color:var(--accent)}
+.gchip:not(.all).on::before{content:"✓ "}
+@media (max-width:600px){.gchips{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;width:100%}.qbar .gchips{flex-basis:100%}.gchip{padding:7px 4px;font-size:.78rem;text-align:center}}
 </style>
 </head>
 <body>
