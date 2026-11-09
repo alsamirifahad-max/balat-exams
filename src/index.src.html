@@ -376,6 +376,28 @@ main#main{--accent:var(--sc,#1f9d66)}
 .jump button:hover{background:var(--sc);color:#fff;border-color:var(--sc)}
 @media (max-width:600px){.qbar .qlbl{flex-basis:100%}.qbar .sp1{display:none}.qbar .btn{flex:1 1 0;padding-inline:6px}.qbar .btn.pri{flex-basis:100%}.qbar label.ck{flex-basis:auto}.topin{gap:8px;padding-block:8px}.topin h1{font-size:1rem}.topin .sub{display:none}.topsrch kbd{display:none}.topsrch{padding:6px 9px}.savestate{font-size:.72rem;padding:3px 8px}.shero p{font-size:.84rem}}
 @media (max-width:600px){.shero{padding:14px;gap:12px}.shero .sico{width:46px;height:46px}.shero h2{font-size:1.2rem}.fcard .drop{flex-wrap:wrap}.snext .btn{flex:1}}
+.psel{min-width:9rem;cursor:pointer}.psel.empty{color:var(--muted)}td .psel{width:100%}
+.ob .psel{min-width:10rem}
+@media (max-width:700px){
+ table.et.stack,table.et.stack tbody{display:block}
+ table.et.stack tr:first-child{display:none}
+ table.et.stack tr{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:12px 2px;border-bottom:1px solid var(--line)}
+ table.et.stack td{display:block;border:0;padding:0;min-width:0}
+ table.et.stack td .in,table.et.stack td .psel,table.et.stack td .secpick{width:100%;min-width:0}
+ table.et.stack td[colspan]{grid-column:1/-1}
+ .tarows td:nth-child(1){grid-column:1/3;grid-row:1}.tarows td:nth-child(5){grid-column:3;grid-row:1;align-self:center}
+ .tarows td:nth-child(2){grid-column:1;grid-row:2}.tarows td:nth-child(3){grid-column:2/4;grid-row:2}
+ .tarows td:nth-child(4){grid-column:1/-1;grid-row:3}
+ .strows td:nth-child(1){grid-column:1/3;grid-row:1}.strows td:nth-child(6){grid-column:3;grid-row:1;align-self:center}
+ .strows td:nth-child(2){grid-column:1;grid-row:2}.strows td:nth-child(5){grid-column:2/4;grid-row:2}
+ .strows td:nth-child(3){grid-column:1/-1;grid-row:3}.strows td:nth-child(4){grid-column:1/-1;grid-row:4;font-size:.8rem}
+ .tarows td:nth-child(2)::before{content:"الحصص";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .tarows td:nth-child(3)::before{content:"الشعب";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .tarows td:nth-child(4)::before,.strows td:nth-child(3)::before{content:"المعلم";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .strows td:nth-child(2)::before{content:"الصف";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .strows td:nth-child(5)::before{content:"درجة الاختبار";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .strows td:nth-child(4)::before{content:"معلمو المادة: ";color:var(--muted)}
+}
 </style>
 </head>
 <body>

@@ -376,6 +376,28 @@ main#main{--accent:var(--sc,#1f9d66)}
 .jump button:hover{background:var(--sc);color:#fff;border-color:var(--sc)}
 @media (max-width:600px){.qbar .qlbl{flex-basis:100%}.qbar .sp1{display:none}.qbar .btn{flex:1 1 0;padding-inline:6px}.qbar .btn.pri{flex-basis:100%}.qbar label.ck{flex-basis:auto}.topin{gap:8px;padding-block:8px}.topin h1{font-size:1rem}.topin .sub{display:none}.topsrch kbd{display:none}.topsrch{padding:6px 9px}.savestate{font-size:.72rem;padding:3px 8px}.shero p{font-size:.84rem}}
 @media (max-width:600px){.shero{padding:14px;gap:12px}.shero .sico{width:46px;height:46px}.shero h2{font-size:1.2rem}.fcard .drop{flex-wrap:wrap}.snext .btn{flex:1}}
+.psel{min-width:9rem;cursor:pointer}.psel.empty{color:var(--muted)}td .psel{width:100%}
+.ob .psel{min-width:10rem}
+@media (max-width:700px){
+ table.et.stack,table.et.stack tbody{display:block}
+ table.et.stack tr:first-child{display:none}
+ table.et.stack tr{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:12px 2px;border-bottom:1px solid var(--line)}
+ table.et.stack td{display:block;border:0;padding:0;min-width:0}
+ table.et.stack td .in,table.et.stack td .psel,table.et.stack td .secpick{width:100%;min-width:0}
+ table.et.stack td[colspan]{grid-column:1/-1}
+ .tarows td:nth-child(1){grid-column:1/3;grid-row:1}.tarows td:nth-child(5){grid-column:3;grid-row:1;align-self:center}
+ .tarows td:nth-child(2){grid-column:1;grid-row:2}.tarows td:nth-child(3){grid-column:2/4;grid-row:2}
+ .tarows td:nth-child(4){grid-column:1/-1;grid-row:3}
+ .strows td:nth-child(1){grid-column:1/3;grid-row:1}.strows td:nth-child(6){grid-column:3;grid-row:1;align-self:center}
+ .strows td:nth-child(2){grid-column:1;grid-row:2}.strows td:nth-child(5){grid-column:2/4;grid-row:2}
+ .strows td:nth-child(3){grid-column:1/-1;grid-row:3}.strows td:nth-child(4){grid-column:1/-1;grid-row:4;font-size:.8rem}
+ .tarows td:nth-child(2)::before{content:"الحصص";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .tarows td:nth-child(3)::before{content:"الشعب";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .tarows td:nth-child(4)::before,.strows td:nth-child(3)::before{content:"المعلم";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .strows td:nth-child(2)::before{content:"الصف";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .strows td:nth-child(5)::before{content:"درجة الاختبار";display:block;font-size:.72rem;color:var(--muted);margin-bottom:2px}
+ .strows td:nth-child(4)::before{content:"معلمو المادة: ";color:var(--muted)}
+}
 </style>
 </head>
 <body>
@@ -1596,6 +1618,26 @@ function allTeachers() {
   const m = new Map(); [...S.ta.map(x => x.t), ...S.st.map(x => x.t), ...S.teachers].forEach(n => { n = String(n || '').trim(); if (n && !m.has(normName(n))) m.set(normName(n), n); });
   return arSort([...m.values()]);
 }
+/* قائمة منسدلة مرنة: خيارات جاهزة + «كتابة اسم آخر» تتحول لخانة كتابة */
+function pickSel(path, val, groups, o = {}) {
+  val = String(val == null ? '' : val).trim();
+  if (!Array.isArray(groups[0] && groups[0].items)) groups = [{ items: groups }];
+  const seen = new Set(), nv = normName(val), pk = o.kind === 's' ? null : personKey(val); let found = false;
+  const same = x => val && (normName(x) === nv || (pk && personKey(x) === pk));
+  const grp = groups.map(g => { const it = g.items.filter(x => { const k = normName(x); if (!x || seen.has(k)) return false; seen.add(k); return true; });
+    const opts = it.map(x => { const sel = !found && same(x); if (sel) found = true; return `<option value="${esc(x)}"${sel ? ' selected' : ''}>${esc(x)}</option>`; }).join('');
+    return it.length ? (g.label ? `<optgroup label="${esc(g.label)}">${opts}</optgroup>` : opts) : ''; }).join('');
+  const extra = val && !found ? `<option value="${esc(val)}" selected>${esc(val)}</option>` : '';
+  return `<select class="in psel${val ? '' : ' empty'}" data-k="${path}" data-pick="${o.kind || 't'}" id="ps_${path.replace(/[^\w]/g, '_')}"${o.title ? ` title="${esc(o.title)}"` : ''}><option value="">${o.ph || '— اختر —'}</option>${extra}${grp}<option value="__other">✎ ${o.other || 'كتابة اسم آخر…'}</option></select>`;
+}
+/* قائمة المعلمين للاختيار: قائمة المدرسة أولاً، ثم من في الإسناد غير الموجود فيها (بلا تكرار الاسم المختصر والكامل) */
+function tchAll() { const out = [...S.teachers]; const has = sameTeacher(out); allTeachers().forEach(n => { if (!has(n)) { out.push(n); } }); const seen = new Set(); return arSort(out.filter(n => { const k = personKey(n); if (seen.has(k)) return false; seen.add(k); return true; })); }
+function tchOpts(first, firstLabel) { const all = tchAll(); return first && first.length ? [{ label: firstLabel, items: first }, { label: 'جميع المعلمين', items: all }] : [{ items: all }]; }
+function subOpts(g) { const sched = []; S.days.forEach(d => d.p.forEach(p => { const s = (p.s[g] || '').trim(); if (s) sched.push(s); })); const ta = S.ta.filter(x => +x.g === +g).map(x => x.sub); return [{ label: 'الخطة الدراسية', items: currList(g) }, { label: 'من الإسناد والجدول', items: [...ta, ...sched] }]; }
+function pickOther(el) {
+  const i = document.createElement('input'); i.className = 'in'; i.dataset.k = el.dataset.k; i.id = el.id; i.placeholder = el.dataset.pick === 's' ? 'اكتب اسم المادة' : 'اكتب الاسم';
+  const prev = getPath(el.dataset.k); i.value = prev && prev !== '__other' ? prev : ''; el.replaceWith(i); i.focus();
+}
 function teacherDatalist() {
   return `<datalist id="tlist">${allTeachers().map(n => `<option value="${esc(n)}"></option>`).join('')}</datalist>`;
 }
@@ -1693,7 +1735,7 @@ function vSchedule() {
       </div>
       <div class="tw"><table class="et"><tr><th>الفترة</th><th>الوقت</th>${G.map(g => `<th style="background:${GCOL[g]}">${GNAME[g]}</th>`).join('')}<th></th></tr>
       ${d.p.map((p, pi) => `<tr><td>${inp(`days.${di}.p.${pi}.n`, p.n, { style: 'width:6rem' })}</td><td>${inp(`days.${di}.p.${pi}.t`, p.t, { style: 'width:7rem' })}</td>
-        ${G.map(g => `<td>${inp(`days.${di}.p.${pi}.s.${g}`, p.s[g] || '', { list: 'subl' + g })}</td>`).join('')}
+        ${G.map(g => `<td>${pickSel(`days.${di}.p.${pi}.s.${g}`, p.s[g] || '', subOpts(g), { kind: 's', ph: '— بدون اختبار —', other: 'كتابة مادة أخرى…' })}</td>`).join('')}
         <td><button class="x" data-act="delPer" data-i="${di}" data-j="${pi}" type="button" title="حذف الفترة">×</button></td></tr>`).join('')}
       </table></div>
       <button class="btn sm" data-act="addPer" data-i="${di}" type="button">إضافة فترة</button>
@@ -1967,7 +2009,7 @@ function vStaff() {
       return `<tr><td><b>${c.no}</b></td><td class="tnames">${esc(comPlace(c))}</td><td>${comSum(c)}</td>
       <td><input class="in" type="number" min="1" max="5" data-k="obsN.${c.no}" data-num="1" value="${obsNeed(c.no)}" style="width:4rem" id="on_${c.no}"></td>
       <td><div class="obsl">${list.map((n, i) => { const dup = n && cnt[normName(n)] > 1, bz = n && busy.has(normName(n)), sw = SWAP && SWAP.key === key && SWAP.i === i;
-        return `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}"><input class="in" list="tlist" data-k="obs.${key}.${i}" value="${esc(n)}" id="ob_${key}_${i}" title="${dup ? 'مكرر في نفس الفترة' : bz ? 'معلم مادة مختبرة في هذه الفترة' : 'اكتب أو اختر اسماً للإحلال'}"><button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`; }).join('')}
+        return `<span class="ob${dup ? ' dup' : ''}${bz ? ' busy' : ''}${sw ? ' sw' : ''}">${pickSel(`obs.${key}.${i}`, n, [{ label: 'متاحون في هذه الفترة', items: tchAll().filter(t => !busy.has(normName(t)) && !cnt[normName(t)]) }, { label: 'جميع المعلمين', items: tchAll() }], { ph: '— اختر الملاحظ —', title: dup ? 'مكرر في نفس الفترة' : bz ? 'معلم مادة مختبرة في هذه الفترة' : 'اختر اسماً للإحلال' })}<button type="button" class="ic" data-act="obsSwap" data-k="${key}" data-i="${i}" title="تبديل مع ملاحظ آخر">⇅</button><button type="button" class="ic x" data-act="obsDel" data-k="${key}" data-i="${i}" title="حذف">×</button></span>`; }).join('')}
       <button type="button" class="btn sm ghost" data-act="obsAdd" data-k="${key}">+ ملاحظ</button></div></td></tr>`; }).join('')}</table></div>
       ${SWAP ? `<p class="upnote ok">اخترت «${esc(obsList(SWAP.key)[SWAP.i] || '')}» للتبديل — اضغط ⇅ عند الملاحظ الآخر لإتمام التبديل، أو <button class="btn sm ghost" data-act="obsSwapCancel" type="button">إلغاء</button></p>` : ''}
       <details><summary>أحمال الملاحظة لكل معلم (جميع الفترات)</summary><div class="loadl">${Object.entries(load).sort((a, b) => b[1] - a[1]).map(([n, v]) => `<span>${esc(n)} <b>${v}</b></span>`).join('') || '<span class="hint">لا يوجد توزيع بعد</span>'}</div></details>`;
@@ -1982,8 +2024,8 @@ function vStaff() {
     ${qbar('assign', 'خطابات التكليف:')}
     ${qbar('receipt', 'بيان استلام الأسئلة:')}
     <p class="hint">يُملأ من الإسناد: لكل مادة في الجدول المعلم الأكثر شعباً، ويمكنك تغييره. جميع معلمي المادة يظهرون في محضر اتفاقية التصحيح.</p>
-    <div class="tw"><table class="et"><tr><th>المادة</th><th>الصف</th><th>المعلم المكلف بالأسئلة</th><th>معلمو المادة في الإسناد</th><th>درجة الاختبار</th><th></th></tr>
-    ${S.st.map((x, i) => `<tr><td>${inp(`st.${i}.sub`, x.sub, { list: 'curr' + x.g })}</td><td><select class="in" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td>${inp(`st.${i}.t`, x.t, { list: 'tlist' })}</td><td class="tnames">${esc(teachersOfSubject(x.sub, x.g).join('، ')) || '<span class="warnt">لا يوجد</span>'}</td><td>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark), style: 'width:5rem' })}</td><td><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف">×</button></td></tr>`).join('')}
+    <div class="tw"><table class="et stack strows"><tr><th>المادة</th><th>الصف</th><th>المعلم المكلف بالأسئلة</th><th>معلمو المادة في الإسناد</th><th>درجة الاختبار</th><th></th></tr>
+    ${S.st.map((x, i) => `<tr><td>${pickSel(`st.${i}.sub`, x.sub, subOpts(x.g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td><select class="in" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td>${pickSel(`st.${i}.t`, x.t, tchOpts(teachersOfSubject(x.sub, x.g), 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}</td><td class="tnames">${esc(teachersOfSubject(x.sub, x.g).join('، ')) || '<span class="warnt">لا يوجد</span>'}</td><td>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark), style: 'width:5rem' })}</td><td><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف">×</button></td></tr>`).join('')}
     </table></div>
     <div class="acts"><button class="btn sm" data-act="addSt" type="button">إضافة مادة</button><button class="btn sm ghost" data-act="stFromSchedule" type="button">إضافة مواد الجدول الناقصة</button></div>
   </section>
@@ -2049,8 +2091,8 @@ function vAssign() {
     ${G.map(g => { const rows = taByG(g); const have = new Set(rows.map(([x]) => normName(x.sub)));
       const miss = CURR[g][semNo()].filter(n => !rows.some(([x]) => subjMatch(x.sub, n)));
       return `<div class="tagrp"><div class="tagh" style="--gc:${GCOL[g]}"><b>${GNAME[g]}</b><span>${rows.length} سطراً — ${new Set(rows.map(([x]) => x.t)).size} معلماً</span></div>
-      <div class="tw"><table class="et"><tr><th style="width:30%">المادة</th><th style="width:8%">الحصص</th><th style="width:22%">الشعب</th><th>المعلم</th><th></th></tr>
-      ${rows.map(([x, i]) => `<tr><td>${inp(`ta.${i}.sub`, x.sub, { list: 'curr' + g })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${x.sec ? esc(x.sec) : '<span class="hint">اختر الشعب ▾</span>'}</button></td><td>${inp(`ta.${i}.t`, x.t, { list: 'tlist' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
+      <div class="tw"><table class="et stack tarows"><tr><th style="width:30%">المادة</th><th style="width:8%">الحصص</th><th style="width:22%">الشعب</th><th>المعلم</th><th></th></tr>
+      ${rows.map(([x, i]) => `<tr><td>${pickSel(`ta.${i}.sub`, x.sub, subOpts(g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${x.sec ? esc(x.sec) : '<span class="hint">اختر الشعب ▾</span>'}</button></td><td>${pickSel(`ta.${i}.t`, x.t, tchOpts(), { ph: '— اختر المعلم —' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
       </table></div>
       <div class="acts wrap"><button class="btn sm" data-act="addTa" data-g="${g}" type="button">+ إضافة معلم / مادة</button>
       ${miss.length ? `<span class="hint">مواد في الخطة بلا إسناد:</span>${miss.map(n => `<button type="button" class="chip" data-act="addTa" data-g="${g}" data-sub="${esc(n)}">+ ${esc(n)}</button>`).join('')}` : '<span class="okt">جميع مواد الخطة مُسندة</span>'}</div></div>`; }).join('')}
@@ -3070,6 +3112,7 @@ function confirmBox(msg) {
 /* ===================== الأحداث ===================== */
 document.addEventListener('input', e => {
   const el = e.target;
+  if (el.dataset.pick && el.value === '__other') return;
   if (el.dataset.k) {
     let v = el.type === 'checkbox' ? el.checked : el.value;
     if (el.dataset.num) v = v === '' ? '' : Number(v);
@@ -3083,6 +3126,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', async e => {
   const el = e.target;
+  if (el.dataset.pick && el.value === '__other') return pickOther(el);
   if (el.dataset.k && (el.tagName === 'SELECT' || el.type === 'checkbox')) { setPath(el.dataset.k, el.type === 'checkbox' ? el.checked : el.dataset.num ? Number(el.value) : el.value); save(); render(); return; }
   if (el.dataset.k && /^(days|com|s\.(codes|secOff|manualTot))/.test(el.dataset.k) && TAB !== 'forms') { if (TAB === 'committees' || /txt$/.test(el.dataset.k)) render(); return; }
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
