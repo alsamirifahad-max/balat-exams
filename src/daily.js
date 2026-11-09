@@ -134,13 +134,51 @@ function dutyOpts(iso) {
 
 /* ---------- الصفحة ---------- */
 function vDaily() {
-  const iso = dIso(), d = wdOf(iso), tt = D().tt;
+  const iso = dIso(), d = wdOf(iso), tt = D().tt; ensureLeaves(iso);
   const bar = `<section class="card dbar"><div class="dnav"><button class="btn sm" data-act="dDay" data-v="-1" type="button" aria-label="اليوم السابق">→</button>
     <label class="ddate"><input type="date" class="in" id="dDate" value="${iso}"><b>${dayAr(iso)}</b><span>${hijriOf(iso)} هـ${(() => { const w = termWeek(iso); return w ? ' · ' + esc(w.txt) : ''; })()}</span></label>
     <button class="btn sm" data-act="dDay" data-v="1" type="button" aria-label="اليوم التالي">←</button>${iso !== todayIso() ? '<button class="btn sm pri" data-act="dDay" data-v="0" type="button">اليوم</button>' : '<em class="tdy now">اليوم</em>'}</div>
     ${d < 0 ? '<p class="al warn">هذا اليوم عطلة نهاية الأسبوع.</p>' : holOf(iso) ? `<p class="al warn">هذا اليوم إجازة رسمية: <b>${esc(holOf(iso))}</b> — لا انتظار ولا مناوبة. <button class="btn sm" data-act="dDay" data-v="1" type="button">أقرب يوم دراسي ←</button></p>` : ''}${tt ? '' : `<p class="al warn">لم يُرفع الجدول المدرسي العام بعد — ارفعه من «الملفات الأساسية» لتظهر الحصص والمتاحون تلقائياً. <button class="btn sm" data-tab="files" type="button">رفع الجدول</button></p>`}
     <div class="dtabs" role="tablist">${[['wait', 'حصص الانتظار'], ['duty', 'الإشراف والمناوبة'], ['tt', 'الجدول المدرسي'], ['log', 'السجل والإحصاء']].map(([k, t]) => `<button type="button" role="tab" class="${DAILY_TAB === k ? 'on' : ''}" data-act="dTab" data-v="${k}" aria-selected="${DAILY_TAB === k}">${t}</button>`).join('')}</div></section>`;
   return bar + ({ wait: vWait, duty: vDuty, tt: vTT, log: vLog })[DAILY_TAB](iso);
+}
+/* ---------- الغياب لعدة أيام ---------- */
+function leaves() { const d = D(); d.leaves = d.leaves || []; return d.leaves; }
+function schoolDaysBetween(a, b) { const out = []; for (let d = a; d <= b && out.length < 120; d = addDays(d, 1)) if (isSchoolDay(d)) out.push(d); return out; }
+function nthSchoolDay(a, n) { let d = a, k = isSchoolDay(a) ? 1 : 0; while (k < n) { d = addDays(d, 1); if (isSchoolDay(d)) k++; } return d; }
+function prevSchoolDay(iso) { let d = iso, k = 0; do { d = addDays(d, -1); } while (!isSchoolDay(d) && ++k < 60); return d; }
+function leaveOf(iso, name) { const k = normName(name); return leaves().find(l => normName(l.n) === k && iso >= l.a && iso <= l.b); }
+function ensureLeaves(iso) {
+  if (!isSchoolDay(iso)) return; let ch = false;
+  leaves().forEach(l => { if (iso < l.a || iso > l.b) return; const w = W(iso); if (!w.blocks.some(b => normName(b.abs) === normName(l.n))) { w.blocks.push({ abs: l.n, leave: l.id, rows: {} }); ch = true; } });
+  if (ch) save();
+}
+function endLeave(l, iso) {
+  l.b = prevSchoolDay(iso); Object.entries(D().wait).forEach(([k, w]) => { if (k >= iso) w.blocks = (w.blocks || []).filter(b => !(b.leave === l.id || (normName(b.abs) === normName(l.n) && b.leave))); });
+  if (l.b < l.a) D().leaves = leaves().filter(x => x !== l);
+}
+/* ---------- لوحة «من غاب اليوم؟» ---------- */
+var ABSG_OPEN = true;
+function mainGrade(n) { const r = ttRow(n); if (!r) return 0; const c = { 1: 0, 2: 0, 3: 0 }; Object.values(r.c).forEach(v => String(v).split(/[^0-9]+/).filter(Boolean).forEach(x => { const g = secGrade(x); if (g) c[g]++; })); const g = [1, 2, 3].sort((a, b) => c[b] - c[a])[0]; return c[g] ? g : 0; }
+function absGrid(iso) {
+  const d = wdOf(iso); if (!tt0()) return `<div class="acts wrap">${pickSel(`daily.ui.addAbs`, '', [{ items: ttNames().filter(n => !absentSet(iso).has(normName(n))) }], { ph: '+ إضافة معلم غائب' })}</div>`;
+  const abs = absentSet(iso), names = ttNames().slice().sort((a, b) => AR.compare(normName(a), normName(b)));
+  const grp = { 1: [], 2: [], 3: [], 0: [] }; names.forEach(n => grp[mainGrade(n)].push(n));
+  const chip = n => { const on = abs.has(normName(n)), c = d >= 0 ? ttDayLoad(n, d) : 0, lv = leaveOf(iso, n);
+    return `<button type="button" class="achip${on ? ' on' : ''}${c ? '' : ' zero'}" data-act="wAbs" data-n="${esc(n)}" aria-pressed="${on}">${lv ? '🕘 ' : ''}${esc(n)}<i>${c}</i></button>`; };
+  const nAbs = (D().wait[iso] || { blocks: [] }).blocks.length;
+  return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs} غائب — اضغط لإضافة أو إزالة` : 'المس أسماء الغائبين'}</span></summary>
+    <p class="hint">المس اسم كل غائب فيظهر جدول حصصه لهذا اليوم تحته مباشرة، والمس الاسم مرة ثانية للإلغاء. الرقم بجانب الاسم عدد حصصه اليوم.</p>
+    ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
+}
+function leaveCtl(iso, b, bi) {
+  const l = b.leave && leaves().find(x => x.id === b.leave) || leaveOf(iso, b.abs);
+  if (l) { const days = schoolDaysBetween(l.a, l.b), k = days.indexOf(iso) + 1; return `<div class="lvbar"><span>🕘 غائب حتى <b>${dayAr(l.b)} ${hijriOf(l.b)}</b> — اليوم ${k} من ${days.length}</span><button class="btn sm ghost" data-act="wBack" data-bi="${bi}" type="button">عاد اليوم</button><button class="btn sm ghost" data-act="wLvOpen" data-bi="${bi}" type="button">تعديل المدة</button></div>`; }
+  return `<div class="lvbar"><button class="btn sm ghost" data-act="wLvOpen" data-bi="${bi}" type="button">🕘 غائب لعدة أيام؟</button></div>`;
+}
+function leaveForm(iso, bi) {
+  return `<div class="lvform" id="lvf${bi}"><b>مدة الغياب ابتداءً من اليوم:</b><div class="wchips">${[[2, 'يومان'], [3, '3 أيام'], [4, '4 أيام'], [5, 'أسبوع دراسي'], [10, 'أسبوعان']].map(([n, t]) => `<button type="button" class="wchip" data-act="wLv" data-bi="${bi}" data-n="${n}">${t}</button>`).join('')}</div>
+    <label class="inl">أو حتى تاريخ <input type="date" class="in" data-lvdate="${bi}" min="${iso}"></label><small class="hint">تُتخطى نهاية الأسبوع والإجازات الرسمية تلقائياً.</small></div>`;
 }
 function vWait(iso) {
   const w = D().wait[iso] || { blocks: [] }, d = wdOf(iso);
@@ -152,15 +190,15 @@ function vWait(iso) {
         <td>${has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.note`, r.note || '', { ph: 'ما تم تنفيذه' }) : ''}</td></tr>`);
     }
     const n = d >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(p => ttCell(b.abs, d, p)).length : 0;
-    return `<article class="wblk"><header><span>نظراً لغياب الزميل:</span>${pickSel(`daily.wait.${iso}.blocks.${bi}.abs`, b.abs || '', [{ items: ttNames() }], { ph: '— اختر المعلم الغائب —' })}<small>${b.abs ? (tt0() ? `${n} حصص اليوم` : '') : ''}</small><button class="x" data-act="wDel" data-v="${bi}" type="button" aria-label="حذف">×</button></header>
+    return `<article class="wblk"><header><span>نظراً لغياب الزميل:</span>${pickSel(`daily.wait.${iso}.blocks.${bi}.abs`, b.abs || '', [{ items: ttNames() }], { ph: '— اختر المعلم الغائب —' })}<small>${b.abs ? (tt0() ? `${n} حصص اليوم` : '') : ''}</small><button class="x" data-act="wDel" data-v="${bi}" type="button" aria-label="حذف">×</button></header>${b.abs ? leaveCtl(iso, b, bi) : ''}
       <div class="tw"><table class="et wtab"><tr><th style="width:52px">الحصة</th><th style="width:70px">الفصل</th><th style="width:80px">الشعبة</th><th>المعلم المنتظر</th><th>ما تم تنفيذه</th></tr>${rows.join('')}</table></div></article>`;
   }).join('');
   const issues = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => subIssue(iso, bi, p, ((b.rows || {})[p] || {}).t)).length, 0);
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
-    <p class="hint">أضف المعلم الغائب فتظهر حصصه وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b>: يظهر أولاً معلمو الصف نفسه (أول/ثاني/ثالث)، ثم بقية المتاحين — هجائياً، والمميَّز بنجمة هو الأقل انتظاراً. تُطبع الاستمارة مقسّمة حسب الصف في ورقة واحدة.</p>
-    <div class="acts wrap">${pickSel(`daily.ui.addAbs`, '', [{ items: ttNames().filter(n => !absentSet(iso).has(normName(n))) }], { ph: '+ إضافة معلم غائب' })}
-      ${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
+    <p class="hint">المس أسماء الغائبين فتظهر حصص كل منهم وشعبه لهذا اليوم من الجدول المدرسي، ثم اضغط اسم المنتظر من <b>المتاحين في تلك الحصة بالضبط</b>: يظهر أولاً معلمو الصف نفسه (أول/ثاني/ثالث)، ثم بقية المتاحين — هجائياً، والمميَّز بنجمة هو الأقل انتظاراً. تُطبع الاستمارة مقسّمة حسب الصف في ورقة واحدة.</p>
+    ${d >= 0 && !holOf(iso) ? absGrid(iso) : ''}
+    <div class="acts wrap">${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
     ${w.blocks.length ? `<div class="wsum"><span><b>${w.blocks.length}</b> غائب</span><span><b>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</b> حصة مسددة</span>${empty ? `<span class="warn"><b>${empty}</b> بلا منتظر</span>` : ''}${issues ? `<span class="bad"><b>${issues}</b> تعارض</span>` : ''}</div>` : '<p class="hint" style="margin-top:10px">لا يوجد غائبون مسجلون لهذا اليوم. يمكنك طباعة استمارة فارغة.</p>'}
     <div class="wblks">${blocks}</div></section>`;
@@ -256,7 +294,7 @@ function ttPages(dd) {
 }
 function statsPages() { return fairPages(); }
 function dailyGroups(kind) {
-  const iso = dIso();
+  const iso = dIso(); ensureLeaves(iso);
   if (kind === 'wait') return [{ land: false, pages: waitPages(iso), t: 'استمارة حصص الانتظار' }];
   if (kind === 'duty') return [{ land: false, pages: dutyPages(iso), t: 'تقرير الإشراف والمناوبة اليومي' }];
   if (kind === 'tt') return [{ land: false, pages: ttPages(TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY), t: 'الجدول المدرسي' }];
@@ -264,6 +302,12 @@ function dailyGroups(kind) {
 }
 function dailyName(kind) { const iso = dIso(); return fname(({ wait: 'استمارة حصص الانتظار', duty: 'تقرير الإشراف والمناوبة', tt: 'الجدول المدرسي - ' + TT_DAYS[TT_DAY == null ? Math.max(0, wdOf(iso)) : TT_DAY], stats: 'تقرير عدالة الانتظار - ' + statRange(STAT_P)[2] })[kind] + (kind === 'wait' || kind === 'duty' ? ' - ' + dayAr(iso) + ' ' + hijriOf(iso).replace(/\//g, '-') : '')); }
 
+function setLeave(iso, bl, end) {
+  if (!bl || !end) return; let l = leaveOf(iso, bl.abs);
+  if (l) { if (end < l.b) endLeave(l, addDays(end, 1)); l.b = end; } else { l = { id: 'L' + Date.now().toString(36), n: bl.abs, a: iso, b: end }; leaves().push(l); }
+  bl.leave = l.id; save(); render(); const n = schoolDaysBetween(l.a, l.b).length; toast(`${bl.abs} غائب ${n} أيام دراسية حتى ${dayAr(l.b)} ${hijriOf(l.b)} — يظهر تلقائياً كل يوم`);
+}
+document.addEventListener('change', e => { const el = e.target; if (!el.dataset || !el.dataset.lvdate) return; const iso = dIso(), bl = W(iso).blocks[+el.dataset.lvdate]; if (el.value && el.value >= iso) setLeave(iso, bl, isSchoolDay(el.value) ? el.value : prevSchoolDay(el.value)); });
 /* ---------- الأحداث ---------- */
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, iso = dIso();
@@ -276,7 +320,15 @@ document.addEventListener('click', async e => {
   if (a === 'ttnDel') { if (await confirmBox('حذف جدول الفصل القادم؟')) { delete D().ttNext; TT_WHICH = 'cur'; save(); render(); } return; }
   if (a === 'ttnApply') { const n = D().ttNext; if (n && await confirmBox(`اعتماد جدول الفصل القادم (${n.teachers.length} معلماً) جدولاً حالياً؟ تُبنى عليه حصص الانتظار من الآن، ويُحفظ الجدول الحالي لاسترجاعه عند الحاجة.`)) { D().ttPrev = D().tt; D().tt = n; delete D().ttNext; TT_WHICH = 'cur'; S.uploads.tt = { name: n.src, at: stamp(), info: `${n.teachers.length} معلماً` }; save(); render(); toast('اعتُمد جدول الفصل الجديد ✓'); } return; }
   if (a === 'ttPrev') { const p = D().ttPrev; if (p && await confirmBox(`استرجاع الجدول السابق (${p.src || ''})؟ يحل محل الجدول الحالي، ويُحفظ الحالي بدلاً منه.`)) { D().ttPrev = D().tt; D().tt = p; save(); render(); toast('استُرجع الجدول السابق'); } return; }
-  if (a === 'wDel') { if (await confirmBox('حذف هذا المعلم الغائب واستمارته لهذا اليوم؟')) { W(iso).blocks.splice(+b.dataset.v, 1); save(); render(); } return; }
+  if (a === 'wDel') { const bl = W(iso).blocks[+b.dataset.v], l = bl && (leaveOf(iso, bl.abs)); if (l) { if (await confirmBox(`${bl.abs} مسجل غائباً لعدة أيام حتى ${dayAr(l.b)} ${hijriOf(l.b)}. إزالته من اليوم وما بعده (عاد للعمل)؟`)) { endLeave(l, iso); save(); render(); } return; } if (await confirmBox('حذف هذا المعلم الغائب واستمارته لهذا اليوم؟')) { W(iso).blocks.splice(+b.dataset.v, 1); save(); render(); } return; }
+  if (a === 'wAbs') { const n = b.dataset.n, w = W(iso), i = w.blocks.findIndex(x => normName(x.abs) === normName(n));
+    if (i < 0) { w.blocks.push({ abs: n, rows: {} }); save(); render(); setTimeout(() => { const el = document.querySelectorAll('.wblk')[w.blocks.length - 1]; if (el && window.innerWidth < 700) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); return; }
+    const bl = w.blocks[i], filled = Object.values(bl.rows || {}).filter(r => r && r.t).length, l = leaveOf(iso, n);
+    if (l) { if (await confirmBox(`${n} مسجل غائباً حتى ${dayAr(l.b)} ${hijriOf(l.b)}. إلغاء غيابه من اليوم وما بعده؟`)) { endLeave(l, iso); save(); render(); } return; }
+    if (filled && !await confirmBox(`إلغاء غياب ${n}؟ سيُحذف ${filled} انتظار مسجل له اليوم.`)) return; w.blocks.splice(i, 1); save(); render(); return; }
+  if (a === 'wLvOpen') { const bi = +b.dataset.bi, art = b.closest('.wblk'), ex = art.querySelector('.lvform'); if (ex) { ex.remove(); return; } art.querySelector('.lvbar').insertAdjacentHTML('afterend', leaveForm(iso, bi)); return; }
+  if (a === 'wLv') { const bl = W(iso).blocks[+b.dataset.bi]; setLeave(iso, bl, nthSchoolDay(iso, +b.dataset.n)); return; }
+  if (a === 'wBack') { const bl = W(iso).blocks[+b.dataset.bi], l = bl && leaveOf(iso, bl.abs); if (l && await confirmBox(`تسجيل عودة ${bl.abs} اليوم؟ يُزال غيابه من اليوم وما بعده.`)) { endLeave(l, iso); save(); render(); toast(`سُجّلت عودة ${bl.abs}`); } return; }
   if (a === 'wSet') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, b.dataset.n); save(); render(); return; }
   if (a === 'wClr') { setPath(`daily.wait.${iso}.blocks.${b.dataset.bi}.rows.${b.dataset.p}.t`, ''); save(); render(); return; }
   if (a === 'wAuto') { const n = autoFill(iso); save(); render(); return toast(n ? `عُبّئت ${n} حصة بالمعلمين المتاحين الأقل انتظاراً` : 'لا توجد حصص فارغة تحتاج تعبئة'); }
