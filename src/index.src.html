@@ -680,6 +680,23 @@ main#main{--sct:var(--sc)}
 
 .wkt td{vertical-align:top}.wkt td .cf{display:block}
 @media (max-width:700px){table.wkt,table.wkt tbody{display:block}table.wkt tr:first-child{display:none}table.wkt tr{display:grid;grid-template-columns:1fr;gap:6px;padding:10px 4px;border-bottom:1px solid var(--line)}table.wkt td{display:block;border:0;padding:0}}
+
+/* لوحة طباعة الإسناد */
+.tapp{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:linear-gradient(180deg,color-mix(in srgb,var(--sct,var(--sc,#7c3aed)) 7%,var(--surface2)),var(--surface2));display:flex;flex-direction:column;gap:9px}
+.tapr{display:flex;flex-wrap:wrap;align-items:center;gap:7px}.tapr > b{font-size:.9rem}
+.tsel{font:inherit;font-size:.86rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tsel.on{border-color:var(--sc,#7c3aed);background:color-mix(in srgb,var(--sc,#7c3aed) 14%,var(--surface));color:var(--ink)}
+.tog{display:inline-flex;cursor:pointer}.tog input{position:absolute;opacity:0;pointer-events:none}.tog span{font-size:.8rem;border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--surface);color:var(--muted)}
+.tog input:checked + span{border-color:color-mix(in srgb,var(--ok) 60%,var(--line));background:color-mix(in srgb,var(--ok) 13%,var(--surface));color:var(--ink);font-weight:700}.tog input:checked + span::before{content:"✓ "}
+.tapr.btns .btn{flex:1 1 0}
+/* صفوف الإسناد */
+.tarows tr.tar td:first-child{border-inline-start:4px solid var(--sx)}
+.tarows tr.tar{background:linear-gradient(to left,color-mix(in srgb,var(--sx) 7%,transparent),transparent 70%)}
+.tarows tr.tar.need td:nth-child(4) .psel,.tarows tr.tar.need td:nth-child(4) select{border-color:color-mix(in srgb,#f59e0b 70%,var(--line))}
+.secpick .secs{display:inline-flex;flex-wrap:wrap;gap:4px;direction:rtl}.secpick .secs i{font-style:normal;font-weight:700;font-size:.8rem;min-width:24px;text-align:center;padding:1px 6px;border-radius:7px;background:color-mix(in srgb,var(--sx,#0e7490) 15%,var(--surface));border:1px solid color-mix(in srgb,var(--sx,#0e7490) 35%,transparent)}
+.secpick{direction:rtl}
+.hsel{font-weight:800;text-align:center}
+@media (max-width:700px){.tarows tr.tar{border-inline-start:4px solid var(--sx);border-radius:10px;margin-bottom:6px}.tarows tr.tar td:first-child{border-inline-start:0}}
 </style>
 </head>
 <body>

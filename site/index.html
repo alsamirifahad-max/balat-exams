@@ -680,6 +680,23 @@ main#main{--sct:var(--sc)}
 
 .wkt td{vertical-align:top}.wkt td .cf{display:block}
 @media (max-width:700px){table.wkt,table.wkt tbody{display:block}table.wkt tr:first-child{display:none}table.wkt tr{display:grid;grid-template-columns:1fr;gap:6px;padding:10px 4px;border-bottom:1px solid var(--line)}table.wkt td{display:block;border:0;padding:0}}
+
+/* لوحة طباعة الإسناد */
+.tapp{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:linear-gradient(180deg,color-mix(in srgb,var(--sct,var(--sc,#7c3aed)) 7%,var(--surface2)),var(--surface2));display:flex;flex-direction:column;gap:9px}
+.tapr{display:flex;flex-wrap:wrap;align-items:center;gap:7px}.tapr > b{font-size:.9rem}
+.tsel{font:inherit;font-size:.86rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tsel.on{border-color:var(--sc,#7c3aed);background:color-mix(in srgb,var(--sc,#7c3aed) 14%,var(--surface));color:var(--ink)}
+.tog{display:inline-flex;cursor:pointer}.tog input{position:absolute;opacity:0;pointer-events:none}.tog span{font-size:.8rem;border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--surface);color:var(--muted)}
+.tog input:checked + span{border-color:color-mix(in srgb,var(--ok) 60%,var(--line));background:color-mix(in srgb,var(--ok) 13%,var(--surface));color:var(--ink);font-weight:700}.tog input:checked + span::before{content:"✓ "}
+.tapr.btns .btn{flex:1 1 0}
+/* صفوف الإسناد */
+.tarows tr.tar td:first-child{border-inline-start:4px solid var(--sx)}
+.tarows tr.tar{background:linear-gradient(to left,color-mix(in srgb,var(--sx) 7%,transparent),transparent 70%)}
+.tarows tr.tar.need td:nth-child(4) .psel,.tarows tr.tar.need td:nth-child(4) select{border-color:color-mix(in srgb,#f59e0b 70%,var(--line))}
+.secpick .secs{display:inline-flex;flex-wrap:wrap;gap:4px;direction:rtl}.secpick .secs i{font-style:normal;font-weight:700;font-size:.8rem;min-width:24px;text-align:center;padding:1px 6px;border-radius:7px;background:color-mix(in srgb,var(--sx,#0e7490) 15%,var(--surface));border:1px solid color-mix(in srgb,var(--sx,#0e7490) 35%,transparent)}
+.secpick{direction:rtl}
+.hsel{font-weight:800;text-align:center}
+@media (max-width:700px){.tarows tr.tar{border-inline-start:4px solid var(--sx);border-radius:10px;margin-bottom:6px}.tarows tr.tar td:first-child{border-inline-start:0}}
 </style>
 </head>
 <body>
@@ -2367,7 +2384,7 @@ function openSecPicker(btn) {
   document.body.appendChild(pop);
   const r = btn.getBoundingClientRect(); pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
   pop.style.left = Math.max(8, Math.min(window.scrollX + r.right - pop.offsetWidth, document.documentElement.clientWidth - pop.offsetWidth - 8)) + 'px';
-  const apply = () => { const v = $$('input', pop).filter(c => c.checked).map(c => +c.value).sort((a, b) => a - b).join('-'); S.ta[i].sec = v; save(); btn.innerHTML = v ? esc(v) : '<span class="hint">اختر الشعب ▾</span>'; $$('.secb', pop).forEach(l => l.classList.toggle('on', l.firstElementChild.checked)); };
+  const apply = () => { const v = $$('input', pop).filter(c => c.checked).map(c => +c.value).sort((a, b) => a - b).join('-'); S.ta[i].sec = v; save(); btn.innerHTML = secChips(v); $$('.secb', pop).forEach(l => l.classList.toggle('on', l.firstElementChild.checked)); };
   pop.addEventListener('change', apply);
   pop.addEventListener('click', e => { const a = e.target.closest('[data-sp]'); if (!a) return; if (a.dataset.sp === 'ok') return closeSecPicker(true); $$('input', pop).forEach(c => c.checked = a.dataset.sp === 'all'); apply(); });
   pop._i = i;
@@ -2485,19 +2502,16 @@ function vAssign() {
     <div class="drops one">${dropZone('ta', 'ملف إسناد المعلمين', `PDF أو Word أو Excel — الإسناد الحالي: ${S.ta.length} سطراً لـ ${tcount} معلماً`, '.xlsx,.xls,.csv,.docx,.doc,.pdf')}</div>
     <div class="acts wrap"><button class="btn sm ghost" data-act="exportTa" type="button">تنزيل الإسناد كملف Excel</button><button class="btn sm" data-act="buildSt" type="button">ربط مواد الجدول بمعلميها من الإسناد</button></div>
     <div id="upMsg"></div>
-    <div class="dens" style="margin-top:14px"><label class="inl">كثافة الطباعة لكشوف المعلمين <select class="in" data-k="s.taPrint.dens" id="st_dens"><option value="cmp"${((S.s.taPrint || {}).dens || 'cmp') === 'cmp' ? ' selected' : ''}>مضغوطة — أكبر عدد من المعلمين في الصفحة</option><option value="mid"${(S.s.taPrint || {}).dens === 'mid' ? ' selected' : ''}>متوسطة</option><option value="std"${(S.s.taPrint || {}).dens === 'std' ? ' selected' : ''}>مريحة — أسطر واسعة للكتابة</option></select></label></div>
-    ${qbar('taSheet', 'كشف الإسناد:')}
+    ${typeof taPrintPanel === 'function' ? taPrintPanel() : ''}
   </section>
   <section class="card">
     <h2>تعديل الإسناد</h2>
-    ${qbar('taSheet', 'كشف الإسناد:', `<label class="ck"><input type="checkbox" data-k="s.taPrint.h" ${(S.s.taPrint || {}).h !== false ? 'checked' : ''}> عمود عدد الحصص</label><label class="ck"><input type="checkbox" data-k="s.taPrint.sign" ${(S.s.taPrint || {}).sign !== false ? 'checked' : ''}> عمود التوقيع</label><label class="ck"><input type="checkbox" data-k="s.taPrint.note" ${(S.s.taPrint || {}).note ? 'checked' : ''}> ملاحظات</label><label class="ck"><input type="checkbox" data-k="s.taPrint.split" ${(S.s.taPrint || {}).split !== false ? 'checked' : ''}> كل صف في صفحة</label>`)}
-    ${qbar('taLoad', 'نصاب المعلمين:')}
     <p class="hint">عدّل أي خانة مباشرة، أو احذف سطراً، أو أضف معلماً أو مادة. قائمة المواد مأخوذة من الخطة الدراسية للمرحلة الثانوية – نظام المسارات (الفصل ${esc(S.s.sem)} أولاً)، ويمكنك كتابة أي مادة أخرى. اضغط خانة الشعب لاختيارها من قائمة شعب الصف نفسه.</p>
     ${G.map(g => { const rows = taByG(g); const have = new Set(rows.map(([x]) => normName(x.sub)));
       const miss = CURR[g][semNo()].filter(n => !rows.some(([x]) => subjMatch(x.sub, n)));
       return `<div class="tagrp"><div class="tagh" style="--gc:${GCOL[g]}"><b>${GNAME[g]}</b><span>${rows.length} سطراً — ${new Set(rows.map(([x]) => x.t)).size} معلماً</span></div>
       <div class="tw"><table class="et stack tarows"><tr><th style="width:30%">المادة</th><th style="width:8%">الحصص</th><th style="width:22%">الشعب</th><th>المعلم</th><th></th></tr>
-      ${rows.map(([x, i]) => `<tr><td>${pickSel(`ta.${i}.sub`, x.sub, subOpts(g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${x.sec ? esc(x.sec) : '<span class="hint">اختر الشعب ▾</span>'}</button></td><td>${pickSel(`ta.${i}.t`, x.t, tchOpts(), { ph: '— اختر المعلم —' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
+      ${rows.map(([x, i]) => `<tr class="tar${x.t ? '' : ' need'}" style="--sx:${subjColor(x.sub)}"><td>${pickSel(`ta.${i}.sub`, x.sub, subOpts(g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${secChips(x.sec)}</button></td><td>${pickSel(`ta.${i}.t`, x.t, tchOpts(), { ph: '— اختر المعلم —' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
       </table></div>
       <div class="acts wrap"><button class="btn sm" data-act="addTa" data-g="${g}" type="button">+ إضافة معلم / مادة</button>
       ${miss.length ? `<span class="hint">مواد في الخطة بلا إسناد:</span>${miss.map(n => `<button type="button" class="chip" data-act="addTa" data-g="${g}" data-sub="${esc(n)}">+ ${esc(n)}</button>`).join('')}` : '<span class="okt">جميع مواد الخطة مُسندة</span>'}</div></div>`; }).join('')}
@@ -5264,6 +5278,46 @@ function agentBar() {
 }
 /* إصلاح: حفظ الوكيل كان قد يُخزَّن بالفصل الأول من نسخة قديمة — يُعاد للثاني ما لم يختره المستخدم صراحة */
 setTimeout(() => { try { const done = localStorage.getItem(LS_KEY + '-semFixV1'); if (done) return; const rm = rawMeta('ta-agent'); if (rm.sem === S.s.sem && !rm.semSet && !inT2()) { updSetMeta('ta-agent', { sem: 'الثاني' }); renderNav(); render(); } localStorage.setItem(LS_KEY + '-semFixV1', '1'); } catch (e) { } }, 1500);
+
+/* ===================== الإسناد: لوحة طباعة موحدة، وألوان المواد، والشعب كشارات ===================== */
+const SUBJ_HUES = [210, 145, 28, 340, 270, 48, 185, 0, 95, 235];
+function subjColor(sub) { const b = normName(String(sub || '').replace(/[\d\s\-–_/]+$/g, '')).replace(/^ال/, ''); if (!b) return 'var(--line)'; let h = 0; for (const ch of b) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return `hsl(${SUBJ_HUES[h % SUBJ_HUES.length]} 58% 46%)`; }
+function secChips(v) { const a = String(v || '').split(/[\s,،\-–]+/).filter(Boolean); return a.length ? `<span class="secs">${a.map(n => `<i>${esc(n)}</i>`).join('')}</span>` : '<span class="hint">اختر الشعب ▾</span>'; }
+function taPick() { const p = S.s.taPrint = S.s.taPrint || {}; if (!Array.isArray(p.fs)) p.fs = ['taSheet']; return p.fs; }
+function taPrintPanel() {
+  const p = S.s.taPrint || {}, fs = taPick(), tg = (k, on, lbl) => `<label class="tog"><input type="checkbox" data-k="s.taPrint.${k}" ${on ? 'checked' : ''}><span>${lbl}</span></label>`;
+  return `<div class="tapp"><div class="tapr"><b>الطباعة:</b>
+      <button type="button" class="tsel${fs.includes('taSheet') ? ' on' : ''}" data-tact="taF" data-v="taSheet">${fs.includes('taSheet') ? '✓ ' : ''}كشف الإسناد</button>
+      <button type="button" class="tsel${fs.includes('taLoad') ? ' on' : ''}" data-tact="taF" data-v="taLoad">${fs.includes('taLoad') ? '✓ ' : ''}نصاب المعلمين</button></div>
+    ${fs.includes('taSheet') ? `<div class="tapr">${gradeChips(QG.taSheet, 'qG', 'taSheet')}</div>
+    <div class="tapr togs">${tg('h', p.h !== false, 'عدد الحصص')}${tg('sign', p.sign !== false, 'التوقيع')}${tg('note', !!p.note, 'ملاحظات')}${tg('split', p.split !== false, 'كل صف في صفحة')}</div>` : ''}
+    <div class="tapr"><label class="inl">الكثافة <select class="in" data-k="s.taPrint.dens"><option value="cmp"${(p.dens || 'cmp') === 'cmp' ? ' selected' : ''}>مضغوطة</option><option value="mid"${p.dens === 'mid' ? ' selected' : ''}>متوسطة</option><option value="std"${p.dens === 'std' ? ' selected' : ''}>مريحة للكتابة</option></select></label></div>
+    <div class="tapr btns"><button class="btn pri" data-tact="taP" data-v="pv" type="button">معاينة</button><button class="btn" data-tact="taP" data-v="print" type="button">طباعة</button><button class="btn" data-tact="taP" data-v="pdf" type="button">PDF</button><button class="btn" data-tact="taP" data-v="word" type="button">Word</button></div></div>`;
+}
+function taRun(op) {
+  const fs = taPick(); if (!fs.length) return toast('اختر كشفاً واحداً على الأقل', true);
+  const m = setMeta(ACTIVE), nm = fname((fs.length > 1 ? 'كشوف الإسناد' : FORMS.find(x => x.id === fs[0]).t) + ' - ' + m.n + ' - الفصل ' + m.sem);
+  const run = () => { const g = fs.flatMap(f => groupsOf(f, f === 'taSheet' && QG.taSheet && QG.taSheet.length ? { g: QG.taSheet } : {})); return op === 'print' ? printPages(g) : op === 'word' ? wordDoc(g, nm) : op === 'pdf' ? downloadPdf(g, nm) : openPreview(g, nm); };
+  return withSetSemAsync(ACTIVE, run);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return; const a = b.dataset.tact;
+  if (a === 'taF') { const fs = taPick(), v = b.dataset.v, i = fs.indexOf(v); if (i >= 0) fs.splice(i, 1); else fs.push(v); fs.sort((x, y) => (x === 'taSheet' ? 0 : 1) - (y === 'taSheet' ? 0 : 1)); save(); render(); }
+  else if (a === 'taP') taRun(b.dataset.v);
+});
+
+/* ===================== التعليمات خلف «؟» ===================== */
+function hintsToHelp(root) {
+  (root || document).querySelectorAll('.sbody section.card, .sbody .card').forEach(card => {
+    const h2 = card.querySelector(':scope > h2'); if (!h2) return;
+    const ps = [...card.querySelectorAll(':scope > p.hint')].filter(p => !p.querySelector('button,input,select,a,label') && !(/\d/.test(p.textContent) && p.textContent.length < 90) && !p.classList.contains('keep'));
+    if (!ps.length) return; const txt = ps.map(p => p.textContent.trim().replace(/\s+/g, ' ')).join(' ');
+    ps.forEach(p => p.remove());
+    let b = h2.querySelector('.hlp'); if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'hlp'; b.textContent = '؟'; b.setAttribute('aria-label', 'شرح'); b.dataset.help = ''; h2.appendChild(b); }
+    if (!b.dataset.help.includes(txt.slice(0, 30))) b.dataset.help = (b.dataset.help ? b.dataset.help + ' ' : '') + txt;
+  });
+}
+if (typeof injectHelp === 'function') { const __ih = injectHelp; injectHelp = function (r) { __ih(r); try { hintsToHelp(r); } catch (e) { } }; }
 
 </script>
 </body>

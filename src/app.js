@@ -1555,7 +1555,7 @@ function openSecPicker(btn) {
   document.body.appendChild(pop);
   const r = btn.getBoundingClientRect(); pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
   pop.style.left = Math.max(8, Math.min(window.scrollX + r.right - pop.offsetWidth, document.documentElement.clientWidth - pop.offsetWidth - 8)) + 'px';
-  const apply = () => { const v = $$('input', pop).filter(c => c.checked).map(c => +c.value).sort((a, b) => a - b).join('-'); S.ta[i].sec = v; save(); btn.innerHTML = v ? esc(v) : '<span class="hint">اختر الشعب ▾</span>'; $$('.secb', pop).forEach(l => l.classList.toggle('on', l.firstElementChild.checked)); };
+  const apply = () => { const v = $$('input', pop).filter(c => c.checked).map(c => +c.value).sort((a, b) => a - b).join('-'); S.ta[i].sec = v; save(); btn.innerHTML = secChips(v); $$('.secb', pop).forEach(l => l.classList.toggle('on', l.firstElementChild.checked)); };
   pop.addEventListener('change', apply);
   pop.addEventListener('click', e => { const a = e.target.closest('[data-sp]'); if (!a) return; if (a.dataset.sp === 'ok') return closeSecPicker(true); $$('input', pop).forEach(c => c.checked = a.dataset.sp === 'all'); apply(); });
   pop._i = i;
@@ -1673,19 +1673,16 @@ function vAssign() {
     <div class="drops one">${dropZone('ta', 'ملف إسناد المعلمين', `PDF أو Word أو Excel — الإسناد الحالي: ${S.ta.length} سطراً لـ ${tcount} معلماً`, '.xlsx,.xls,.csv,.docx,.doc,.pdf')}</div>
     <div class="acts wrap"><button class="btn sm ghost" data-act="exportTa" type="button">تنزيل الإسناد كملف Excel</button><button class="btn sm" data-act="buildSt" type="button">ربط مواد الجدول بمعلميها من الإسناد</button></div>
     <div id="upMsg"></div>
-    <div class="dens" style="margin-top:14px"><label class="inl">كثافة الطباعة لكشوف المعلمين <select class="in" data-k="s.taPrint.dens" id="st_dens"><option value="cmp"${((S.s.taPrint || {}).dens || 'cmp') === 'cmp' ? ' selected' : ''}>مضغوطة — أكبر عدد من المعلمين في الصفحة</option><option value="mid"${(S.s.taPrint || {}).dens === 'mid' ? ' selected' : ''}>متوسطة</option><option value="std"${(S.s.taPrint || {}).dens === 'std' ? ' selected' : ''}>مريحة — أسطر واسعة للكتابة</option></select></label></div>
-    ${qbar('taSheet', 'كشف الإسناد:')}
+    ${typeof taPrintPanel === 'function' ? taPrintPanel() : ''}
   </section>
   <section class="card">
     <h2>تعديل الإسناد</h2>
-    ${qbar('taSheet', 'كشف الإسناد:', `<label class="ck"><input type="checkbox" data-k="s.taPrint.h" ${(S.s.taPrint || {}).h !== false ? 'checked' : ''}> عمود عدد الحصص</label><label class="ck"><input type="checkbox" data-k="s.taPrint.sign" ${(S.s.taPrint || {}).sign !== false ? 'checked' : ''}> عمود التوقيع</label><label class="ck"><input type="checkbox" data-k="s.taPrint.note" ${(S.s.taPrint || {}).note ? 'checked' : ''}> ملاحظات</label><label class="ck"><input type="checkbox" data-k="s.taPrint.split" ${(S.s.taPrint || {}).split !== false ? 'checked' : ''}> كل صف في صفحة</label>`)}
-    ${qbar('taLoad', 'نصاب المعلمين:')}
     <p class="hint">عدّل أي خانة مباشرة، أو احذف سطراً، أو أضف معلماً أو مادة. قائمة المواد مأخوذة من الخطة الدراسية للمرحلة الثانوية – نظام المسارات (الفصل ${esc(S.s.sem)} أولاً)، ويمكنك كتابة أي مادة أخرى. اضغط خانة الشعب لاختيارها من قائمة شعب الصف نفسه.</p>
     ${G.map(g => { const rows = taByG(g); const have = new Set(rows.map(([x]) => normName(x.sub)));
       const miss = CURR[g][semNo()].filter(n => !rows.some(([x]) => subjMatch(x.sub, n)));
       return `<div class="tagrp"><div class="tagh" style="--gc:${GCOL[g]}"><b>${GNAME[g]}</b><span>${rows.length} سطراً — ${new Set(rows.map(([x]) => x.t)).size} معلماً</span></div>
       <div class="tw"><table class="et stack tarows"><tr><th style="width:30%">المادة</th><th style="width:8%">الحصص</th><th style="width:22%">الشعب</th><th>المعلم</th><th></th></tr>
-      ${rows.map(([x, i]) => `<tr><td>${pickSel(`ta.${i}.sub`, x.sub, subOpts(g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${x.sec ? esc(x.sec) : '<span class="hint">اختر الشعب ▾</span>'}</button></td><td>${pickSel(`ta.${i}.t`, x.t, tchOpts(), { ph: '— اختر المعلم —' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
+      ${rows.map(([x, i]) => `<tr class="tar${x.t ? '' : ' need'}" style="--sx:${subjColor(x.sub)}"><td>${pickSel(`ta.${i}.sub`, x.sub, subOpts(g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${secChips(x.sec)}</button></td><td>${pickSel(`ta.${i}.t`, x.t, tchOpts(), { ph: '— اختر المعلم —' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
       </table></div>
       <div class="acts wrap"><button class="btn sm" data-act="addTa" data-g="${g}" type="button">+ إضافة معلم / مادة</button>
       ${miss.length ? `<span class="hint">مواد في الخطة بلا إسناد:</span>${miss.map(n => `<button type="button" class="chip" data-act="addTa" data-g="${g}" data-sub="${esc(n)}">+ ${esc(n)}</button>`).join('')}` : '<span class="okt">جميع مواد الخطة مُسندة</span>'}</div></div>`; }).join('')}
