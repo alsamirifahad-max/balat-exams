@@ -126,7 +126,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--accent);margin:4px 0}
 .fstep.cur{background:var(--soft);color:var(--ink)}
 .fstep:hover{background:var(--soft)}
 .fsep{width:14px;height:1.5px;background:var(--line)}
-@media (max-width:600px){.fsep{display:none}.drop{flex-wrap:wrap}}
+@media (max-width:600px){.fsep{display:none}.drop{flex-wrap:wrap;align-items:flex-start;padding:14px;gap:12px}.drop .dic{width:46px;height:46px;flex:0 0 46px}.drop .dtx{flex:1 1 calc(100% - 60px);min-width:0}.drop > label.btn{flex:1 1 100%;padding:10px}}
 
 /* الإسناد والملاحظون */
 .tagrp{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:12px}
@@ -289,6 +289,14 @@ body.noscroll{overflow:hidden}
 .modal{position:fixed;inset:0;background:rgba(5,20,24,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal .box{background:var(--surface);color:var(--ink);border-radius:12px;padding:22px;width:min(380px,100%);border:1px solid var(--line)}
 .modal h3{margin:0 0 8px}
+.modal .tchbox{width:min(560px,100%);max-height:92vh;display:flex;flex-direction:column}.tchbox > *{flex-shrink:0}
+.tchbox .tlist{overflow:auto;flex:1 1 auto;flex-shrink:1;min-height:120px;border:1px solid var(--line);border-radius:9px;padding:4px 6px;margin-top:8px;background:var(--bg)}
+.tchbox .trow{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--line);font-size:.92rem;cursor:pointer}
+.tchbox .trow:last-of-type{border-bottom:0}.tchbox .trow span{flex:1}
+.tchbox .trem{margin-top:8px;padding:8px;border-radius:8px;background:rgba(220,60,60,.08);color:var(--ink);font-size:.84rem;line-height:1.7}
+.tchbox .tmode{margin-top:6px;display:flex;flex-wrap:wrap}.tchbox .tmode button{flex:1}
+.tg{display:inline-block;font-size:.72rem;font-style:normal;font-weight:700;padding:1px 7px;border-radius:20px;white-space:nowrap}
+.tg.new{background:rgba(46,184,124,.16);color:#1f9a66}.tg.old{background:rgba(120,140,150,.16);color:var(--muted)}.tg.del{background:rgba(220,60,60,.13);color:#c94040}
 .codein{font-size:1.6rem;letter-spacing:.5em;text-align:center;direction:ltr}
 .err{color:var(--bad);min-height:1.4em;font-size:.9rem}
 .toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(30px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:9px;opacity:0;transition:.25s;z-index:60;max-width:calc(100% - 32px);pointer-events:none}
@@ -1263,6 +1271,131 @@ async function pdfAssignRows(buf) {
   if (!out.some(r => r.length > 1)) throw new Error('لم يُعثر على جدول إسناد في ملف PDF. إن كان الملف صورة ممسوحة ضوئياً فاحفظه من Word أو Excel ثم ارفعه.');
   return out;
 }
+/* ===================== رفع قائمة المعلمين (Excel / Word / PDF / نص) ===================== */
+async function pdfLineRows(buf) {
+  await ensurePdfJs();
+  const pdf = await pdfjsLib.getDocument({ data: buf, isEvalSupported: false, disableFontFace: true }).promise; const out = [];
+  const norm = t => toWestern(String(t).normalize('NFKC')).replace(/[\u0000-\u001f]/g, '').replace(/\s+/g, ' ');
+  for (let pn = 1; pn <= pdf.numPages; pn++) {
+    const page = await pdf.getPage(pn); const tc = await page.getTextContent({ disableNormalization: true });
+    const items = tc.items.map(it => ({ s: norm(it.str), x0: it.transform[4], w: it.width || 0, y: it.transform[5] })).filter(i => i.s.trim() || i.s === ' ');
+    const lines = []; items.sort((a, b) => b.y - a.y).forEach(it => { const l = lines.find(l => Math.abs(l.y - it.y) < 5); if (l) l.items.push(it); else lines.push({ y: it.y, items: [it] }); });
+    lines.sort((a, b) => b.y - a.y).forEach(l => out.push(lineSegments(l.items).map(g => g.s)));
+  }
+  return out;
+}
+/* PDF: يحدد عمود الاسم من صف العناوين ثم يجمع نص كل خلية (حتى لو التف الاسم على سطرين) بحدود الجدول */
+async function pdfTeacherNames(buf) {
+  await ensurePdfJs();
+  const pdf = await pdfjsLib.getDocument({ data: buf, isEvalSupported: false, disableFontFace: true }).promise; const out = [];
+  const norm = t => toWestern(String(t).normalize('NFKC')).replace(/[\u0000-\u001f]/g, '').replace(/\s+/g, ' ');
+  for (let pn = 1; pn <= pdf.numPages; pn++) {
+    const page = await pdf.getPage(pn); const tc = await page.getTextContent({ disableNormalization: true });
+    const items = tc.items.map(it => ({ s: norm(it.str), x0: it.transform[4], w: it.width || 0, y: it.transform[5] })).filter(i => i.s.trim());
+    const lines = []; items.slice().sort((a, b) => b.y - a.y).forEach(it => { const l = lines.find(l => Math.abs(l.y - it.y) < 4); if (l) l.items.push(it); else lines.push({ y: it.y, items: [it] }); });
+    lines.sort((a, b) => b.y - a.y).forEach(l => l.segs = lineSegments(l.items));
+    const hl = lines.find(l => l.segs.some(g => isNameHdr(g.s)));
+    if (!hl) continue;
+    const segs = hl.segs.slice().sort((a, b) => a.x - b.x); const hi = segs.findIndex(g => isNameHdr(g.s)); const H = segs[hi];
+    const lo = hi > 0 ? (segs[hi - 1].x1 + H.x0) / 2 : -1e9, up = hi < segs.length - 1 ? (H.x1 + segs[hi + 1].x0) / 2 : 1e9;
+    const inCol = it => { const cx = it.x0 + it.w / 2; return cx > lo && cx < up; };
+    let rules = []; try { rules = (await pdfHLines(page)).filter(r => r.y < hl.y && r.x0 < H.x + 2 && r.x1 > H.x - 2).map(r => r.y); } catch (e) { rules = []; }
+    rules = [...new Set(rules.map(y => Math.round(y)))].sort((a, b) => b - a);
+    const body = lines.filter(l => l.y < hl.y - 2).map(l => ({ y: l.y, num: l.items.some(it => !inCol(it) && /^\d{1,3}$/.test(it.s.trim())), s: lineSegments(l.items.filter(inCol)).map(g => g.s).join(' ').trim() }));
+    if (rules.length >= 2) {
+      for (let i = 0; i < rules.length - 1; i++) { const cell = body.filter(l => l.s && l.y < rules[i] && l.y > rules[i + 1]).map(l => l.s).join(' '); if (cell) out.push(cell); }
+    } else if (body.filter(l => l.num).length >= 3) {
+      /* بلا حدود: سطر فيه رقم تسلسلي يبدأ صفاً جديداً، وما بعده بلا رقم تكملة للاسم الملتف */
+      let cur = null; body.forEach(l => { if (l.num) { if (cur) out.push(cur); cur = l.s; } else if (cur != null && l.s) cur = (cur + ' ' + l.s).trim(); }); if (cur) out.push(cur);
+    } else {
+      const bl = body.filter(l => l.s); const gaps = bl.slice(1).map((l, i) => bl[i].y - l.y).sort((a, b) => a - b); const med = gaps.length ? gaps[Math.floor(gaps.length * 0.75)] : 20;
+      let cur = null, py = null; bl.forEach(l => { if (cur != null && py - l.y < med * 0.7) cur += ' ' + l.s; else { if (cur) out.push(cur); cur = l.s; } py = l.y; }); if (cur) out.push(cur);
+    }
+  }
+  return out;
+}
+async function readTeacherFile(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const isZip = buf[0] === 0x50 && buf[1] === 0x4b;
+  let rows;
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) {
+    const cells = await pdfTeacherNames(buf.slice());
+    const got = parseTeacherRows(cells.map(c => [c])); if (got.length >= 3) return got;
+    rows = await pdfLineRows(buf.slice());
+  }
+  else if (buf[0] === 0xD0 && buf[1] === 0xCF && /\.doc$/i.test(file.name)) rows = docBinaryRows(buf);
+  else if (/\.docx$/i.test(file.name) || (isZip && !/\.(xlsx|xlsm|xls|csv)$/i.test(file.name))) rows = docxRows(buf);
+  else if (/\.txt$/i.test(file.name)) rows = new TextDecoder('utf-8').decode(buf).split(/\r?\n/).map(l => l.split(/\t|,|؛|;/));
+  else { const wb = XLSX.read(buf, { type: 'array' }); rows = []; wb.SheetNames.forEach(n => { rows = rows.concat(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' })); rows.push([]); }); }
+  return parseTeacherRows(rows);
+}
+function fixLamAlef(s) { return String(s).replace(/(^|\s)ا([اأإآ])ل/g, '$1ال$2'); }
+function isNameHdr(s) { const v = normName(fixLamAlef(String(s || '').trim())); return /^(اسم المعلم.*|اسم الموظف|الاسم( الرباعي| الثلاثي| الكامل)?|المعلم|اسم منسوب.*|اسم الموظف.*)$/.test(v); }
+const TCH_STOP = /(المملكة|السعودية|وزارة|التعليم|الإدارة|الادارة|العامة|محافظة|مدرسة|المدرسة|الثانوية|المتوسطة|الابتدائية|كشف|أسماء|اسماء|قائمة|المعلمين|منسوبي|العام الدراسي|الفصل الدراسي|الاسم|التخصص|المادة|التوقيع|الجوال|السجل المدني|الهوية|الملاحظات|رقم|المجموع|العدد|الإجمالي|مدير|وكيل|قائد|الشؤون|التعليمية|المرحلة|الصف|الشعبة|النصاب|الحصص|اليوم|التاريخ|هـ$|^م$|^ت$)/;
+function cleanTeacherName(s) {
+  s = toWestern(String(s || '')).normalize('NFKC').replace(/[‎‏‪-‮]/g, '').replace(/\s+/g, ' ').trim();
+  s = fixLamAlef(s).replace(/^[\d\s.\-–_)(/\\]+/, '').replace(/^(الأستاذ|الاستاذ|الأستاذة|المعلم|أ\s*[/.]|أ\s+|م\s*[/.])\s*/, '').replace(/[\d\s.\-–_]+$/, '').trim();
+  return s;
+}
+function looksLikeName(s) {
+  if (!s || s.length < 5 || s.length > 45) return false;
+  if (/[0-9@:]/.test(s) || /[A-Za-z]/.test(s)) return false;
+  if (!/^[؀-ۿ\s]+$/.test(s)) return false;
+  const w = s.split(' ').filter(Boolean); if (w.length < 2 || w.length > 6) return false;
+  if (TCH_STOP.test(s)) return false;
+  if (w.some(x => x.length === 1 && !/^[وى]$/.test(x))) return false;
+  return true;
+}
+function parseTeacherRows(rows) {
+  rows = rows.map(r => (Array.isArray(r) ? r : [r]).map(c => String(c == null ? '' : c).trim()));
+  const names = [];
+  // 1) عمود الاسم من صف العناوين إن وُجد
+  const hi = rows.findIndex(r => r.some(isNameHdr));
+  if (hi >= 0) {
+    const col = rows[hi].findIndex(isNameHdr);
+    rows.slice(hi + 1).forEach(r => { const n = cleanTeacherName(r[col]); if (looksLikeName(n)) names.push(n); });
+  }
+  // 2) بدون عناوين واضحة: أفضل خانة تبدو اسماً في كل سطر
+  if (names.length < 3) {
+    names.length = 0;
+    rows.forEach(r => { const c = r.map(cleanTeacherName).filter(looksLikeName).sort((a, b) => b.split(' ').length - a.split(' ').length || b.length - a.length); if (c.length) names.push(c[0]); });
+  }
+  const seen = new Set(); return names.filter(n => { const k = normName(n); if (seen.has(k)) return false; seen.add(k); return true; });
+}
+/* مفتاح الشخص: الاسم الأول + اسم العائلة، ليُعرف «علي القرني» و«علي سعيد القرني» أنهما شخص واحد */
+function personKey(n) { const w = normName(n).split(' ').filter(Boolean); return w.length ? w[0] + '|' + w[w.length - 1] : ''; }
+function sameTeacher(list) { const a = new Set(list.map(normName)), b = new Set(list.map(personKey)); return n => a.has(normName(n)) || b.has(personKey(n)); }
+function teacherReview(found, fileName) {
+  return new Promise(res => {
+    const inCur = sameTeacher(S.teachers), inFile = sameTeacher(found);
+    const cur = { has: n => inCur(n) };
+    const removed = S.teachers.filter(n => !inFile(n));
+    const newCount = found.filter(n => !inCur(n)).length;
+    let m = $('#tchModal'); if (!m) { m = document.createElement('div'); m.id = 'tchModal'; m.className = 'modal'; document.body.appendChild(m); }
+    m.innerHTML = `<div class="box tchbox" role="dialog" aria-label="مراجعة قائمة المعلمين">
+      <h3>مراجعة أسماء المعلمين</h3>
+      <p class="hint">${esc(fileName)} — وُجد <b>${found.length}</b> اسماً: <span class="tg new">${newCount} جديد</span> <span class="tg old">${found.length - newCount} موجود</span>${removed.length ? ` <span class="tg del">${removed.length} غير موجود في الملف</span>` : ''}</p>
+      <div class="seg tmode" role="group"><button type="button" class="on" data-m="replace">استبدال القائمة بالكامل</button><button type="button" data-m="merge">إضافة للقائمة الحالية</button></div>
+      <p class="hint tmh">ستُعتمد أسماء الملف فقط${removed.length ? `، ويُحذف ${removed.length} اسماً غير موجود فيه` : ''}. أزل علامة أي سطر لا تريده.</p>
+      <div class="tlist">${found.map((n, i) => `<label class="trow"><input type="checkbox" checked data-i="${i}"><span>${esc(n)}</span>${cur.has(n) ? '' : '<em class="tg new">جديد</em>'}</label>`).join('')}
+      ${removed.length ? `<div class="trem"><b>سيُحذف من القائمة (غير موجود في الملف):</b> ${removed.map(esc).join('، ')}</div>` : ''}</div>
+      <div class="acts"><button class="btn pri" id="tchOk" type="button">اعتماد القائمة</button><button class="btn ghost" id="tchNo" type="button">إلغاء</button><button class="btn ghost sm" id="tchAll" type="button">تحديد/إلغاء الكل</button></div></div>`;
+    m.hidden = false; let mode = 'replace';
+    const setMode = v => { mode = v; $$('.tmode button', m).forEach(b => b.classList.toggle('on', b.dataset.m === v)); const tr = $('.trem', m); if (tr) tr.hidden = v !== 'replace';
+      $('.tmh', m).textContent = v === 'replace' ? `ستُعتمد أسماء الملف فقط${removed.length ? `، ويُحذف ${removed.length} اسماً غير موجود فيه` : ''}. أزل علامة أي سطر لا تريده.` : 'تُضاف الأسماء الجديدة فقط وتبقى القائمة الحالية كما هي.'; };
+    $$('.tmode button', m).forEach(b => b.onclick = () => setMode(b.dataset.m));
+    $('#tchAll', m).onclick = () => { const bx = $$('.tlist input', m); const all = bx.every(x => x.checked); bx.forEach(x => x.checked = !all); };
+    const close = v => { m.hidden = true; m.innerHTML = ''; res(v); };
+    $('#tchNo', m).onclick = () => close(null);
+    $('#tchOk', m).onclick = () => close({ mode, names: $$('.tlist input', m).filter(x => x.checked).map(x => found[+x.dataset.i]) });
+  });
+}
+function tchTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([['م', 'اسم المعلم', 'التخصص', 'الجوال'], ...S.teachers.map((n, i) => [i + 1, n, '', ''])]);
+  ws['!cols'] = [{ wch: 5 }, { wch: 32 }, { wch: 18 }, { wch: 14 }]; ws['!views'] = [{ RTL: true }];
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; XLSX.utils.book_append_sheet(wb, ws, 'المعلمون');
+  XLSX.writeFile(wb, 'قائمة المعلمين.xlsx');
+}
 async function readAssignFile(file) {
   const buf = new Uint8Array(await file.arrayBuffer());
   const isZip = buf[0] === 0x50 && buf[1] === 0x4b;
@@ -1569,7 +1702,7 @@ function vStudents() {
 }
 function dropZone(slot, ttl, desc, accept) {
   const u = S.uploads[slot];
-  const ic = slot === 'ta' ? '<path d="M8 7h8M8 11h8M8 15h5"/><rect x="4" y="3" width="16" height="18" rx="2"/>' : '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/>';
+  const ic = slot === 'tch' ? '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18 14.5c1.8.7 3 2.6 3 5"/>' : slot === 'ta' ? '<path d="M8 7h8M8 11h8M8 15h5"/><rect x="4" y="3" width="16" height="18" rx="2"/>' : '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/>';
   return `<div class="drop${u ? ' done' : ''}" data-slot="${slot}">
     <div class="dic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></div>
     <div class="dtx"><b>${ttl}</b><small>${desc}</small>
@@ -1605,6 +1738,22 @@ async function processSlot(slot, file) {
       S.s.gs = Object.assign({}, S.s.gs, { file: f, src: 'file', include: true });
       S.uploads.gs = { name: file.name, at: stamp(), info: f.kind === 'img' ? `${f.imgs.length} صفحة` : 'جدول' };
       msg = `تم رفع بيان توزيع الدرجات الجديد (${file.name}) وأصبح هو المستخدم في خطابات التكليف. يمكنك العودة للبيان المعتمد من خانة «المصدر».`;
+    } else if (slot === 'tch') {
+      const found = await readTeacherFile(file);
+      if (!found.length) throw new Error('لم يُعثر على أسماء معلمين في الملف. اجعل الأسماء في عمود عنوانه «اسم المعلم» أو اسماً في كل سطر، أو نزّل القالب واملأه.');
+      const r = await teacherReview(found, file.name);
+      if (!r) { toast('أُلغي الرفع'); return; }
+      const before = S.teachers.length;
+      if (r.mode === 'replace') S.teachers = arSort(r.names);
+      else {
+        r.names.forEach(n => {
+          const i = S.teachers.findIndex(x => normName(x) === normName(n) || personKey(x) === personKey(n));
+          if (i < 0) S.teachers.push(n); else if (normName(n).split(' ').length > normName(S.teachers[i]).split(' ').length) S.teachers[i] = n; /* يُستكمل الاسم الأقصر بالأطول */
+        });
+        S.teachers = arSort(S.teachers);
+      }
+      S.uploads.tch = { name: file.name, at: stamp(), info: `${S.teachers.length} معلماً` };
+      msg = r.mode === 'replace' ? `اعتُمدت قائمة المعلمين الجديدة: ${S.teachers.length} معلماً (كانت ${before}). القائمة مرتبة هجائياً وتظهر في توزيع الملاحظين وكشوف التوقيع.` : `أُضيف ${S.teachers.length - before} معلماً جديداً — المجموع ${S.teachers.length}.`;
     } else if (slot === 'ta') {
       const list = await readAssignFile(file);
       if (!list.length) throw new Error('لم يُعثر على جدول فيه أعمدة «المعلم» و«المادة». نزّل القالب واملأه ثم ارفعه.');
@@ -1615,7 +1764,7 @@ async function processSlot(slot, file) {
     }
   } catch (e) { ok = false; msg = `${file.name}: ${e.message || e}`; }
   save(true); render();
-  const box = $('#upMsg'); if (box) box.innerHTML = `<p class="upnote ${ok ? 'ok' : 'bad'}">${esc(msg)}</p>`;
+  const box = $('#upMsg_' + slot) || $('#upMsg'); if (box) box.innerHTML = `<p class="upnote ${ok ? 'ok' : 'bad'}">${esc(msg)}</p>`;
   toast(ok ? 'تم الرفع بنجاح' : 'تعذر رفع الملف', !ok);
 }
 async function pickSlot(slot, files) {
@@ -1756,10 +1905,11 @@ function vStaff() {
   </section>
   <section class="card">
     <h2>قائمة المعلمين (للملاحظة والتوقيع على التعليمات)</h2>
+    <div class="drops one">${dropZone('tch', 'رفع قائمة معلمي المدرسة', `Excel أو Word أو PDF — كشف منسوبي المدرسة أو أي ملف فيه الأسماء. تراجع الأسماء قبل اعتمادها، وتختار الاستبدال أو الإضافة. القائمة الحالية: ${S.teachers.length} معلماً`, '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt')}</div><div id="upMsg_tch"></div>
     ${qbar('tList', 'كشف بأسماء المعلمين:')}
     ${qbar('obsInstr', 'تعليمات الملاحظين مع التوقيع:')}
-    <p class="hint">اسم في كل سطر. تُضاف أسماء معلمي الإسناد تلقائياً. قوائم اختيار المعلمين في كل الموقع مرتبة هجائياً.</p>
-    <div class="acts"><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
+    <p class="hint">أو عدّل يدوياً: اسم في كل سطر. تُضاف أسماء معلمي الإسناد تلقائياً، وقوائم اختيار المعلمين في كل الموقع مرتبة هجائياً.</p>
+    <div class="acts"><button class="btn sm ghost" data-act="tchTpl" type="button">تنزيل القائمة كقالب Excel</button><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
     <textarea class="in ta" data-k="teachers" data-lines="1" rows="10" id="f_teachers">${esc(S.teachers.join('\n'))}</textarea>
   </section>
   <section class="card">
@@ -2629,7 +2779,7 @@ function stuExcel() {
 
 /* ===================== الرمز الخاص ===================== */
 async function sha(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
-const SLOT_NAMES = { noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
+const SLOT_NAMES = { tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
 /* يُطلب الرمز مرة واحدة في الجلسة؛ اختيار الملف يتم أولاً بلمسة مباشرة (متطلب سفاري في الآيفون) ثم التحقق */
 let UNLOCKED = (() => { try { return sessionStorage.getItem('balat-unlock') === '1'; } catch (e) { return false; } })();
 async function unlock(reason) {
@@ -2731,6 +2881,7 @@ document.addEventListener('click', async e => {
     case 'bag': return runBag(b.dataset.op, b.dataset.kind, b.dataset.arg == null ? undefined : (/^\d+$/.test(b.dataset.arg) ? +b.dataset.arg : b.dataset.arg));
     case 'palette': return openPalette();
     case 'libOpen': { const f = FORMS.find(x => x.id === b.dataset.v); return openPreview(groupsOf(f.id, {}), fname(f.t)); }
+    case 'tchTpl': tchTemplate(); return;
     case 'sortTeachers': S.teachers = arSort(S.teachers); toast('رُتبت القائمة هجائياً'); return re();
     case 'mergeTeachers': { const have = new Set(S.teachers.map(normName)); let n = 0; allTeachers().forEach(t => { if (!have.has(normName(t))) { S.teachers.push(t); n++; } }); S.teachers = arSort(S.teachers); toast(n ? `أضيف ${n} معلماً` : 'القائمة مكتملة'); return re(); }
     case 'qprint': return printPages(groupsOf(b.dataset.form, qopts(b)));
