@@ -107,7 +107,7 @@ function subOptsFor(iso, bi, p) {
 function autoFill(iso) {
   const w = W(iso), d = wdOf(iso); let n = 0;
   w.blocks.forEach((b, bi) => { for (let p = 1; p <= 7; p++) { if (!(d >= 0 && ttCell(b.abs, d, p))) continue; b.rows = b.rows || {}; const r = b.rows[p] = b.rows[p] || {}; if (r.t) continue;
-    const ld = waitLoad(iso), wk = weekLoad(); const gr = rowGrade(iso, b, p); const g = subOptsFor(iso, bi, p)[0].items.slice().sort((a, b) => (teachesGrade(b, gr) - teachesGrade(a, gr)) || (ld[normName(a)] || 0) - (ld[normName(b)] || 0) || (wk[normName(a)] || 0) - (wk[normName(b)] || 0) || AR.compare(normName(a), normName(b))); if (g.length) { r.t = g[0]; n++; } } });
+    const R = waitRank(iso, b, p); const g = subOptsFor(iso, bi, p)[0].items.slice().sort(R.cmp); if (g.length) { r.t = g[0]; n++; } } });
   return n;
 }
 
@@ -247,6 +247,14 @@ function vWait(iso) {
     <div class="wblks">${blocks}</div></section>`;
 }
 function tt0() { return !!D().tt; }
+/* أولوية المنتظر: 1) لا يُثقَل من عنده 5 حصص فأكثر اليوم  2) يدرّس الشعبة نفسها  3) يدرّس الصف نفسه  4) الأقل انشغالاً اليوم (حصصه + انتظاره)  5) الأقل انتظاراً في الفصل */
+function waitRank(iso, b, p) {
+  const d = wdOf(iso), secs = b && b.abs && d >= 0 ? ttSecs(b.abs, d, p).map(String) : [], gr = rowGrade(iso, b, p), ld = waitLoad(iso), wk = weekLoad();
+  const info = n => { const k = normName(n), row = ttRow(n), cells = row ? Object.values(row.c).join(' ').split(/[^0-9]+/).filter(Boolean) : [];
+    const busy = (d >= 0 ? ttDayLoad(n, d) : 0) + (ld[k] || 0); return { ss: secs.some(s => cells.includes(s)), sg: teachesGrade(n, gr), busy, heavy: busy >= 5, term: wk[k] || 0 }; };
+  const cmp = (a, b2) => { const x = info(a), y = info(b2); return (x.heavy - y.heavy) || (y.ss - x.ss) || (y.sg - x.sg) || (x.busy - y.busy) || (x.term - y.term) || AR.compare(normName(a), normName(b2)); };
+  return { info, cmp, gr };
+}
 /* اختيار المنتظر بلمسة: المتاحون في الحصة نفسها أمامك مباشرة، مرتبين هجائياً، والأقل انتظاراً مميزون */
 function waitChips(iso, bi, p, r) {
   const path = `daily.wait.${iso}.blocks.${bi}.rows.${p}.t`;
@@ -254,10 +262,10 @@ function waitChips(iso, bi, p, r) {
   const g = subOptsFor(iso, bi, p), all = g[0].items.slice().sort((a, b) => AR.compare(normName(a), normName(b)));
   if (!tt0()) return pickSel(path, '', g, { ph: '— اختر المنتظر —' });
   const gr = rowGrade(iso, D().wait[iso].blocks[bi], p), same = gr ? all.filter(n => teachesGrade(n, gr)) : [], rest = all.filter(n => !same.includes(n));
-  const ld = waitLoad(iso), wk = weekLoad(), sc = n => (ld[normName(n)] || 0) * 100 + (wk[normName(n)] || 0);
-  const pool = same.length ? same : all, sug = new Set(pool.slice().sort((a, b) => sc(a) - sc(b) || AR.compare(normName(a), normName(b))).slice(0, 3));
-  const chip = n => `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}${same.includes(n) ? ' sg g' + gr : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}"${sug.has(n) ? ' title="الأقل انتظاراً"' : ''}>${esc(n)}</button>`;
-  return `<div class="wpick">${all.length ? `${same.length ? `<small class="wgl g${gr}">① معلمو ${GSHORT[gr]} ثانوي المتاحون (${same.length})</small><div class="wchips">${same.map(chip).join('')}</div>` : ''}
+  const R = waitRank(iso, D().wait[iso].blocks[bi], p), sug = new Set(all.slice().sort(R.cmp).slice(0, 3));
+  const chip = n => { const f = R.info(n), why = [f.ss ? 'يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`].filter(Boolean).join(' · ');
+    return `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}${same.includes(n) ? ' sg g' + gr : ''}${f.heavy ? ' heavy' : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}" title="${esc(why)}">${f.ss ? '◆ ' : ''}${esc(n)}<i class="ld">${f.busy}</i></button>`; };
+  return `<div class="wpick">${all.length ? `${same.length ? `<small class="wgl g${gr}">① معلمو ${GSHORT[gr]} ثانوي المتاحون (${same.length}) — ◆ يدرّس الشعبة · الرقم = حصصه اليوم</small><div class="wchips">${same.map(chip).join('')}</div>` : ''}
     ${rest.length ? (same.length ? `<details class="wrest"><summary>② بقية المتاحين (${rest.length}) — عرض</summary><div class="wchips">${rest.map(chip).join('')}</div></details>` : `<small class="wgl">المتاحون في الحصة ${p} (${rest.length})</small><div class="wchips">${rest.map(chip).join('')}</div>`) : ''}` : '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}
     <details class="wother"><summary>اسم آخر…</summary>${pickSel(path, '', g, { ph: '— كل المعلمين —' })}</details></div>`;
 }
