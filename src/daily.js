@@ -9,6 +9,11 @@ var DUTY_DEF = {
       { t: 'الفسحة الثانية', g: 'الصف الأول الثانوي', locs: ['المقصف', 'أمام وخلف الصالة', 'أمام وخلف المبنى المدرسي'] }],
   dutyRows: 3
 };
+var ADM_DEF = 'عبدالله الغامدي، كامل القرني، سالم الشهراني، عبدالعزيز الغامدي، أنور الغامدي، سليمان الشهري، فواز السلمي، نايف القاضي، حاتم السلمي، محمد السهلي، عبدالله المطيري، مطلق المحمادي، ماجد جهام';
+/* الهيئة الإدارية: تظهر أولاً عند اختيار المناوب */
+function admList() { const c = D().cfg; if (c.adm == null) c.adm = ADM_DEF; return String(c.adm).split(/[،,\n]+/).map(x => x.trim()).filter(Boolean); }
+function isAdm(n) { return admList().some(a => normName(a) === normName(n)); }
+function admSplit(names, absSet) { const adm = admList(), ak = new Set(adm.map(normName)); return { adm: adm.filter(n => !absSet || !absSet.has(normName(n))), rest: names.filter(n => !ak.has(normName(n))) }; }
 function D() { S.daily = S.daily || {}; const d = S.daily; d.wait = d.wait || {}; d.duty = d.duty || {}; d.week = d.week || {}; d.cfg = d.cfg || clone(DUTY_DEF); if (!d.cfg.b) d.cfg = clone(DUTY_DEF); return d; }
 function dIso() { if (!DAILY_DATE) DAILY_DATE = todayIso(); return DAILY_DATE; }
 function wdOf(iso) { const w = isoToDate(iso).getUTCDay(); return w <= 4 ? w : -1; }
@@ -126,8 +131,8 @@ function lastP(wd) { const t = D().tt; if (!t) return 7; if (!LP_CACHE || LP_CAC
 const PNAME = { 5: 'الخامسة', 6: 'السادسة', 7: 'السابعة', 8: 'الثامنة' };
 function lastLbl(wd) { const p = lastP(wd); return `الحصة الأخيرة (${PNAME[p] || p})`; }
 function has7(n, wd) { return !!(D().tt && ttCell(n, wd, lastP(wd))); }
-function dutyOptsWd(wd) { const p7 = [], here = [], none = []; ttNames().forEach(n => { if (has7(n, wd)) p7.push(n); else if (ttDayLoad(n, wd)) here.push(n); else none.push(n); });
-  return [{ label: `⑦ لديهم ${lastLbl(wd)} يوم ${TT_DAYS[wd]} (${p7.length})`, items: p7 }, { label: 'متواجدون ذلك اليوم', items: here }, { label: 'ليس لديهم حصص ذلك اليوم', items: none }]; }
+function dutyOptsWd(wd) { const p7 = [], here = [], none = [], A = admSplit(ttNames()); A.rest.forEach(n => { if (has7(n, wd)) p7.push(n); else if (ttDayLoad(n, wd)) here.push(n); else none.push(n); });
+  return [{ label: `🏢 الهيئة الإدارية (${A.adm.length})`, items: A.adm }, { label: `⑦ لديهم ${lastLbl(wd)} يوم ${TT_DAYS[wd]} (${p7.length})`, items: p7 }, { label: 'متواجدون ذلك اليوم', items: here }, { label: 'ليس لديهم حصص ذلك اليوم', items: none }]; }
 function autoWeek() {
   if (!D().tt) return -1; const [a, b] = statRange('t'), wkCount = {}; let filled = 0;
   for (let wd = 0; wd < 5; wd++) { const t = weekTpl(wd); t.duty.forEach(r => { if (r.n) wkCount[normName(r.n)] = (wkCount[normName(r.n)] || 0) + 1; }); }
@@ -139,7 +144,7 @@ function autoWeek() {
 function vWeekDuty() {
   const n = D().cfg.dutyRows || 3;
   const rows = [0, 1, 2, 3, 4].map(wd => { const t = weekTpl(wd), opt = dutyOptsWd(wd);
-    return `<tr><td><b>${TT_DAYS[wd]}</b></td>${t.duty.slice(0, Math.max(n, t.duty.length)).map((r, j) => `<td>${pickSel(`daily.week.${wd}.duty.${j}.n`, r.n || '', opt, { ph: '— اختر —' })}${r.n && D().tt && !has7(r.n, wd) ? `<span class="cf">⚠ ليس لديه الحصة الأخيرة</span>` : ''}</td>`).join('')}</tr>`; }).join('');
+    return `<tr><td><b>${TT_DAYS[wd]}</b></td>${t.duty.slice(0, Math.max(n, t.duty.length)).map((r, j) => `<td>${pickSel(`daily.week.${wd}.duty.${j}.n`, r.n || '', opt, { ph: '— اختر —' })}${r.n && D().tt && !isAdm(r.n) && !has7(r.n, wd) ? `<span class="cf">⚠ ليس لديه الحصة الأخيرة</span>` : ''}</td>`).join('')}</tr>`; }).join('');
   return `<section class="card wkduty"><h2>جدول المناوبة الأسبوعي الثابت</h2>
     <div class="acts wrap"><button class="btn pri" data-act="dWeekAuto" type="button">⑦ توزيع عادل على أيام الأسبوع</button><button class="btn ghost" data-act="dWeekClr" type="button">مسح الجدول</button></div>
     <div class="tw"><table class="et wkt"><tr><th style="width:80px">اليوم</th>${Array.from({ length: n }, (_, j) => `<th>المناوب ${j + 1}</th>`).join('')}</tr>${rows}</table></div></section>`;
@@ -155,13 +160,14 @@ function dutyIssue(iso, name, where) {
   if (absentSet(iso).has(k)) return 'غائب اليوم';
   const u = U(iso); let c = 0; u.b.forEach(b => { if (normName(b.gen) === k) c++; b.rows.forEach(r => { if (normName(r.n) === k) c++; }); });
   if (where === 'b' && c > 1) return 'مكلف بأكثر من موقع إشراف';
-  const d = wdOf(iso); if (d >= 0 && D().tt && ttRow(name) && !ttDayLoad(name, d)) return 'ليس لديه حصص اليوم';
+  const d = wdOf(iso); if (d >= 0 && D().tt && ttRow(name) && !isAdm(name) && !ttDayLoad(name, d)) return 'ليس لديه حصص اليوم';
   return '';
 }
 function dutyOpts(iso) {
-  const d = wdOf(iso), abs = absentSet(iso), names = ttNames(); const p7 = [], here = [], none = [], away = [];
-  names.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d >= 0 && D().tt && has7(n, d)) p7.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
+  const d = wdOf(iso), abs = absentSet(iso), A = admSplit(ttNames(), abs); const p7 = [], here = [], none = [], away = [];
+  A.rest.forEach(n => { const k = normName(n); if (abs.has(k)) away.push(n); else if (d >= 0 && D().tt && has7(n, d)) p7.push(n); else if (d < 0 || !D().tt || ttDayLoad(n, d)) here.push(n); else none.push(n); });
   const g = [];
+  if (A.adm.length) g.push({ label: `🏢 الهيئة الإدارية (${A.adm.length})`, items: A.adm });
   if (p7.length) g.push({ label: `⑦ لديهم ${lastLbl(d)} اليوم — الأولى بالمناوبة (${p7.length})`, items: p7 });
   g.push({ label: `✓ متواجدون اليوم حسب الجدول (${here.length})`, items: here }, { label: 'ليس لديهم حصص اليوم', items: none }, { label: '✕ غائبون اليوم', items: away });
   return g;
@@ -281,7 +287,7 @@ function vDuty(iso) {
     <div class="acts wrap"><button class="btn pri" data-act="dPrint" data-v="duty" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="duty" type="button">PDF</button><button class="btn" data-act="dWord" data-v="duty" type="button">Word</button><span class="sp1"></span>
       <button class="btn" data-act="dWeek" type="button">حفظ كجدول ثابت لكل يوم ${wdOf(iso) >= 0 ? TT_DAYS[wdOf(iso)] : ''}</button>${saved ? '<button class="btn ghost" data-act="dReset" type="button">مسح تعبئة هذا اليوم</button>' : ''}</div>
     <div class="dblks">${blocks}${duty}</div>
-    <details class="sub"><summary>إعدادات النموذج (الفسح والمواقع)</summary><div class="grid2">${cfg.b.map((b, i) => `<label>اسم ${i + 1} ${inp(`daily.cfg.b.${i}.t`, b.t)}</label><label>الصفوف ${inp(`daily.cfg.b.${i}.g`, b.g)}</label>`).join('')}<label>رقم النموذج ${inp('daily.cfg.no', cfg.no)}</label><label>رمز النموذج ${inp('daily.cfg.code', cfg.code)}</label></div></details>
+    <details class="sub"><summary>إعدادات النموذج (الفسح والمواقع)</summary><div class="grid2">${cfg.b.map((b, i) => `<label>اسم ${i + 1} ${inp(`daily.cfg.b.${i}.t`, b.t)}</label><label>الصفوف ${inp(`daily.cfg.b.${i}.g`, b.g)}</label>`).join('')}<label class="full">الهيئة الإدارية (تظهر أولاً عند اختيار المناوب — افصل بين الأسماء بفاصلة «،») ${(admList(), inp('daily.cfg.adm', cfg.adm))}</label><label>رقم النموذج ${inp('daily.cfg.no', cfg.no)}</label><label>رمز النموذج ${inp('daily.cfg.code', cfg.code)}</label></div></details>
   </section>${vWeekDuty()}`;
 }
 function ttSrc() { return TT_WHICH === 'next' && D().ttNext ? D().ttNext : D().tt; }
