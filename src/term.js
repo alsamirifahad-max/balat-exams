@@ -571,7 +571,7 @@ function morningCard() {
   if (!isSchoolDay(iso)) { let d = iso, k = 0; do { d = addDays(d, 1); } while (!isSchoolDay(d) && ++k < 90); note = `اليوم ${holOf(iso) || 'عطلة نهاية الأسبوع'} — الملخص لأقرب يوم دراسي: ${dayAr(d)} ${hijriOf(d)}`; iso = d; }
   ensureLeaves(iso);
   const wd = wdOf(iso), w = D().wait[iso] || { blocks: [] }, abs = w.blocks.filter(b => b.abs);
-  let need = 0, done = 0; abs.forEach(b => { for (let p = 1; p <= 7; p++) { const has = wd >= 0 && ttCell(b.abs, wd, p); const r = (b.rows || {})[p] || {}; if (has || r.t) { need++; if (r.t) done++; } } });
+  let need = 0, done = 0; abs.forEach(b => { for (let p = 1; p <= 7; p++) { const has = wd >= 0 && ttCell(b.abs, wd, p) && blkNeeds(b, p); const r = (b.rows || {})[p] || {}; if (has || r.t) { need++; if (r.t) done++; } } });
   const u = D().duty[iso]; let dn = 0, dt = 0; if (u) { (u.b || []).forEach(x => { dt++; if (x.gen) dn++; (x.rows || []).forEach(r => { dt++; if (r.n) dn++; }); }); (u.duty || []).forEach(r => { dt++; if (r.n) dn++; }); }
   const di = S.days.findIndex(d => d.g === iso), nextEx = S.days.find(d => d.g > iso);
   let ex;

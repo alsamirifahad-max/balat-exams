@@ -713,6 +713,15 @@ main#main{--sct:var(--sc)}
 .admed{margin-top:10px;border:1px dashed var(--line);border-radius:12px;padding:8px 10px;background:var(--surface2,var(--soft))}.admed summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--info)}.admed .wchips{margin:10px 0}
 .achip.adm{cursor:default;padding-inline-end:4px}.achip .x{font:inherit;border:0;background:color-mix(in srgb,#e11d48 14%,transparent);color:#e11d48;border-radius:999px;width:24px;height:24px;cursor:pointer;font-size:.72rem;font-weight:800}
 .admadd{display:flex;gap:6px;align-items:center}.admadd .in{flex:1;min-width:0}
+.amode{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 10px}.amode>span{font-size:.8rem;color:var(--muted)}.amode button{font:inherit;font-size:.8rem;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer;min-height:34px}.amode button.on{background:#b45309;border-color:#b45309;color:#fff}.amode button.on:first-of-type{background:#0e7490;border-color:#0e7490}
+.achip.part{border-color:#b45309;background:color-mix(in srgb,#f59e0b 18%,var(--surface))}
+.pctl{margin:6px 0 8px;border:1px dashed color-mix(in srgb,#b45309 55%,var(--line));border-radius:12px;padding:6px 10px;background:color-mix(in srgb,#f59e0b 6%,var(--surface))}.pctl summary{cursor:pointer;font-size:.85rem;font-weight:700;color:#b45309}.ptag{color:#b45309}
+.prow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}.prow>span{font-size:.8rem;font-weight:700;min-width:92px}.prow.hot{outline:2px solid #f59e0b;outline-offset:3px;border-radius:10px}
+.wchip.pch{min-width:38px;font-weight:800}.wchip.pch.cl{background:color-mix(in srgb,var(--info) 14%,var(--surface))}.wchip.pch.on{background:#b45309;border-color:#b45309;color:#fff}
+tr.here td{background:color-mix(in srgb,#16a34a 7%,transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pctl summary,:root:not([data-theme="light"]) .ptag{color:#fbbf24}}:root[data-theme="dark"] .pctl summary,:root[data-theme="dark"] .ptag{color:#fbbf24}
+.achip.part,.achip.on.part{color:#7c2d12;background:color-mix(in srgb,#f59e0b 26%,var(--surface));border-color:#b45309}.achip.part i{background:#b45309;color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .achip.part{color:#fde68a}}:root[data-theme="dark"] .achip.part{color:#fde68a}
 </style>
 </head>
 <body>
