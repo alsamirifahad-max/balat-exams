@@ -823,6 +823,12 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 @media (max-width:700px){.ttg td.cv.ok small{font-size:.8rem}}
 .ttfoc{display:flex;gap:4px;margin:0 0 8px;padding:4px;border-radius:12px;background:var(--surface2,var(--soft));border:1px solid var(--line)}.ttfoc button{flex:1;font:inherit;font-size:.82rem;font-weight:700;border:0;border-radius:9px;padding:8px;background:transparent;color:var(--muted);cursor:pointer}.ttfoc button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}.ttfoc button.on:last-child{background:#dc2626;color:#fff}
 .absdone{font:inherit;width:100%;margin:2px 0 10px;padding:11px 12px;border:0;border-radius:12px;background:var(--done);color:#fff;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 3px 10px color-mix(in srgb,var(--done) 35%,transparent)}
+.ttg td.wt{line-height:1.1}.ttg td.wt small{display:block}.ttg td.wt .wb{font-weight:600;opacity:.85;font-size:.62rem}.ttlive .lg i.w{background:color-mix(in srgb,var(--done) 25%,var(--surface));border:1px solid var(--done)}
+.ttout{display:inline-flex;flex-wrap:wrap;gap:6px;width:100%;justify-content:flex-start}.ttout .btn{margin:0}
+.ttlive{display:block}.tth{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}.tth span{color:var(--muted)}.wprog.tt{margin:10px 0 6px}
+.ttact,.ttout{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ttact .btn,.ttout .btn{margin:0}.ttout{padding-top:8px;border-top:1px dashed var(--line)}
+.ttlive .lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px}.ttlive .lg span{display:inline-flex;align-items:center;gap:5px}.ttlive .lg i{margin:0}
+.btn.undo{background:color-mix(in srgb,var(--done) 16%,var(--surface));border-color:var(--done);color:var(--ink);font-weight:800;animation:undoIn .25s ease-out}.btn.clr{font-size:.75rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -4915,15 +4921,20 @@ function vTT(iso) {
   return `<section class="card"><h2>${TT_WHICH === 'next' && D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام'} — ${esc(TT_DAYS[dd])}</h2>${sw}
     <div class="acts wrap"><div class="dtabs sm">${TT_DAYS.map((n, i) => `<button type="button" class="${i === dd ? 'on' : ''}" data-act="ttDay" data-v="${i}">${n}</button>`).join('')}</div><span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="tt" type="button">طباعة جدول اليوم</button><button class="btn" data-act="dPdf" data-v="tt" type="button">PDF</button><button class="btn" data-act="dXls" data-v="tt" type="button">Excel</button></div>
     <p class="hint">${t.teachers.length} معلماً — ${esc(t.src || '')}. الخانة الفارغة تعني أن المعلم متاح في تلك الحصة.</p>
-    ${live ? `<div class="ttlive"><b>⚡ تفاعلي:</b> المس <u>اسم المعلم</u> لتسجيل غيابه، ثم المس <u>حصته</u> لاختيار المنتظر.<span class="lg"><i class="a"></i>غائب<i class="n"></i>تحتاج منتظراً<i class="k"></i>تم</span>${nAbs ? `<span class="ttprog">${nOk} من ${nNeed} مسددة</span>${nNeed - nOk ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button>` : ''}` : ''}</div>
-      ${nAbs ? `<div class="ttfoc"><button type="button" class="${foc ? '' : 'on'}" data-act="ttFoc" data-v="0">كل المعلمين (${t.teachers.length})</button><button type="button" class="${foc ? 'on' : ''}" data-act="ttFoc" data-v="1">✕ الغائبون فقط (${nAbs})</button></div>` : ''}` : (TT_WHICH !== 'next' && wdOf(iso) >= 0 ? `<p class="hint">التفاعل (تسجيل الغياب واختيار المنتظر) متاح ليوم ${dayAr(iso)} المحدد. <button class="btn sm" data-act="ttDay" data-v="${wdOf(iso)}" type="button">انتقل ليوم ${dayAr(iso)}</button></p>` : '')}
+    ${live ? `<div class="ttlive">
+      <div class="tth"><b>⚡ جدول تفاعلي</b><span>① المس <u>اسم الغائب</u> ② المس <u>حصته</u> لاختيار المنتظر</span></div>
+      ${nAbs ? `<div class="wprog tt"><div class="bar"><i style="width:${nNeed ? Math.round(nOk * 100 / nNeed) : 0}%"></i></div><span><b>${nOk}</b> من <b>${nNeed}</b> حصة مسددة${nNeed - nOk ? ` · <em class="left">باقي ${nNeed - nOk}</em>` : ''}</span>${nNeed - nOk ? '' : '<em class="okt">✓ اكتمل التسديد</em>'}</div>
+      <div class="ttact">${nNeed - nOk ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : ''}${WUNDO && WUNDO.iso === iso ? `<button class="btn sm undo" data-act="wUndo" type="button">↺ تراجع عن ${WUNDO.k === 'clr' ? 'المسح' : 'التوزيع'} (${WUNDO.n})</button>` : nOk ? `<button class="btn sm ghost clr" data-act="wClrAll" type="button">✕ مسح الاختيارات</button>` : ''}</div>
+      <div class="ttout"><button class="btn sm" data-act="dPrint" data-v="wait" type="button">🖨 طباعة الاستمارة</button><button class="btn sm" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn sm wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button></div>` : ''}
+      <div class="lg"><span><i class="a"></i>غائب</span><span><i class="n"></i>تحتاج منتظراً</span><span><i class="k"></i>تم</span><span><i class="w"></i>منتظر في حصة فراغه</span></div></div>` : (TT_WHICH !== 'next' && wdOf(iso) >= 0 ? `<p class="hint">التفاعل (تسجيل الغياب واختيار المنتظر) متاح ليوم ${dayAr(iso)} المحدد. <button class="btn sm" data-act="ttDay" data-v="${wdOf(iso)}" type="button">انتقل ليوم ${dayAr(iso)}</button></p>` : '')}
+      ${live && nAbs ? `<div class="ttfoc"><button type="button" class="${foc ? '' : 'on'}" data-act="ttFoc" data-v="0">كل المعلمين (${t.teachers.length})</button><button type="button" class="${foc ? 'on' : ''}" data-act="ttFoc" data-v="1">✕ الغائبون فقط (${nAbs})</button></div>` : ''}
     <div class="tw"><table class="et ttg${live ? ' live' : ''}"><tr><th>المعلم</th>${[1, 2, 3, 4, 5, 6, 7].map(p => `<th${live && iso === todayIso() && curP() === p ? ' class="nowc"' : ''}>${p}</th>`).join('')}<th>حصص</th></tr>${t.teachers.filter(x => !foc || bmap[normName(x.n)] != null).map(x => { const k = normName(x.n), bi = live ? bmap[k] : undefined, bl = bi != null ? W(iso).blocks[bi] : null;
       const nameC = live ? `<td class="tn${bl ? (bl.part ? ' part' : ' abs') : ''}"><button type="button" class="ttn" data-act="wAbs" data-n="${esc(x.n)}" aria-pressed="${!!bl}">${bl ? (bl.part ? '⏱ ' : '✕ ') : ''}${esc(x.n)}</button></td>` : `<td class="tn">${esc(x.n)}</td>`;
       return `<tr class="${bl ? 'absr' : ''}">${nameC}${[1, 2, 3, 4, 5, 6, 7].map(p => { const v = x.c[dd + '-' + p], g = v ? secGrade(String(v).split('،')[0]) : 0;
         if (bl && v && blkNeeds(bl, p)) { const r = (bl.rows || {})[p] || {}; return `<td class="cv${r.t ? ' ok' : ''} g${g}"><button type="button" data-act="wOpen" data-bi="${bi}" data-p="${p}"><b>${esc(v)}</b><small title="${esc(r.t || '')}">${r.t ? `✓<span class="fl"> ${esc(r.t)}</span>` : 'اختر'}</small></button></td>`; }
-        const wt = live && waitAt[k + '|' + p]; if (!v && wt) return `<td class="wt" title="منتظر بدل ${esc(wt)}"><small>انتظار</small></td>`;
+        const wt = live && waitAt[k + '|' + p]; if (!v && wt) return `<td class="wt" title="منتظر بدل ${esc(wt)}"><small>منتظر</small><small class="wb">بدل ${esc(String(wt).split(' ')[0])}</small></td>`;
         return `<td class="${v ? 'g' + g : 'fr'}">${v ? esc(v) : ''}</td>`; }).join('')}<td>${[1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length}</td></tr>`; }).join('')}
-    ${foc ? '' : `<tr class="tot"><td>المتاحون</td>${free.map(f => `<td>${f}</td>`).join('')}<td></td></tr>`}</table></div>${foc ? `<button type="button" class="btn sm ghost" data-act="ttFoc" data-v="0" style="margin-top:8px">＋ إضافة غائب آخر</button>` : ''}</section>${live && WSHEET ? wSheet(iso) : ''}`;
+    ${foc ? '' : `<tr class="tot"><td>المتاحون</td>${free.map(f => `<td>${f}</td>`).join('')}<td></td></tr>`}</table></div>${foc ? `<button type="button" class="btn sm ghost" data-act="ttFoc" data-v="0" style="margin-top:8px">＋ إضافة غائب آخر</button>` : ''}</section>${live && WSHEET ? wSheet(iso) : ''}${waSheet(iso)}`;
 }
 function vLog() {
   const ws = D().wait, us = D().duty; const dates = [...new Set([...Object.keys(ws).filter(k => (ws[k].blocks || []).length), ...Object.keys(us)])].sort().reverse();
@@ -5811,7 +5822,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794406130';
+var BUILD_ID = '1794407499';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
