@@ -354,17 +354,18 @@ function nextEmpty(iso, after) { const S2 = wSlots(iso), i = after ? S2.findInde
   return S2.slice(i + 1).concat(S2.slice(0, Math.max(0, i))).find(x => !slotT(x)) || null; }
 const GCL = { 1: 'أول', 2: 'ثاني', 3: 'ثالث' };
 function wBoard(iso) {
-  const w = D().wait[iso], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, slots = wSlots(iso), done = slots.filter(slotT).length;
+  const w = D().wait[iso], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, slots = wSlots(iso), done = slots.filter(slotT).length, cnt = waitLoad(iso), dbl = Object.values(cnt).filter(v => v > 1).length;
   const cards = w.blocks.map((b, bi) => { const my = slots.filter(x => x.bi === bi), md = my.filter(slotT).length, lv = leaveOf(iso, b.abs);
     const head = `<header><button type="button" class="wcn" data-act="wSetOpen" data-v="${bi}"><b>${b.part ? '⏱ ' : lv ? '🕘 ' : ''}${esc(b.abs)}</b><small>${b.part ? esc(partLbl(b, L)) : lv ? 'غياب لعدة أيام' : 'غائب اليوم'} · ⚙</small></button><i class="${my.length && md === my.length ? 'ok' : ''}">${my.length ? (md === my.length ? '✓ ' : '') + md + '/' + my.length : '—'}</i></header>`;
     const set = WSET === bi ? `<div class="wsetp"><div class="acts wrap" style="margin:0 0 6px"><span class="sp1"></span><button class="btn sm ghost" data-act="wDel" data-v="${bi}" type="button">حذف من الغياب</button><button class="btn sm ghost" data-act="wSetOpen" data-v="-1" type="button">إغلاق</button></div>${partCtl(iso, b, bi)}${b.part ? '' : leaveCtl(iso, b, bi)}</div>` : '';
     const rows = my.map(x => { const r = (b.rows || {})[x.p] || {}, sc = ttSecs(b.abs, d, x.p), g = secGrade(sc[0]), iss = subIssue(iso, bi, x.p, r.t), now = iso === todayIso() && curP() === x.p;
-      return `<button type="button" class="wslot g${g}${r.t ? ' ok' : ''}${iss ? ' bad' : ''}${now ? ' now' : ''}" data-act="wOpen" data-bi="${bi}" data-p="${x.p}"><span class="pp"><b>${x.p}</b><small>${t12(((bellNow()[g === 1 ? 1 : 23] || [])[x.p - 1] || [])[0])}</small></span><span class="gp">${GCL[g] || ''} <b>${esc(sc.join('، '))}</b></span><span class="tn">${r.t ? `${iss ? '⚠' : '✓'} ${esc(r.t)}` : 'اختر ←'}</span>${now ? '<em class="nowtag">الآن</em>' : ''}</button>`; }).join('');
+      return `<button type="button" class="wslot g${g}${r.t ? ' ok' : ''}${iss ? ' bad' : ''}${now ? ' now' : ''}" data-act="wOpen" data-bi="${bi}" data-p="${x.p}"><span class="pp"><b>${x.p}</b><small>${t12(((bellNow()[g === 1 ? 1 : 23] || [])[x.p - 1] || [])[0])}</small></span><span class="gp">${GCL[g] || ''} <b>${esc(sc.join('، '))}</b></span><span class="tn">${r.t ? `${iss ? '⚠' : '✓'} ${esc(r.t)}${(cnt[normName(r.t)] || 0) > 1 ? `<i class="dbl" title="عليه ${cnt[normName(r.t)]} انتظارات اليوم">×${cnt[normName(r.t)]}</i>` : ''}` : 'اختر ←'}</span>${now ? '<em class="nowtag">الآن</em>' : ''}</button>`; }).join('');
     const full = my.length && md === my.length;
-    if (full && WEXP !== bi && WSET !== bi) return `<article class="wcard full fold">${head}<button type="button" class="wfold" data-act="wExp" data-v="${bi}">${my.map(x => `<span class="g${secGrade(ttSecs(b.abs, d, x.p)[0])}"><b>ح${x.p}</b> ${esc(slotT(x))}</span>`).join('')}<em>تعديل</em></button></article>`;
+    if (full && WEXP !== bi && WSET !== bi) return `<article class="wcard full fold">${head}<button type="button" class="wfold" data-act="wExp" data-v="${bi}">${my.map(x => `<span class="g${secGrade(ttSecs(b.abs, d, x.p)[0])}"><b>ح${x.p}</b> ${esc(slotT(x))}${(cnt[normName(slotT(x))] || 0) > 1 ? `<i class="dbl">×${cnt[normName(slotT(x))]}</i>` : ''}</span>`).join('')}<em>تعديل</em></button></article>`;
     return `<article class="wcard${full ? ' full' : ''}">${head}${set}${rows || '<p class="hint" style="margin:6px 4px">لا حصص تحتاج تسديداً.</p>'}</article>`; }).join('');
   const pct = slots.length ? Math.round(done * 100 / slots.length) : 0;
   return `<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : '<em class="okt">✓ اكتمل التسديد</em>'}</div>
+    <div class="wopt"><button type="button" class="wtog${oneWait() ? ' on' : ''}" data-act="wOne" aria-pressed="${oneWait()}"><i></i>انتظار واحد لكل معلم في اليوم</button>${dbl ? `<span class="dblw">⚠ ${dbl} ${dbl > 1 ? 'معلمين عليهم' : 'معلم عليه'} أكثر من انتظار (×2)</span>` : ''}</div>
     <div class="wgkey"><span class="g1">أول ثانوي</span><span class="g2">ثاني ثانوي</span><span class="g3">ثالث ثانوي</span></div>
     <div class="wcards">${cards}</div>${WSHEET ? wSheet(iso) : ''}`;
 }
@@ -372,9 +373,9 @@ var WMORE = false, WEXP = -1;
 function wSheet(iso) {
   const { bi, p } = WSHEET, w = D().wait[iso], b = w && w.blocks[bi]; if (!b) { WSHEET = null; return ''; }
   const d = wdOf(iso), r = (b.rows || {})[p] || {}, sc = ttSecs(b.abs, d, p), g = secGrade(sc[0]), R = waitRank(iso, b, p);
-  const free = subOptsFor(iso, bi, p)[0].items, live = free.filter(n => !R.info(n).done).sort(R.cmp), dn = free.filter(n => R.info(n).done).sort((x, y) => (R.info(y).lc - R.info(x).lc) || R.cmp(x, y));
+  const free = subOptsFor(iso, bi, p)[0].items, all0 = free.filter(n => !R.info(n).done).sort(R.cmp), live = all0.filter(n => !R.info(n).had), had = all0.filter(n => R.info(n).had), dn = free.filter(n => R.info(n).done).sort((x, y) => (R.info(y).lc - R.info(x).lc) || R.cmp(x, y));
   const free2 = new Set(free.map(normName)), others = ttNames().filter(n => !free2.has(normName(n)) && normName(n) !== normName(b.abs)).sort((a, c) => AR.compare(normName(a), normName(c)));
-  const row = (n, i, kind) => { const f = R.info(n), why = kind === 'x' ? (subIssue(iso, bi, p, n) || '') : [f.ss ? '◆ يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`, f.term ? `${f.term} انتظار بالفصل` : '', f.done ? (f.lc ? `🏁 آخر حصة ${f.lc}` : 'لا حصص اليوم') : ''].filter(Boolean).join(' · ');
+  const row = (n, i, kind) => { const f = R.info(n), why = kind === 'x' ? (subIssue(iso, bi, p, n) || '') : [f.ss ? '◆ يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`, f.term ? `${f.term} انتظار بالفصل` : '', f.hadP && f.hadP.length ? `↻ انتظر اليوم ح${f.hadP.join('، ح')}` : '', f.done ? (f.lc ? `🏁 آخر حصة ${f.lc}` : 'لا حصص اليوم') : ''].filter(Boolean).join(' · ');
     return `<div class="crow${kind === 'x' ? ' x' : ''}${kind === 'l' && i === 0 ? ' top' : ''}${r.t && normName(r.t) === normName(n) ? ' cur' : ''}" data-q="${esc(normName(n))}"><button type="button" class="cpick" data-act="wPick" data-n="${esc(n)}">${kind === 'l' && i === 0 ? '<i class="st">★ الأنسب</i>' : ''}<b>${esc(n)}</b><small>${esc(why)}</small></button>${kind === 'x' ? '' : `<button type="button" class="wlv" data-act="wQOut" data-p="${p}" data-n="${esc(n)}" title="خرج قبل هذه الحصة" aria-label="${esc(n)} خرج قبل الحصة">⏱</button>`}</div>`; };
   const my = wSlots(iso).filter(x => x.bi === bi), k = my.findIndex(x => x.p === p) + 1, left = wSlots(iso).filter(x => !slotT(x)).length, nx = nextEmpty(iso, WSHEET);
   const top = live.slice(0, 4), more = live.slice(4);
@@ -382,8 +383,9 @@ function wSheet(iso) {
     <div class="wsh-h"><span class="gbadge g${g}">${GCL[g] || ''}</span><div><b>${esc(b.abs)}</b><small>الحصة ${p} <span dir="ltr">${esc(pTime(p, g))}</span> · ش ${esc(sc.join('، '))} · ${k} من ${my.length}</small></div><button type="button" class="x" data-act="wClose" aria-label="إغلاق">✕</button></div>
     <div class="wsh-b">${top.length ? top.map((n, i) => row(n, i, 'l')).join('') : '<p class="hint">لا يوجد متاح ممن لديهم حصص لاحقة.</p>'}
       ${more.length ? `<details class="cg"${WMORE ? ' open' : ''} ontoggle="WMORE=this.open"><summary>بقية المتاحين (${more.length})</summary>${more.map((n, i) => row(n, i + 4, 'm')).join('')}</details>` : ''}
-      ${dn.length ? `<details class="cg"${top.length ? '' : ' open'}><summary>🏁 أنهوا حصصهم — غالباً خرجوا (${dn.length})</summary>${dn.map((n, i) => row(n, i, 'd')).join('')}</details>` : ''}
-      <details class="cg"><summary>🔎 بحث أو اسم غير متاح</summary><input class="in wsq" type="search" placeholder="اكتب جزءاً من الاسم…" oninput="const q=normName(this.value),bx=this.closest('details');bx.querySelectorAll('.crow').forEach(e=>e.hidden=!q||!e.dataset.q.includes(q))">${others.concat(live, dn).filter((n, i, A) => A.findIndex(z => normName(z) === normName(n)) === i).map((n, i) => row(n, i, others.includes(n) ? 'x' : 'm').replace('class="crow', 'hidden class="crow')).join('')}</details></div>
+      ${had.length ? `<details class="cg had"${top.length ? '' : ' open'}><summary>↻ سبق له انتظار اليوم — انتظار ثانٍ (${had.length})</summary>${had.map((n, i) => row(n, i, 'h')).join('')}</details>` : ''}
+      ${dn.length ? `<details class="cg"${top.length || had.length ? '' : ' open'}><summary>🏁 أنهوا حصصهم — غالباً خرجوا (${dn.length})</summary>${dn.map((n, i) => row(n, i, 'd')).join('')}</details>` : ''}
+      <details class="cg"><summary>🔎 بحث أو اسم غير متاح</summary><input class="in wsq" type="search" placeholder="اكتب جزءاً من الاسم…" oninput="const q=normName(this.value),bx=this.closest('details');bx.querySelectorAll('.crow').forEach(e=>e.hidden=!q||!e.dataset.q.includes(q))">${others.concat(live, had, dn).filter((n, i, A) => A.findIndex(z => normName(z) === normName(n)) === i).map((n, i) => row(n, i, others.includes(n) ? 'x' : 'm').replace('class="crow', 'hidden class="crow')).join('')}</details></div>
     <div class="wsh-f">${r.t ? `<button class="btn sm ghost" data-act="wPick" data-n="" type="button">مسح</button>` : ''}<span class="sp1"></span><small>${left ? `باقي ${left}` : 'اكتمل ✓'}</small>${nx ? `<button class="btn sm" data-act="wSkip" type="button">تخطَّ ←</button>` : ''}</div></div>`;
 }
 /* ===== الإرسال عبر واتساب ===== */
@@ -442,11 +444,15 @@ function vWait(iso) {
 }
 function tt0() { return !!D().tt; }
 /* أولوية المنتظر: 1) لا يُثقَل من عنده 5 حصص فأكثر اليوم  2) يدرّس الشعبة نفسها  3) يدرّس الصف نفسه  4) الأقل انشغالاً اليوم (حصصه + انتظاره)  5) الأقل انتظاراً في الفصل */
+function oneWait() { return D().cfg.oneWait !== false; }
+/* أين انتظر المعلم اليوم (للتنبيه على الانتظار الثاني) */
+function waitsOf(iso, n, skip) { const k = normName(n), out = []; ((D().wait[iso] || {}).blocks || []).forEach((b, bi) => Object.entries(b.rows || {}).forEach(([p, r]) => { if (r && r.t && normName(r.t) === k && !(skip && skip.bi === bi && skip.p === +p)) out.push(+p); })); return out.sort((a, c) => a - c); }
 function waitRank(iso, b, p) {
+  const bi0 = ((D().wait[iso] || {}).blocks || []).indexOf(b), cur = b && b.rows && b.rows[p] && b.rows[p].t ? normName(b.rows[p].t) : '';
   const d = wdOf(iso), secs = b && b.abs && d >= 0 ? ttSecs(b.abs, d, p).map(String) : [], gr = rowGrade(iso, b, p), ld = waitLoad(iso), wk = weekLoad();
   const info = n => { const k = normName(n), row = ttRow(n), cells = row ? Object.values(row.c).join(' ').split(/[^0-9]+/).filter(Boolean) : [];
-    const busy = (d >= 0 ? ttDayLoad(n, d) : 0) + (ld[k] || 0); return { done: doneBefore(iso, n, p), lc: d >= 0 ? lastC(n, d) : 7, ss: secs.some(s => cells.includes(s)), sg: teachesGrade(n, gr), busy, heavy: busy >= 5, term: wk[k] || 0 }; };
-  const cmp = (a, b2) => { const x = info(a), y = info(b2); return (x.done - y.done) || (x.heavy - y.heavy) || (y.ss - x.ss) || (y.sg - x.sg) || (x.busy - y.busy) || (x.term - y.term) || AR.compare(normName(a), normName(b2)); };
+    const today = (ld[k] || 0) - (cur === k ? 1 : 0), busy = (d >= 0 ? ttDayLoad(n, d) : 0) + today; return { today, had: oneWait() && today >= 1, hadP: today ? waitsOf(iso, n, { bi: bi0, p }) : [], done: doneBefore(iso, n, p), lc: d >= 0 ? lastC(n, d) : 7, ss: secs.some(s => cells.includes(s)), sg: teachesGrade(n, gr), busy, heavy: busy >= 5, term: wk[k] || 0 }; };
+  const cmp = (a, b2) => { const x = info(a), y = info(b2); return (x.done - y.done) || (x.had - y.had) || (x.heavy - y.heavy) || (y.ss - x.ss) || (y.sg - x.sg) || (x.busy - y.busy) || (x.term - y.term) || AR.compare(normName(a), normName(b2)); };
   return { info, cmp, gr };
 }
 /* اختيار المنتظر بلمسة: المتاحون في الحصة نفسها أمامك مباشرة، مرتبين هجائياً، والأقل انتظاراً مميزون */
@@ -601,8 +607,9 @@ document.addEventListener('click', async e => {
   if (a === 'wOpenNext') { const em = wSlots(iso).filter(x => !slotT(x)), n = em[0]; if (n) { WSHEET = { bi: n.bi, p: n.p }; render(); } return; }
   if (a === 'wClose') { WSHEET = null; render(); return; }
   if (a === 'wSkip') { const n = nextEmpty(iso, WSHEET); WSHEET = n ? { bi: n.bi, p: n.p } : null; render(); return; }
-  if (a === 'wPick') { wHint(1); const cur = WSHEET; setPath(`daily.wait.${iso}.blocks.${cur.bi}.rows.${cur.p}.t`, b.dataset.n); save();
-    const n = b.dataset.n ? nextEmpty(iso, cur) : null; WSHEET = b.dataset.n ? (n ? { bi: n.bi, p: n.p } : null) : cur; render(); if (b.dataset.n) toast(`✓ ${b.dataset.n} — الحصة ${cur.p}${n ? (n.bi !== cur.bi ? ` · الغائب التالي: ${n.b.abs}` : ` · التالي: الحصة ${n.p}`) : ' · اكتمل التسديد ✓'}`); return; }
+  if (a === 'wOne') { D().cfg.oneWait = !oneWait(); save(); render(); return toast(oneWait() ? 'من أخذ انتظاراً اليوم يُؤخَّر ويُطوى، ولا تختاره التعبئة التلقائية إلا عند الضرورة' : 'أُلغي قيد الانتظار الواحد — الترتيب بالأنسب فقط'); }
+  if (a === 'wPick') { wHint(1); const cur = WSHEET, prev = b.dataset.n ? waitsOf(iso, b.dataset.n, cur) : []; setPath(`daily.wait.${iso}.blocks.${cur.bi}.rows.${cur.p}.t`, b.dataset.n); save();
+    const n = b.dataset.n ? nextEmpty(iso, cur) : null; WSHEET = b.dataset.n ? (n ? { bi: n.bi, p: n.p } : null) : cur; render(); if (b.dataset.n && prev.length) toast(`⚠ ${b.dataset.n}: هذا انتظاره ${prev.length === 1 ? 'الثاني' : 'رقم ' + (prev.length + 1)} اليوم (سبق في ح${prev.join('، ح')})`, true); else if (b.dataset.n) toast(`✓ ${b.dataset.n} — الحصة ${cur.p}${n ? (n.bi !== cur.bi ? ` · الغائب التالي: ${n.b.abs}` : ` · التالي: الحصة ${n.p}`) : ' · اكتمل التسديد ✓'}`); return; }
   if (a === 'wQOut') { const n = b.dataset.n, p = +b.dataset.p, x = quickOut(iso, n, p); if (x === false) return toast(`${n} مسجل غائباً اليوم`); save(); render(); const bl = W(iso).blocks.find(z => normName(z.abs) === normName(n)), dd = wdOf(iso), need = dd >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(q => ttCell(n, dd, q) && blkNeeds(bl, q)).length : 0;
     return toast(`⏱ ${n} خارج من الحصة ${p}${need ? ` · أُضيفت ${need} من حصصه للتسديد` : ''}${reflowMsg(n, x)} — للتراجع المس ↺`, x.got.some(g => !g.t)); }
   if (a === 'wQUndo') { quickUndo(iso, b.dataset.n); save(); render(); return toast(`↺ ${b.dataset.n} موجود — أُلغي الاستئذان`); }
