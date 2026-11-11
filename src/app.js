@@ -1897,7 +1897,7 @@ function stickerPage(c, o) {
 }
 function callSheetPages(c) {
   const stu = S.students.filter(x => x.com === c.no).sort((a, b) => a.seat - b.seat);
-  const per = 34, pages = [];
+  const per = fitPer(stu.length, 34), pages = [];
   const dayCols = S.days.map(d => H(`${dayName(d)}<br><span style="font-size:8pt">${dateShort(d)}</span>`, { fs: '9pt' }));
   for (let i = 0; i < Math.max(1, stu.length); i += per) {
     const part = stu.slice(i, i + per);
@@ -1928,7 +1928,7 @@ function obsTablePages(o) {
   sesOpt(o || {}).forEach(se => {
     const rows = [];
     (typeof comsOrdered === 'function' ? comsOrdered() : S.com).forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, name: l[i] || '', first: i === 0, n }); });
-    const per = 32;
+    const per = fitPer(rows.length, 32);
     for (let k = 0; k < rows.length; k += per) {
       const part = rows.slice(k, k + per);
       const tr = [[H('رقم اللجنة', { w: '10%' }), H('المقر', { w: '19%' }), H('عدد الطلاب', { w: '10%' }), H('اسم الملاحظ'), H('التوقيع', { w: '22%' })]];
@@ -2095,7 +2095,7 @@ const OBS_INSTR = ['التأكد من أن الأسئلة وورقة الإجا�
 function obsInstrPages() {
   const p1 = title('مهام ومسؤوليات ملاحظي اللجان', yearLine()) + `<p class="txt">فيما يلي بعض مهام ومسؤوليات ملاحظي اللجان آمل الاطلاع عليها والتقيد بها :</p><ol class="ins small">${OBS_INSTR.map(x => `<li>${x}</li>`).join('')}</ol>`;
   const t = S.teachers, half = Math.ceil(t.length / 2), pages = [p1];
-  const per = 26;
+  const per = fitPer(half, 26);
   for (let s = 0; s < Math.max(1, half); s += per) {
     const rows = [[H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' }), H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' })]];
     for (let i = s; i < Math.min(half, s + per); i++) { const a = t[i], b = t[i + half]; rows.push([i + 1, { v: esc(a || ''), al: 'right' }, '', b ? i + half + 1 : '', { v: esc(b || ''), al: 'right' }, '']); }
@@ -2296,6 +2296,8 @@ const ALL_SET = ['schedule', 'comCounts', 'comPlaces', 'comSchedule', 'sticker',
 /* ===================== الطباعة والتصدير ===================== */
 /* ملاءمة الصفحة: يقيس كل صفحة بعرض الورق الفعلي ويصغّرها إن زادت عن ورقة واحدة */
 const PAPER = { p: { w: 741, h: 1060 }, l: { w: 1070, h: 731 } };
+/* تقسيم ذكي للصفحات: إن كانت الزيادة معقولة تُضغط في صفحة واحدة (تصغير تلقائي حتى ~62%)، وإلا تُقسم بالتساوي */
+function fitPer(n, per) { n = Math.max(1, n | 0); if (n <= Math.floor(per * 1.6)) return n; const k = Math.ceil(n / per); return Math.ceil(n / k); }
 function fitScales(pagesEls) {
   const st = document.createElement('div'); st.className = 'measure'; document.body.appendChild(st);
   const res = pagesEls.map(el => {

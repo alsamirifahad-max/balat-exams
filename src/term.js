@@ -310,7 +310,7 @@ function fairHtml() {
 function fairPages() {
   const F = fairData(STAT_P);
   const rows = [[H('م', { w: '7%' }), H('المعلم'), H('النصاب', { w: '12%' }), H('حصص الانتظار', { w: '16%' }), H('الملاحظة', { w: '22%' })], ...F.rows.map((r, i) => [i + 1, { v: esc(r.n), al: 'right' }, r.ld == null ? '—' : r.ld, `<b>${r.c}</b>`, r.cls === 'hi' ? 'أعلى من المتوسط' : r.cls === 'lo' ? 'لم يُكلَّف' : ''])];
-  const out = []; const per = 32;
+  const out = []; const per = fitPer(rows.length - 1, 32);
   for (let i = 1; i < rows.length || i === 1; i += per) out.push(title('تقرير عدالة توزيع حصص الانتظار', `${F.lbl} — ${F.tot} حصة في ${F.days} يوماً — المتوسط ${F.avg.toFixed(1)} لكل معلم`) + T([rows[0], ...rows.slice(i, i + per)], { cls: 'dense' }) + (i + per >= rows.length ? sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]) : ''));
   return out;
 }

@@ -2765,7 +2765,7 @@ function stickerPage(c, o) {
 }
 function callSheetPages(c) {
   const stu = S.students.filter(x => x.com === c.no).sort((a, b) => a.seat - b.seat);
-  const per = 34, pages = [];
+  const per = fitPer(stu.length, 34), pages = [];
   const dayCols = S.days.map(d => H(`${dayName(d)}<br><span style="font-size:8pt">${dateShort(d)}</span>`, { fs: '9pt' }));
   for (let i = 0; i < Math.max(1, stu.length); i += per) {
     const part = stu.slice(i, i + per);
@@ -2796,7 +2796,7 @@ function obsTablePages(o) {
   sesOpt(o || {}).forEach(se => {
     const rows = [];
     (typeof comsOrdered === 'function' ? comsOrdered() : S.com).forEach(c => { const l = obsList(`${se.key}_${c.no}`).filter(Boolean); const n = Math.max(1, l.length); for (let i = 0; i < n; i++) rows.push({ c, name: l[i] || '', first: i === 0, n }); });
-    const per = 32;
+    const per = fitPer(rows.length, 32);
     for (let k = 0; k < rows.length; k += per) {
       const part = rows.slice(k, k + per);
       const tr = [[H('رقم اللجنة', { w: '10%' }), H('المقر', { w: '19%' }), H('عدد الطلاب', { w: '10%' }), H('اسم الملاحظ'), H('التوقيع', { w: '22%' })]];
@@ -2963,7 +2963,7 @@ const OBS_INSTR = ['التأكد من أن الأسئلة وورقة الإجا�
 function obsInstrPages() {
   const p1 = title('مهام ومسؤوليات ملاحظي اللجان', yearLine()) + `<p class="txt">فيما يلي بعض مهام ومسؤوليات ملاحظي اللجان آمل الاطلاع عليها والتقيد بها :</p><ol class="ins small">${OBS_INSTR.map(x => `<li>${x}</li>`).join('')}</ol>`;
   const t = S.teachers, half = Math.ceil(t.length / 2), pages = [p1];
-  const per = 26;
+  const per = fitPer(half, 26);
   for (let s = 0; s < Math.max(1, half); s += per) {
     const rows = [[H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' }), H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' })]];
     for (let i = s; i < Math.min(half, s + per); i++) { const a = t[i], b = t[i + half]; rows.push([i + 1, { v: esc(a || ''), al: 'right' }, '', b ? i + half + 1 : '', { v: esc(b || ''), al: 'right' }, '']); }
@@ -3164,6 +3164,8 @@ const ALL_SET = ['schedule', 'comCounts', 'comPlaces', 'comSchedule', 'sticker',
 /* ===================== الطباعة والتصدير ===================== */
 /* ملاءمة الصفحة: يقيس كل صفحة بعرض الورق الفعلي ويصغّرها إن زادت عن ورقة واحدة */
 const PAPER = { p: { w: 741, h: 1060 }, l: { w: 1070, h: 731 } };
+/* تقسيم ذكي للصفحات: إن كانت الزيادة معقولة تُضغط في صفحة واحدة (تصغير تلقائي حتى ~62%)، وإلا تُقسم بالتساوي */
+function fitPer(n, per) { n = Math.max(1, n | 0); if (n <= Math.floor(per * 1.6)) return n; const k = Math.ceil(n / per); return Math.ceil(n / k); }
 function fitScales(pagesEls) {
   const st = document.createElement('div'); st.className = 'measure'; document.body.appendChild(st);
   const res = pagesEls.map(el => {
@@ -4742,13 +4744,14 @@ const ORD = ['أولاً', 'ثانياً', 'ثالثاً', 'رابعاً'];
 function waitPages(iso) {
   const rows = waitRows(iso), all = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs).map(b => b.abs);
   const intro = `<p class="wl">إخواني المعلمين / نظراً لغياب ${all.length > 1 ? 'الزملاء' : 'الزميل'} هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد الحصص حسب الجدول الموضح لكل صف والتوقيع بالعلم، ولكم جزيل الشكر.</p>`;
-  const hd = [H('الحصة', { w: '8%' }), H('الشعبة', { w: '9%' }), H('المعلم الغائب', { w: '20%' }), H('المعلم المنتظر', { w: '22%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
+  const hd = [H('الحصة', { w: '10%' }), H('الشعبة', { w: '8%' }), H('المعلم الغائب', { w: '22%' }), H('المعلم المنتظر', { w: '22%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
   const secs = [1, 2, 3, 0].map(g => ({ g, rows: rows.filter(r => r.g === g) })).filter(x => x.rows.length);
   const head = (x, k, cont) => { const ab = [...new Set(x.rows.map(r => r.abs))]; return [{ v: `<b>${ORD[k] || ''}: ${x.g ? GNAME[x.g] : 'حصص أخرى'}${cont ? ' (تابع)' : ''}</b> &nbsp;—&nbsp; نظراً لغياب ${ab.length > 1 ? 'الزملاء' : 'الزميل'}: <b>${ab.map(esc).join('، ')}</b>`, cs: 6, al: 'right', bg: GCOL[x.g] || '#eeeeee' }]; };
-  const line = r => [`<b>${r.p}</b><br><small style="font-size:7.5pt">${pTime(r.p, r.g)}</small>`, esc(r.sec), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), ''];
+  const nw = v => `<span style="white-space:nowrap">${v}</span>`, st = (p, g) => { const B = bellNow()[g === 1 ? 1 : 23][p - 1]; return B ? t12(B[0]) : ''; };
+  const line = r => [`<b>${r.p}</b> <small style="font-size:7.5pt;white-space:nowrap">${st(r.p, r.g)}</small>`, esc(r.sec), nw(esc(r.abs)), `<b>${nw(esc(r.t))}</b>`, esc(r.note), ''];
   const ttl = () => title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`);
   if (!secs.length) return [ttl() + intro + T([hd, ...Array.from({ length: 14 }, () => ['', '', '', '', '', ''])], { cls: 'dense' }) + sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]])];
-  const CAP = 24, pages = []; let top = ttl() + intro, body = '', used = 2;
+  const CAP = fitPer(rows.length + secs.length * 2 + 2, 36) + 1, pages = []; let top = ttl() + intro, body = '', used = 2;
   const flush = () => { pages.push(top + `<div>${body}</div>`); top = ttl(); body = ''; used = 0; };
   secs.forEach((x, k) => { let i = 0, cont = false;
     while (i < x.rows.length) { if (used + 3 > CAP) flush();
@@ -4769,7 +4772,7 @@ function ttPages(dd) {
   const t = ttSrc(); if (!t) return [];
   const rows = t.teachers.map((x, i) => [i + 1, { v: esc(x.n), al: 'right' }, ...[1, 2, 3, 4, 5, 6, 7].map(p => esc(x.c[dd + '-' + p] || '')), [1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length]);
   const hd = [H('م', { w: '5%' }), H('المعلم', { w: '22%' }), ...[1, 2, 3, 4, 5, 6, 7].map(p => H('الحصة ' + p)), H('المجموع', { w: '8%' })];
-  const out = []; const per = 34; for (let i = 0; i < rows.length; i += per) out.push(title((t === D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام') + ' — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
+  const out = []; const per = fitPer(rows.length, 34); for (let i = 0; i < rows.length; i += per) out.push(title((t === D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام') + ' — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
   return out;
 }
 function statsPages() { return fairPages(); }
@@ -5174,7 +5177,7 @@ function fairHtml() {
 function fairPages() {
   const F = fairData(STAT_P);
   const rows = [[H('م', { w: '7%' }), H('المعلم'), H('النصاب', { w: '12%' }), H('حصص الانتظار', { w: '16%' }), H('الملاحظة', { w: '22%' })], ...F.rows.map((r, i) => [i + 1, { v: esc(r.n), al: 'right' }, r.ld == null ? '—' : r.ld, `<b>${r.c}</b>`, r.cls === 'hi' ? 'أعلى من المتوسط' : r.cls === 'lo' ? 'لم يُكلَّف' : ''])];
-  const out = []; const per = 32;
+  const out = []; const per = fitPer(rows.length - 1, 32);
   for (let i = 1; i < rows.length || i === 1; i += per) out.push(title('تقرير عدالة توزيع حصص الانتظار', `${F.lbl} — ${F.tot} حصة في ${F.days} يوماً — المتوسط ${F.avg.toFixed(1)} لكل معلم`) + T([rows[0], ...rows.slice(i, i + per)], { cls: 'dense' }) + (i + per >= rows.length ? sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]) : ''));
   return out;
 }
@@ -5574,7 +5577,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794394163';
+var BUILD_ID = '1794394892';
 async function checkVersion() {
   try { const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; const v = (await r.text()).trim(); if (!v || v === BUILD_ID || BUILD_ID.startsWith('__')) return;
     if ($('#newVer')) return; const d = document.createElement('div'); d.id = 'newVer'; d.className = 'newver'; d.innerHTML = '<span>✨ تحديث جديد للموقع متاح</span><button class="btn sm pri" type="button">تحديث الآن</button>'; d.querySelector('button').onclick = () => location.reload(); document.body.appendChild(d);

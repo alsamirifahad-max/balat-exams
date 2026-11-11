@@ -439,13 +439,14 @@ const ORD = ['أولاً', 'ثانياً', 'ثالثاً', 'رابعاً'];
 function waitPages(iso) {
   const rows = waitRows(iso), all = (D().wait[iso] || { blocks: [] }).blocks.filter(b => b.abs).map(b => b.abs);
   const intro = `<p class="wl">إخواني المعلمين / نظراً لغياب ${all.length > 1 ? 'الزملاء' : 'الزميل'} هذا اليوم <b>${dayAr(iso)}</b> الموافق <b>${hijriOf(iso)} هـ</b>، آمل تسديد الحصص حسب الجدول الموضح لكل صف والتوقيع بالعلم، ولكم جزيل الشكر.</p>`;
-  const hd = [H('الحصة', { w: '8%' }), H('الشعبة', { w: '9%' }), H('المعلم الغائب', { w: '20%' }), H('المعلم المنتظر', { w: '22%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
+  const hd = [H('الحصة', { w: '10%' }), H('الشعبة', { w: '8%' }), H('المعلم الغائب', { w: '22%' }), H('المعلم المنتظر', { w: '22%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
   const secs = [1, 2, 3, 0].map(g => ({ g, rows: rows.filter(r => r.g === g) })).filter(x => x.rows.length);
   const head = (x, k, cont) => { const ab = [...new Set(x.rows.map(r => r.abs))]; return [{ v: `<b>${ORD[k] || ''}: ${x.g ? GNAME[x.g] : 'حصص أخرى'}${cont ? ' (تابع)' : ''}</b> &nbsp;—&nbsp; نظراً لغياب ${ab.length > 1 ? 'الزملاء' : 'الزميل'}: <b>${ab.map(esc).join('، ')}</b>`, cs: 6, al: 'right', bg: GCOL[x.g] || '#eeeeee' }]; };
-  const line = r => [`<b>${r.p}</b><br><small style="font-size:7.5pt">${pTime(r.p, r.g)}</small>`, esc(r.sec), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), ''];
+  const nw = v => `<span style="white-space:nowrap">${v}</span>`, st = (p, g) => { const B = bellNow()[g === 1 ? 1 : 23][p - 1]; return B ? t12(B[0]) : ''; };
+  const line = r => [`<b>${r.p}</b> <small style="font-size:7.5pt;white-space:nowrap">${st(r.p, r.g)}</small>`, esc(r.sec), nw(esc(r.abs)), `<b>${nw(esc(r.t))}</b>`, esc(r.note), ''];
   const ttl = () => title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`);
   if (!secs.length) return [ttl() + intro + T([hd, ...Array.from({ length: 14 }, () => ['', '', '', '', '', ''])], { cls: 'dense' }) + sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]])];
-  const CAP = 24, pages = []; let top = ttl() + intro, body = '', used = 2;
+  const CAP = fitPer(rows.length + secs.length * 2 + 2, 36) + 1, pages = []; let top = ttl() + intro, body = '', used = 2;
   const flush = () => { pages.push(top + `<div>${body}</div>`); top = ttl(); body = ''; used = 0; };
   secs.forEach((x, k) => { let i = 0, cont = false;
     while (i < x.rows.length) { if (used + 3 > CAP) flush();
@@ -466,7 +467,7 @@ function ttPages(dd) {
   const t = ttSrc(); if (!t) return [];
   const rows = t.teachers.map((x, i) => [i + 1, { v: esc(x.n), al: 'right' }, ...[1, 2, 3, 4, 5, 6, 7].map(p => esc(x.c[dd + '-' + p] || '')), [1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length]);
   const hd = [H('م', { w: '5%' }), H('المعلم', { w: '22%' }), ...[1, 2, 3, 4, 5, 6, 7].map(p => H('الحصة ' + p)), H('المجموع', { w: '8%' })];
-  const out = []; const per = 34; for (let i = 0; i < rows.length; i += per) out.push(title((t === D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام') + ' — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
+  const out = []; const per = fitPer(rows.length, 34); for (let i = 0; i < rows.length; i += per) out.push(title((t === D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام') + ' — يوم ' + TT_DAYS[dd]) + T([hd, ...rows.slice(i, i + per)], { cls: 'dense' }));
   return out;
 }
 function statsPages() { return fairPages(); }
