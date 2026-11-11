@@ -1084,6 +1084,7 @@ function render() {
   if (TAB === 'forms') renderPreview();
   if (TAB === 'files') renderStuTable();
   if (TAB === 'home') setTimeout(renderThumbs, 30);
+  document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
 }
 function inp(path, val, o = {}) {

@@ -830,6 +830,26 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .ttlive .lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px}.ttlive .lg span{display:inline-flex;align-items:center;gap:5px}.ttlive .lg i{margin:0}
 .btn.undo{background:color-mix(in srgb,var(--done) 16%,var(--surface));border-color:var(--done);color:var(--ink);font-weight:800;animation:undoIn .25s ease-out}.btn.clr{font-size:.75rem;color:var(--muted)}
 .tttip{font:inherit;width:100%;display:flex;align-items:center;gap:10px;text-align:start;margin:4px 0 12px;padding:10px 12px;border:1px dashed color-mix(in srgb,var(--done) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--done) 8%,var(--surface));color:var(--ink);cursor:pointer;font-size:.84rem;line-height:1.5}.tttip i{font-style:normal;font-size:1.1rem}.tttip span{flex:1}.tttip b{color:var(--done)}.tttip em{font-style:normal;font-weight:800;color:var(--done);white-space:nowrap;font-size:.8rem}.tttip:hover{background:color-mix(in srgb,var(--done) 14%,var(--surface))}
+.woutbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface2,var(--soft))}.woutbar>b{font-size:.8rem;color:var(--muted);margin-inline-end:4px}.woutbar .btn{margin:0}
+.wopts{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:8px 12px;background:var(--surface)}.wopts>summary{cursor:pointer;font-weight:800;font-size:.88rem;color:var(--muted);padding:2px 0}.wopts[open]>summary{color:var(--ink);margin-bottom:8px}.wopts .wopt{flex-direction:column;align-items:stretch}.wopts .wtog{justify-content:flex-start}.wopts .rules{margin-top:10px}.tttip.sm{margin:10px 0 2px;font-size:.78rem;padding:8px 10px}
+.wdone{display:inline-flex;gap:6px;margin-inline-start:auto}.wdone .btn{margin:0;padding:8px 16px;font-weight:800}
+.amode.seg{display:flex;gap:4px;padding:4px;margin:8px 0;border-radius:12px;background:var(--surface2,var(--soft));border:1px solid var(--line)}.amode.seg button{flex:1;border:0;border-radius:9px;background:transparent;color:var(--muted);min-height:36px;padding:6px 4px}.amode.seg button.on,.amode.seg button.on:first-of-type{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}.amode.seg button.on.m-full{background:#dc2626;color:#fff}.amode.seg button.on.m-out,.amode.seg button.on.m-late{background:#b45309;color:#fff}
+.asrch{margin:0 0 8px}.asrch .in{width:100%}
+.apick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:8px;border-radius:12px;background:color-mix(in srgb,#dc2626 8%,var(--surface));border:1px dashed color-mix(in srgb,#dc2626 45%,var(--line))}.apk{font:inherit;font-size:.8rem;font-weight:800;border:0;border-radius:999px;padding:5px 10px;background:#dc2626;color:#fff;cursor:pointer}.apk.part{background:#b45309}.apk i{font-style:normal;opacity:.8;margin-inline-start:4px}
+.absg .wchips{gap:6px}.absg .achip{padding:5px 10px;font-size:.84rem;min-height:36px}.absg .agrp{margin-top:8px}.absg .agrp[hidden],.absg .achip[hidden]{display:none}
+/* وضوح الأسماء: شبكة منتظمة، خط أكبر وتباين أعلى */
+.absg .agrp .wchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.absg .agrp .achip{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;font-size:.95rem;font-weight:600;color:var(--ink);min-height:42px;padding:6px 12px;text-align:start;line-height:1.3;background:color-mix(in srgb,var(--gc) 7%,var(--surface));border-width:1.5px}
+.absg .agrp .achip i{flex:0 0 auto;min-width:22px;height:22px;font-size:.72rem;opacity:.85}
+.absg .agrp .achip.zero{opacity:.55}
+.absg .agrp .achip.on{font-weight:800}
+@media (max-width:380px){.absg .agrp .wchips{grid-template-columns:1fr 1fr}.absg .agrp .achip{font-size:.9rem;padding:6px 9px}}
+.absg .agrp .wchips{grid-template-columns:repeat(2,minmax(0,1fr))}@media (min-width:640px){.absg .agrp .wchips{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
+.absg .agrp .achip{font-size:.9rem;padding:6px 8px 6px 10px;min-height:44px}.absg .agrp .achip>span,.absg .agrp .achip{word-break:normal;overflow-wrap:anywhere}
+@media (max-width:380px){.absg .agrp .achip{font-size:.86rem}}
+.absg .agrp .achip{white-space:nowrap;overflow:hidden;padding:6px 8px;gap:4px;font-size:.88rem;letter-spacing:-.1px}.absg .agrp .achip i{min-width:19px;height:19px;font-size:.66rem}
+.absg .agrp .wchips{gap:5px}
+@media (max-width:639px){.absg .agrp .achip.lng{grid-column:span 2}}
 </style>
 </head>
 <body>
@@ -2046,6 +2066,7 @@ function render() {
   if (TAB === 'forms') renderPreview();
   if (TAB === 'files') renderStuTable();
   if (TAB === 'home') setTimeout(renderThumbs, 30);
+  document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
 }
 function inp(path, val, o = {}) {
@@ -4697,7 +4718,9 @@ function absGrid(iso) {
   const bl0 = (D().wait[iso] || { blocks: [] }).blocks, nAbs = bl0.length, nPart = bl0.filter(x => x.part).length;
   return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs - nPart ? (nAbs - nPart) + ' غائب' : ''}${nAbs - nPart && nPart ? ' · ' : ''}${nPart ? nPart + ' مستأذن/متأخر' : ''}` : 'المس الاسم'}</span><button type="button" class="hlp" data-help="المس اسم الغائب فتظهر حصصه لهذا اليوم، والمسه ثانية للإلغاء. الرقم = حصصه اليوم." aria-label="شرح">؟</button></summary>
 
-    <div class="amode" role="radiogroup"><span>عند لمس الاسم:</span>${[['full', 'غائب اليوم'], ['out', '⏱ استأذن / خرج مبكراً'], ['late', '⏰ تأخر']].map(([k, t]) => `<button type="button" role="radio" aria-checked="${ABS_MODE === k}" class="${ABS_MODE === k ? 'on' : ''}" data-act="absMode" data-v="${k}">${t}</button>`).join('')}</div>
+    <div class="amode seg" role="radiogroup" aria-label="عند لمس الاسم">${[['full', '✕ غائب'], ['out', '⏱ استأذن'], ['late', '⏰ تأخر']].map(([k, t]) => `<button type="button" role="radio" aria-checked="${ABS_MODE === k}" class="${ABS_MODE === k ? 'on m-' + k : ''}" data-act="absMode" data-v="${k}">${t}</button>`).join('')}</div>
+    <div class="asrch"><input class="in" type="search" placeholder="🔎 ابحث باسم المعلم…" oninput="const q=normName(this.value),bx=this.closest('.absg');bx.querySelectorAll('.agrp .achip').forEach(e=>e.hidden=!!q&&!normName(e.dataset.n).includes(q));bx.querySelectorAll('.agrp').forEach(g=>g.hidden=!!q&&!g.querySelector('.achip:not([hidden])'))"></div>
+    ${nAbs ? `<div class="apick">${bl0.map(x => `<button type="button" class="apk${x.part ? ' part' : ''}" data-act="wAbs" data-n="${esc(x.abs)}" title="إلغاء">${x.part ? '⏱ ' : ''}${esc(x.abs)} <i>✕</i></button>`).join('')}</div>` : ''}
     ${nAbs ? `<button type="button" class="absdone" data-act="absDone">✓ انتهيت من تحديد الغائبين (${nAbs}) — إلى التسديد</button>` : ''}
     ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp g${g}"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
 }
@@ -4772,11 +4795,11 @@ function wBoard(iso) {
     if (full && WEXP !== bi && WSET !== bi) return sec + `<article class="wcard g${ag} full fold">${head}<button type="button" class="wfold" data-act="wExp" data-v="${bi}">${my.map(x => `<span class="g${secGrade(ttSecs(b.abs, d, x.p)[0])}"><b>ح${x.p}</b> ${esc(slotT(x))}${(cnt[normName(slotT(x))] || 0) > 1 ? `<i class="dbl">×${cnt[normName(slotT(x))]}</i>` : ''}</span>`).join('')}<em>تعديل</em></button></article>`;
     return sec + `<article class="wcard g${ag}${full ? ' full' : ''}">${head}${set}${rows || '<p class="hint" style="margin:6px 4px">لا حصص تحتاج تسديداً.</p>'}</article>`; }).join('');
   const pct = slots.length ? Math.round(done * 100 / slots.length) : 0;
-  return `<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة${slots.length - done ? ` · <em class="left">باقي ${slots.length - done}</em>` : ''}</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : '<em class="okt">✓ اكتمل التسديد</em>'}${WUNDO && WUNDO.iso === iso ? `<button class="btn sm undo" data-act="wUndo" type="button">↺ تراجع عن ${WUNDO.k === 'clr' ? 'المسح' : 'التوزيع التلقائي'} (${WUNDO.n})</button>` : done ? `<button class="btn sm ghost clr" data-act="wClrAll" type="button">✕ مسح الاختيارات</button>` : ''}</div>
-    <div class="wopt"><button type="button" class="wtog${oneWait() ? ' on' : ''}" data-act="wOne" aria-pressed="${oneWait()}"><i></i>انتظار واحد لكل معلم في اليوم</button>${dbl ? `<span class="dblw">⚠ ${dbl} ${dbl > 1 ? 'معلمين عليهم' : 'معلم عليه'} أكثر من انتظار (×2)</span>` : ''}</div>
+  return `<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة${slots.length - done ? ` · <em class="left">باقي ${slots.length - done}</em>` : ''}</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : `<em class="okt">✓ اكتمل التسديد</em><span class="wdone"><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 اطبع</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 أرسل</button></span>`}${WUNDO && WUNDO.iso === iso ? `<button class="btn sm undo" data-act="wUndo" type="button">↺ تراجع عن ${WUNDO.k === 'clr' ? 'المسح' : 'التوزيع التلقائي'} (${WUNDO.n})</button>` : done ? `<button class="btn sm ghost clr" data-act="wClrAll" type="button">✕ مسح الاختيارات</button>` : ''}</div>
+    ${dbl ? `<div class="wopt"><span class="dblw">⚠ ${dbl} ${dbl > 1 ? 'معلمين عليهم' : 'معلم عليه'} أكثر من انتظار (×2)</span></div>` : ''}
     <div class="wcards">${cards}</div>${WSHEET ? wSheet(iso) : ''}`;
 }
-var WMORE = false, WEXP = -1, WUNDO = null;
+var WMORE = false, WEXP = -1, WUNDO = null, WOPT = false;
 function wSheet(iso) {
   const { bi, p } = WSHEET, w = D().wait[iso], b = w && w.blocks[bi]; if (!b) { WSHEET = null; return ''; }
   const d = wdOf(iso), r = (b.rows || {})[p] || {}, sc = ttSecs(b.abs, d, p), g = secGrade(sc[0]), R = waitRank(iso, b, p);
@@ -4855,14 +4878,17 @@ function vWait(iso) {
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
 
-    ${d >= 0 && !holOf(iso) && tt0() ? `<button type="button" class="tttip" data-act="goTT"><i>💡</i><span>يمكنك أيضاً تسجيل الغياب واختيار المنتظر بالضغط مباشرة على <b>«الجدول المدرسي»</b></span><em>افتحه ←</em></button>` : ''}
-    ${d >= 0 && !holOf(iso) ? absGrid(iso) + nowOutPanel(iso) + rulesPanel(iso) : ''}
-    <div class="acts wrap">${w.blocks.length ? `${board ? '' : '<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>'}<button class="btn sm ${skipDone() ? 'on' : 'ghost'} dnt" data-act="wSkipDone" type="button" aria-pressed="${skipDone()}" title="من أنهى حصصه قبل حصة الانتظار يُؤخَّر في الاقتراح والتعبئة التلقائية">🏁 تأخير من أنهى حصصه ${skipDone() ? '✓' : '✕'}</button>` : ''}
-      <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
-    ${w.blocks.length && !board ? `<div class="wsum"><span><b>${w.blocks.filter(b => !b.part).length}</b> غائب</span>${w.blocks.some(b => b.part) ? `<span><b>${w.blocks.filter(b => b.part).length}</b> مستأذن/متأخر</span>` : ''}<span><b>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</b> حصة مسددة</span>${empty ? `<span class="warn"><b>${empty}</b> بلا منتظر</span>` : ''}${issues ? `<span class="bad"><b>${issues}</b> تعارض</span>` : ''}</div>` : '<p class="hint" style="margin-top:10px">لا يوجد غائبون مسجلون لهذا اليوم. يمكنك طباعة استمارة فارغة.</p>'}
+    ${d >= 0 && !holOf(iso) && tt0() && !w.blocks.length ? `<button type="button" class="tttip" data-act="goTT"><i>💡</i><span>يمكنك أيضاً تسجيل الغياب واختيار المنتظر بالضغط مباشرة على <b>«الجدول المدرسي»</b></span><em>افتحه ←</em></button>` : ''}
+    ${d >= 0 && !holOf(iso) ? absGrid(iso) + nowOutPanel(iso) : ''}
+    ${!w.blocks.length ? '<p class="hint" style="margin-top:10px">لا يوجد غائبون مسجلون لهذا اليوم. المس أسماء الغائبين أعلاه للبدء.</p>' : ''}
+    ${w.blocks.length && !board ? `${tt0() ? '<div class="acts wrap"><button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button></div>' : ''}<div class="wsum"><span><b>${w.blocks.filter(b => !b.part).length}</b> غائب</span>${w.blocks.some(b => b.part) ? `<span><b>${w.blocks.filter(b => b.part).length}</b> مستأذن/متأخر</span>` : ''}<span><b>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</b> حصة مسددة</span>${empty ? `<span class="warn"><b>${empty}</b> بلا منتظر</span>` : ''}${issues ? `<span class="bad"><b>${issues}</b> تعارض</span>` : ''}</div>` : ''}
     ${w.blocks.length && tt0() && !board ? `<div class="wlegend" aria-label="دليل الرموز"><span><b class="lg st">★</b>الأنسب (حتى 3)</span><span><b class="lg">◆</b>يدرّس الشعبة</span><span><b class="lg n">3</b>حصصه اليوم</span><span><b class="lg">⏱</b>خرج قبل الحصة</span><span><b class="lg">🏁</b>أنهى حصصه</span><button type="button" class="hlp" data-help="ترتيب الأنسب: من يدرّس الشعبة نفسها، ثم من يدرّس الصف، ثم الأقل حصصاً اليوم، ثم الأقل انتظاراً في الفصل. يُؤخَّر من بلغ 5 حصص اليوم ومن أنهى حصصه. المس «★ الأنسب» لاختياره مباشرة، أو أي اسم آخر." aria-label="شرح الترتيب">؟</button></div>` : ''}
-    ${w.blocks.length && tt0() ? `<div class="wvt" role="tablist"><button type="button" class="${board ? 'on' : ''}" data-act="wView" data-v="p">☰ لوحة التسديد</button><button type="button" class="${board ? '' : 'on'}" data-act="wView" data-v="a">▦ تفصيلي</button></div>` : ''}
-    ${board ? wBoard(iso) : `<div class="wblks">${blocks}</div>`}</section>${waSheet(iso)}`;
+    ${board ? wBoard(iso) : `<div class="wblks">${blocks}</div>`}
+    <div class="woutbar"><b>الإخراج</b><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 معاينة وطباعة</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button><button class="btn sm" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn sm" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn sm" data-act="dXls" data-v="wait" type="button">Excel</button></div>
+    ${d >= 0 && !holOf(iso) && tt0() ? `<details class="wopts"${WOPT ? ' open' : ''} ontoggle="WOPT=this.open"><summary>⚙ خيارات الانتظار</summary>
+      <div class="wopt"><button type="button" class="wtog${oneWait() ? ' on' : ''}" data-act="wOne" aria-pressed="${oneWait()}"><i></i>انتظار واحد لكل معلم في اليوم</button><button type="button" class="wtog${skipDone() ? ' on' : ''}" data-act="wSkipDone" aria-pressed="${skipDone()}"><i></i>🏁 تأخير من أنهى حصصه</button></div>
+      <div class="wvt" role="tablist"><button type="button" class="${wView() === 'p' ? 'on' : ''}" data-act="wView" data-v="p">☰ لوحة التسديد</button><button type="button" class="${wView() === 'p' ? '' : 'on'}" data-act="wView" data-v="a">▦ العرض التفصيلي</button></div>
+      ${rulesPanel(iso)}<button type="button" class="tttip sm" data-act="goTT"><i>💡</i><span>التسجيل والتسديد متاحان أيضاً من <b>«الجدول المدرسي»</b></span><em>افتحه ←</em></button></details>` : ''}</section>${waSheet(iso)}`;
 }
 function tt0() { return !!D().tt; }
 /* أولوية المنتظر: 1) لا يُثقَل من عنده 5 حصص فأكثر اليوم  2) يدرّس الشعبة نفسها  3) يدرّس الصف نفسه  4) الأقل انشغالاً اليوم (حصصه + انتظاره)  5) الأقل انتظاراً في الفصل */
@@ -4925,9 +4951,9 @@ function vTT(iso) {
     <p class="hint">${t.teachers.length} معلماً — ${esc(t.src || '')}. الخانة الفارغة تعني أن المعلم متاح في تلك الحصة.</p>
     ${live ? `<div class="ttlive">
       <div class="tth"><b>⚡ جدول تفاعلي</b><span>① المس <u>اسم الغائب</u> ② المس <u>حصته</u> لاختيار المنتظر</span></div>
-      ${nAbs ? `<div class="wprog tt"><div class="bar"><i style="width:${nNeed ? Math.round(nOk * 100 / nNeed) : 0}%"></i></div><span><b>${nOk}</b> من <b>${nNeed}</b> حصة مسددة${nNeed - nOk ? ` · <em class="left">باقي ${nNeed - nOk}</em>` : ''}</span>${nNeed - nOk ? '' : '<em class="okt">✓ اكتمل التسديد</em>'}</div>
+      ${nAbs ? `<div class="wprog tt"><div class="bar"><i style="width:${nNeed ? Math.round(nOk * 100 / nNeed) : 0}%"></i></div><span><b>${nOk}</b> من <b>${nNeed}</b> حصة مسددة${nNeed - nOk ? ` · <em class="left">باقي ${nNeed - nOk}</em>` : ''}</span>${nNeed - nOk ? '' : `<em class="okt">✓ اكتمل التسديد</em><span class="wdone"><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 اطبع</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 أرسل</button></span>`}</div>
       <div class="ttact">${nNeed - nOk ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : ''}${WUNDO && WUNDO.iso === iso ? `<button class="btn sm undo" data-act="wUndo" type="button">↺ تراجع عن ${WUNDO.k === 'clr' ? 'المسح' : 'التوزيع'} (${WUNDO.n})</button>` : nOk ? `<button class="btn sm ghost clr" data-act="wClrAll" type="button">✕ مسح الاختيارات</button>` : ''}</div>
-      <div class="ttout"><button class="btn sm" data-act="dPrint" data-v="wait" type="button">🖨 طباعة الاستمارة</button><button class="btn sm" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn sm wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button></div>` : ''}
+      ${nNeed - nOk ? `<div class="ttout"><button class="btn sm" data-act="dPrint" data-v="wait" type="button">🖨 طباعة الاستمارة</button><button class="btn sm" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn sm wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button></div>` : ''}` : ''}
       <div class="lg"><span><i class="a"></i>غائب</span><span><i class="n"></i>تحتاج منتظراً</span><span><i class="k"></i>تم</span><span><i class="w"></i>منتظر في حصة فراغه</span></div></div>` : (TT_WHICH !== 'next' && wdOf(iso) >= 0 ? `<p class="hint">التفاعل (تسجيل الغياب واختيار المنتظر) متاح ليوم ${dayAr(iso)} المحدد. <button class="btn sm" data-act="ttDay" data-v="${wdOf(iso)}" type="button">انتقل ليوم ${dayAr(iso)}</button></p>` : '')}
       ${live && nAbs ? `<div class="ttfoc"><button type="button" class="${foc ? '' : 'on'}" data-act="ttFoc" data-v="0">كل المعلمين (${t.teachers.length})</button><button type="button" class="${foc ? 'on' : ''}" data-act="ttFoc" data-v="1">✕ الغائبون فقط (${nAbs})</button></div>` : ''}
     <div class="tw"><table class="et ttg${live ? ' live' : ''}"><tr><th>المعلم</th>${[1, 2, 3, 4, 5, 6, 7].map(p => `<th${live && iso === todayIso() && curP() === p ? ' class="nowc"' : ''}>${p}</th>`).join('')}<th>حصص</th></tr>${t.teachers.filter(x => !foc || bmap[normName(x.n)] != null).map(x => { const k = normName(x.n), bi = live ? bmap[k] : undefined, bl = bi != null ? W(iso).blocks[bi] : null;
@@ -5825,7 +5851,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794412545';
+var BUILD_ID = '1794430033';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';

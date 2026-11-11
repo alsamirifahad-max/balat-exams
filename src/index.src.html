@@ -830,6 +830,26 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .ttlive .lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px}.ttlive .lg span{display:inline-flex;align-items:center;gap:5px}.ttlive .lg i{margin:0}
 .btn.undo{background:color-mix(in srgb,var(--done) 16%,var(--surface));border-color:var(--done);color:var(--ink);font-weight:800;animation:undoIn .25s ease-out}.btn.clr{font-size:.75rem;color:var(--muted)}
 .tttip{font:inherit;width:100%;display:flex;align-items:center;gap:10px;text-align:start;margin:4px 0 12px;padding:10px 12px;border:1px dashed color-mix(in srgb,var(--done) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--done) 8%,var(--surface));color:var(--ink);cursor:pointer;font-size:.84rem;line-height:1.5}.tttip i{font-style:normal;font-size:1.1rem}.tttip span{flex:1}.tttip b{color:var(--done)}.tttip em{font-style:normal;font-weight:800;color:var(--done);white-space:nowrap;font-size:.8rem}.tttip:hover{background:color-mix(in srgb,var(--done) 14%,var(--surface))}
+.woutbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface2,var(--soft))}.woutbar>b{font-size:.8rem;color:var(--muted);margin-inline-end:4px}.woutbar .btn{margin:0}
+.wopts{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:8px 12px;background:var(--surface)}.wopts>summary{cursor:pointer;font-weight:800;font-size:.88rem;color:var(--muted);padding:2px 0}.wopts[open]>summary{color:var(--ink);margin-bottom:8px}.wopts .wopt{flex-direction:column;align-items:stretch}.wopts .wtog{justify-content:flex-start}.wopts .rules{margin-top:10px}.tttip.sm{margin:10px 0 2px;font-size:.78rem;padding:8px 10px}
+.wdone{display:inline-flex;gap:6px;margin-inline-start:auto}.wdone .btn{margin:0;padding:8px 16px;font-weight:800}
+.amode.seg{display:flex;gap:4px;padding:4px;margin:8px 0;border-radius:12px;background:var(--surface2,var(--soft));border:1px solid var(--line)}.amode.seg button{flex:1;border:0;border-radius:9px;background:transparent;color:var(--muted);min-height:36px;padding:6px 4px}.amode.seg button.on,.amode.seg button.on:first-of-type{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}.amode.seg button.on.m-full{background:#dc2626;color:#fff}.amode.seg button.on.m-out,.amode.seg button.on.m-late{background:#b45309;color:#fff}
+.asrch{margin:0 0 8px}.asrch .in{width:100%}
+.apick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:8px;border-radius:12px;background:color-mix(in srgb,#dc2626 8%,var(--surface));border:1px dashed color-mix(in srgb,#dc2626 45%,var(--line))}.apk{font:inherit;font-size:.8rem;font-weight:800;border:0;border-radius:999px;padding:5px 10px;background:#dc2626;color:#fff;cursor:pointer}.apk.part{background:#b45309}.apk i{font-style:normal;opacity:.8;margin-inline-start:4px}
+.absg .wchips{gap:6px}.absg .achip{padding:5px 10px;font-size:.84rem;min-height:36px}.absg .agrp{margin-top:8px}.absg .agrp[hidden],.absg .achip[hidden]{display:none}
+/* وضوح الأسماء: شبكة منتظمة، خط أكبر وتباين أعلى */
+.absg .agrp .wchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.absg .agrp .achip{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;font-size:.95rem;font-weight:600;color:var(--ink);min-height:42px;padding:6px 12px;text-align:start;line-height:1.3;background:color-mix(in srgb,var(--gc) 7%,var(--surface));border-width:1.5px}
+.absg .agrp .achip i{flex:0 0 auto;min-width:22px;height:22px;font-size:.72rem;opacity:.85}
+.absg .agrp .achip.zero{opacity:.55}
+.absg .agrp .achip.on{font-weight:800}
+@media (max-width:380px){.absg .agrp .wchips{grid-template-columns:1fr 1fr}.absg .agrp .achip{font-size:.9rem;padding:6px 9px}}
+.absg .agrp .wchips{grid-template-columns:repeat(2,minmax(0,1fr))}@media (min-width:640px){.absg .agrp .wchips{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
+.absg .agrp .achip{font-size:.9rem;padding:6px 8px 6px 10px;min-height:44px}.absg .agrp .achip>span,.absg .agrp .achip{word-break:normal;overflow-wrap:anywhere}
+@media (max-width:380px){.absg .agrp .achip{font-size:.86rem}}
+.absg .agrp .achip{white-space:nowrap;overflow:hidden;padding:6px 8px;gap:4px;font-size:.88rem;letter-spacing:-.1px}.absg .agrp .achip i{min-width:19px;height:19px;font-size:.66rem}
+.absg .agrp .wchips{gap:5px}
+@media (max-width:639px){.absg .agrp .achip.lng{grid-column:span 2}}
 </style>
 </head>
 <body>
