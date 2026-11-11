@@ -383,15 +383,17 @@ function wSheet(iso) {
   const row = (n, i, kind) => { const f = R.info(n), why = kind === 'x' ? (subIssue(iso, bi, p, n) || '') : [f.ss ? '◆ يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`, f.term ? `${f.term} انتظار بالفصل` : '', f.hadP && f.hadP.length ? `↻ انتظر اليوم ح${f.hadP.join('، ح')}` : '', f.done ? (f.lc ? `🏁 آخر حصة ${f.lc}` : 'لا حصص اليوم') : ''].filter(Boolean).join(' · ');
     return `<div class="crow${kind === 'x' ? ' x' : ''}${kind === 'l' && i === 0 ? ' top' : ''}${r.t && normName(r.t) === normName(n) ? ' cur' : ''}" data-q="${esc(normName(n))}"><button type="button" class="cpick" data-act="wPick" data-n="${esc(n)}">${kind === 'l' && i === 0 ? '<i class="st">★ الأنسب</i>' : ''}<b>${esc(n)}</b><small>${esc(why)}</small></button>${kind === 'x' ? '' : `<button type="button" class="wlv" data-act="wQOut" data-p="${p}" data-n="${esc(n)}" title="خرج قبل هذه الحصة" aria-label="${esc(n)} خرج قبل الحصة">⏱</button>`}</div>`; };
   const my = wSlots(iso).filter(x => x.bi === bi), k = my.findIndex(x => x.p === p) + 1, left = wSlots(iso).filter(x => !slotT(x)).length, nx = nextEmpty(iso, WSHEET);
-  const top = live.slice(0, 4), more = live.slice(4);
+  const top = live.slice(0, 4), more = live.slice(4), AL = wSlots(iso), ci = AL.findIndex(x => x.bi === bi && x.p === p);
+  let pbi = -1; const strip = `<div class="wstrip" role="tablist" aria-label="كل الحصص">${AL.map(x => { const sep = x.bi !== pbi && pbi !== -1 ? '<i class="sep"></i>' : ''; pbi = x.bi; const gg = secGrade(ttSecs(x.b.abs, d, x.p)[0]), on = x.bi === bi && x.p === p;
+    return sep + `<button type="button" class="sd g${gg}${slotT(x) ? ' ok' : ''}${on ? ' cur' : ''}" data-act="wJump" data-bi="${x.bi}" data-p="${x.p}" title="${esc(x.b.abs)} · ح${x.p}${slotT(x) ? ' · ' + esc(slotT(x)) : ''}" aria-current="${on}">${x.p}</button>`; }).join('')}</div>`;
   return `<div class="wsh-bg" data-act="wClose"></div><div class="wsh g${g}" role="dialog" aria-label="اختيار المنتظر">
-    <div class="wsh-h"><span class="gbadge g${g}">${GCL[g] || ''}</span><div><b>${esc(b.abs)}</b><small>الحصة ${p} <span dir="ltr">${esc(pTime(p, g))}</span> · ش ${esc(sc.join('، '))} · ${k} من ${my.length}</small></div><button type="button" class="x" data-act="wClose" aria-label="إغلاق">✕</button></div>
+    <div class="wsh-h"><span class="gbadge g${g}">${GCL[g] || ''}</span><div><b>${esc(b.abs)}</b><small>الحصة ${p} <span dir="ltr">${esc(pTime(p, g))}</span> · ش ${esc(sc.join('، '))} · ${k} من ${my.length}</small></div><button type="button" class="x" data-act="wClose" aria-label="إغلاق">✕</button></div>${strip}
     <div class="wsh-b">${top.length ? top.map((n, i) => row(n, i, 'l')).join('') : '<p class="hint">لا يوجد متاح ممن لديهم حصص لاحقة.</p>'}
       ${more.length ? `<details class="cg"${WMORE ? ' open' : ''} ontoggle="WMORE=this.open"><summary>بقية المتاحين (${more.length})</summary>${more.map((n, i) => row(n, i + 4, 'm')).join('')}</details>` : ''}
       ${had.length ? `<details class="cg had"${top.length ? '' : ' open'}><summary>↻ سبق له انتظار اليوم — انتظار ثانٍ (${had.length})</summary>${had.map((n, i) => row(n, i, 'h')).join('')}</details>` : ''}
       ${dn.length ? `<details class="cg"${top.length || had.length ? '' : ' open'}><summary>🏁 أنهوا حصصهم — غالباً خرجوا (${dn.length})</summary>${dn.map((n, i) => row(n, i, 'd')).join('')}</details>` : ''}
       <details class="cg"><summary>🔎 بحث أو اسم غير متاح</summary><input class="in wsq" type="search" placeholder="اكتب جزءاً من الاسم…" oninput="const q=normName(this.value),bx=this.closest('details');bx.querySelectorAll('.crow').forEach(e=>e.hidden=!q||!e.dataset.q.includes(q))">${others.concat(live, had, dn).filter((n, i, A) => A.findIndex(z => normName(z) === normName(n)) === i).map((n, i) => row(n, i, others.includes(n) ? 'x' : 'm').replace('class="crow', 'hidden class="crow')).join('')}</details></div>
-    <div class="wsh-f">${r.t ? `<button class="btn sm ghost" data-act="wPick" data-n="" type="button">مسح</button>` : ''}<span class="sp1"></span><small>${left ? `باقي ${left}` : 'اكتمل ✓'}</small>${nx ? `<button class="btn sm" data-act="wSkip" type="button">تخطَّ ←</button>` : ''}</div></div>`;
+    <div class="wsh-f"><button class="btn sm" data-act="wNav" data-v="-1" type="button"${ci > 0 ? '' : ' disabled'}>→ السابق</button>${r.t ? `<button class="btn sm ghost" data-act="wPick" data-n="" type="button">مسح</button>` : ''}<span class="sp1"></span><small>${left ? `باقي ${left}` : 'اكتمل ✓'}</small><button class="btn sm" data-act="wNav" data-v="1" type="button"${ci < AL.length - 1 ? '' : ' disabled'}>التالي ←</button></div></div>`;
 }
 /* ===== الإرسال عبر واتساب ===== */
 var WA = null;
@@ -623,6 +625,8 @@ document.addEventListener('click', async e => {
   if (a === 'wOpen') { WMORE = false; WSHEET = { bi: +b.dataset.bi, p: +b.dataset.p }; render(); setTimeout(() => { const q = document.querySelector('.wsh .wsq'); if (q && window.innerWidth > 700) q.focus(); }, 30); return; }
   if (a === 'wOpenNext') { const em = wSlots(iso).filter(x => !slotT(x)), n = em[0]; if (n) { WSHEET = { bi: n.bi, p: n.p }; render(); } return; }
   if (a === 'wClose') { WSHEET = null; render(); return; }
+  if (a === 'wNav') { const AL = wSlots(iso), i = AL.findIndex(x => x.bi === WSHEET.bi && x.p === WSHEET.p), n = AL[i + +b.dataset.v]; if (n) { WMORE = false; WSHEET = { bi: n.bi, p: n.p }; render(); } return; }
+  if (a === 'wJump') { WMORE = false; WSHEET = { bi: +b.dataset.bi, p: +b.dataset.p }; render(); return; }
   if (a === 'wSkip') { const n = nextEmpty(iso, WSHEET); WSHEET = n ? { bi: n.bi, p: n.p } : null; render(); return; }
   if (a === 'wOne') { D().cfg.oneWait = !oneWait(); save(); render(); return toast(oneWait() ? 'من أخذ انتظاراً اليوم يُؤخَّر ويُطوى، ولا تختاره التعبئة التلقائية إلا عند الضرورة' : 'أُلغي قيد الانتظار الواحد — الترتيب بالأنسب فقط'); }
   if (a === 'wPick') { wHint(1); const cur = WSHEET, prev = b.dataset.n ? waitsOf(iso, b.dataset.n, cur) : []; setPath(`daily.wait.${iso}.blocks.${cur.bi}.rows.${cur.p}.t`, b.dataset.n); save();
@@ -674,4 +678,13 @@ function xlsFromGroups(groups, nm) {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'dDate' && el.value) { DAILY_DATE = el.value; return render(); }
+});
+
+/* الكمبيوتر: عجلة الماوس تمرّر شريط الحصص أفقياً، والأسهم تتنقل بين الحصص، وEsc يغلق الورقة */
+document.addEventListener('wheel', e => { const st = e.target.closest && e.target.closest('.wstrip'); if (!st || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return; st.scrollLeft -= e.deltaY; e.preventDefault(); }, { passive: false });
+document.addEventListener('keydown', e => {
+  if (typeof WSHEET === 'undefined' || !WSHEET || !document.querySelector('.wsh')) return; const a = document.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  if (e.key === 'Escape') { WSHEET = null; render(); return; }
+  const dir = e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : 0; if (!dir) return; e.preventDefault();
+  const AL = wSlots(dIso()), i = AL.findIndex(x => x.bi === WSHEET.bi && x.p === WSHEET.p), n = AL[i + dir]; if (n) { WMORE = false; WSHEET = { bi: n.bi, p: n.p }; render(); }
 });
