@@ -454,6 +454,7 @@ function vWait(iso) {
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
 
+    ${d >= 0 && !holOf(iso) && tt0() ? `<button type="button" class="tttip" data-act="goTT"><i>💡</i><span>يمكنك أيضاً تسجيل الغياب واختيار المنتظر بالضغط مباشرة على <b>«الجدول المدرسي»</b></span><em>افتحه ←</em></button>` : ''}
     ${d >= 0 && !holOf(iso) ? absGrid(iso) + nowOutPanel(iso) + rulesPanel(iso) : ''}
     <div class="acts wrap">${w.blocks.length ? `${board ? '' : '<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>'}<button class="btn sm ${skipDone() ? 'on' : 'ghost'} dnt" data-act="wSkipDone" type="button" aria-pressed="${skipDone()}" title="من أنهى حصصه قبل حصة الانتظار يُؤخَّر في الاقتراح والتعبئة التلقائية">🏁 تأخير من أنهى حصصه ${skipDone() ? '✓' : '✕'}</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
@@ -603,6 +604,7 @@ document.addEventListener('change', e => { const el = e.target; if (!el.dataset 
 /* ---------- الأحداث ---------- */
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, iso = dIso();
+  if (a === 'goTT') { DAILY_TAB = 'tt'; TT_DAY = null; TT_WHICH = 'cur'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (a === 'dTab') { DAILY_TAB = b.dataset.v; return render(); }
   if (a === 'dDay') { const v = +b.dataset.v; if (v === 0) DAILY_DATE = todayIso(); else { let d = iso, k = 0; do { d = addDays(d, v); } while (!isSchoolDay(d) && ++k < 60); DAILY_DATE = d; } return render(); }
   if (a === 'dOpen') { DAILY_DATE = b.dataset.v; DAILY_TAB = 'wait'; return render(); }

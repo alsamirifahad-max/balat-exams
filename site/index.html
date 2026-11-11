@@ -829,6 +829,7 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .ttact,.ttout{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ttact .btn,.ttout .btn{margin:0}.ttout{padding-top:8px;border-top:1px dashed var(--line)}
 .ttlive .lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px}.ttlive .lg span{display:inline-flex;align-items:center;gap:5px}.ttlive .lg i{margin:0}
 .btn.undo{background:color-mix(in srgb,var(--done) 16%,var(--surface));border-color:var(--done);color:var(--ink);font-weight:800;animation:undoIn .25s ease-out}.btn.clr{font-size:.75rem;color:var(--muted)}
+.tttip{font:inherit;width:100%;display:flex;align-items:center;gap:10px;text-align:start;margin:4px 0 12px;padding:10px 12px;border:1px dashed color-mix(in srgb,var(--done) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--done) 8%,var(--surface));color:var(--ink);cursor:pointer;font-size:.84rem;line-height:1.5}.tttip i{font-style:normal;font-size:1.1rem}.tttip span{flex:1}.tttip b{color:var(--done)}.tttip em{font-style:normal;font-weight:800;color:var(--done);white-space:nowrap;font-size:.8rem}.tttip:hover{background:color-mix(in srgb,var(--done) 14%,var(--surface))}
 </style>
 </head>
 <body>
@@ -4854,6 +4855,7 @@ function vWait(iso) {
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
 
+    ${d >= 0 && !holOf(iso) && tt0() ? `<button type="button" class="tttip" data-act="goTT"><i>💡</i><span>يمكنك أيضاً تسجيل الغياب واختيار المنتظر بالضغط مباشرة على <b>«الجدول المدرسي»</b></span><em>افتحه ←</em></button>` : ''}
     ${d >= 0 && !holOf(iso) ? absGrid(iso) + nowOutPanel(iso) + rulesPanel(iso) : ''}
     <div class="acts wrap">${w.blocks.length ? `${board ? '' : '<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>'}<button class="btn sm ${skipDone() ? 'on' : 'ghost'} dnt" data-act="wSkipDone" type="button" aria-pressed="${skipDone()}" title="من أنهى حصصه قبل حصة الانتظار يُؤخَّر في الاقتراح والتعبئة التلقائية">🏁 تأخير من أنهى حصصه ${skipDone() ? '✓' : '✕'}</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
@@ -5003,6 +5005,7 @@ document.addEventListener('change', e => { const el = e.target; if (!el.dataset 
 /* ---------- الأحداث ---------- */
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, iso = dIso();
+  if (a === 'goTT') { DAILY_TAB = 'tt'; TT_DAY = null; TT_WHICH = 'cur'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (a === 'dTab') { DAILY_TAB = b.dataset.v; return render(); }
   if (a === 'dDay') { const v = +b.dataset.v; if (v === 0) DAILY_DATE = todayIso(); else { let d = iso, k = 0; do { d = addDays(d, v); } while (!isSchoolDay(d) && ++k < 60); DAILY_DATE = d; } return render(); }
   if (a === 'dOpen') { DAILY_DATE = b.dataset.v; DAILY_TAB = 'wait'; return render(); }
@@ -5822,7 +5825,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794407499';
+var BUILD_ID = '1794412545';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
