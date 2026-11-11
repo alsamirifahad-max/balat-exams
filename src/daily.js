@@ -297,7 +297,7 @@ function absGrid(iso) {
   return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs - nPart ? (nAbs - nPart) + ' غائب' : ''}${nAbs - nPart && nPart ? ' · ' : ''}${nPart ? nPart + ' مستأذن/متأخر' : ''}` : 'المس الاسم'}</span><button type="button" class="hlp" data-help="المس اسم الغائب فتظهر حصصه لهذا اليوم، والمسه ثانية للإلغاء. الرقم = حصصه اليوم." aria-label="شرح">؟</button></summary>
 
     <div class="amode" role="radiogroup"><span>عند لمس الاسم:</span>${[['full', 'غائب اليوم'], ['out', '⏱ استأذن / خرج مبكراً'], ['late', '⏰ تأخر']].map(([k, t]) => `<button type="button" role="radio" aria-checked="${ABS_MODE === k}" class="${ABS_MODE === k ? 'on' : ''}" data-act="absMode" data-v="${k}">${t}</button>`).join('')}</div>
-    ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
+    ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp g${g}"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
 }
 var NOW_P = 0, NOW_OPEN = false, RULE_OPEN = false;
 function guessP(iso) { if (iso !== todayIso()) return 3; const d = wdOf(iso); return Math.max(1, Math.min(d >= 0 ? lastP(d) : 7, curP())); }
@@ -312,7 +312,7 @@ function nowOutPanel(iso) {
   return `<details class="nowout"${NOW_OPEN ? ' open' : ''} ontoggle="NOW_OPEN=this.open"><summary><b>🚶 من خرج الآن؟</b> <span>${nOut ? `${nOut} خارج المدرسة في الحصة ${p}` : iso === todayIso() && curP() <= 7 ? `الآن: الحصة ${curP()} (${esc(pTimeAny(curP()))})` : 'نداء سريع أثناء اليوم'}</span></summary>
     <div class="prow"><span>الحصة الآن</span><div class="wchips">${Array.from({ length: L }, (_, i) => `<button type="button" class="wchip pch tm${p === i + 1 ? ' on' : ''}" data-act="nP" data-p="${i + 1}" title="${esc(pTimeAny(i + 1))}">${i + 1}<small>${t12(bellNow()[23][i][0])}</small></button>`).join('')}</div></div>
     <small class="hint">المس من خرج قبل الحصة ${p} (استأذن أو انصرف) — يُستبعد منها وما بعدها، وتُسدَّد حصصه المتبقية ويُعاد توزيع انتظاره. 🏁 = أنهى حصصه، والرقم = آخر حصة له. المسه ثانية للتراجع.</small>
-    ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}
+    ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp g${g}"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}
     ${nOut ? `<div class="acts"><button class="btn sm ghost" data-act="nClr" type="button">↺ إلغاء خروج الحصة ${p}</button></div>` : ''}</details>`;
 }
 /* قواعد الخروج الدائمة */
@@ -386,6 +386,30 @@ function wSheet(iso) {
       <details class="cg"><summary>🔎 بحث أو اسم غير متاح</summary><input class="in wsq" type="search" placeholder="اكتب جزءاً من الاسم…" oninput="const q=normName(this.value),bx=this.closest('details');bx.querySelectorAll('.crow').forEach(e=>e.hidden=!q||!e.dataset.q.includes(q))">${others.concat(live, dn).filter((n, i, A) => A.findIndex(z => normName(z) === normName(n)) === i).map((n, i) => row(n, i, others.includes(n) ? 'x' : 'm').replace('class="crow', 'hidden class="crow')).join('')}</details></div>
     <div class="wsh-f">${r.t ? `<button class="btn sm ghost" data-act="wPick" data-n="" type="button">مسح</button>` : ''}<span class="sp1"></span><small>${left ? `باقي ${left}` : 'اكتمل ✓'}</small>${nx ? `<button class="btn sm" data-act="wSkip" type="button">تخطَّ ←</button>` : ''}</div></div>`;
 }
+/* ===== الإرسال عبر واتساب ===== */
+var WA = null;
+function waText(iso, k) {
+  const head = `*${k === 'duty' ? 'تقرير الإشراف والمناوبة' : 'استمارة حصص الانتظار'}*\n${dayAr(iso)} ${hijriOf(iso)} هـ\n${S.s.school || ''}`.trim();
+  if (k === 'duty') { const u = U(iso), cfg = D().cfg; const L = [head];
+    cfg.b.forEach((b, i) => { const x = u.b[i]; if (!x) return; L.push(`\n*${b.t}* (${b.g})`); if (x.gen) L.push(`المشرف العام: ${x.gen}`); x.rows.forEach(r => r.n && L.push(`• ${r.loc}: ${r.n}`)); });
+    const du = u.duty.filter(r => r.n); if (du.length) L.push(`\n*المناوبة*`, ...du.map(r => `• ${r.n}`)); return L.join('\n'); }
+  const rows = waitRows(iso), DOT = { 1: '🟢', 2: '🟡', 3: '🟠', 0: '⚪' }, L = [head];
+  [1, 2, 3, 0].forEach(g => { const R = rows.filter(r => r.g === g); if (!R.length) return; L.push(`\n${DOT[g]} *${g ? GNAME[g] : 'حصص أخرى'}*`); R.forEach(r => L.push(`ح${r.p} · ش ${r.sec} · بدل ${r.abs} ← ${r.t ? '*' + r.t + '*' : '— لم يُحدد'}`)); });
+  if (!rows.length) L.push('\nلا يوجد غائبون مسجلون.'); return L.join('\n');
+}
+function waNum(v) { let n = toWestern(String(v || '')).replace(/[^\d]/g, ''); if (!n) return ''; if (n.startsWith('00')) n = n.slice(2); if (n.startsWith('05')) n = '966' + n.slice(1); else if (n.startsWith('5') && n.length === 9) n = '966' + n; return n; }
+function waNums() { const c = D().cfg; c.waN = Array.isArray(c.waN) ? c.waN : []; return c.waN; }
+function waSheet(iso) {
+  if (!WA) return ''; const k = WA, canFile = !!(navigator.canShare && window.File && (() => { try { return navigator.canShare({ files: [new File(['x'], 'a.pdf', { type: 'application/pdf' })] }); } catch (e) { return false; } })());
+  const favs = waNums();
+  return `<div class="wsh-bg" data-act="waClose"></div><div class="wsh wash" role="dialog" aria-label="إرسال واتساب"><div class="wsh-h"><span class="gbadge" style="background:#25d366">📲</span><div><b>إرسال ${k === 'duty' ? 'تقرير المناوبة' : 'استمارة الانتظار'} عبر واتساب</b><small>${dayAr(iso)} ${hijriOf(iso)} هـ</small></div><button type="button" class="x" data-act="waClose" aria-label="إغلاق">✕</button></div>
+    <div class="wsh-b">
+      <button type="button" class="waopt" data-act="waPdf"><b>📄 الاستمارة PDF</b><small>${canFile ? 'تفتح قائمة المشاركة — اختر واتساب ثم أي شخص أو مجموعة' : 'يُنزَّل الملف ثم يُفتح واتساب لترفقه'}</small></button>
+      <button type="button" class="waopt" data-act="waTxt" data-n=""><b>💬 رسالة نصية مرتبة</b><small>يفتح واتساب لتختار أي شخص أو مجموعة</small></button>
+      <div class="wanum"><input class="in" id="waIn" inputmode="tel" placeholder="أو اكتب رقم جوال محدد"><button class="btn sm pri" data-act="waTxt" data-n="__in" type="button">إرسال</button></div>
+      ${favs.length ? `<div class="wafav"><small>أرقام سابقة:</small>${favs.map(f => `<span><button type="button" class="wchip" data-act="waTxt" data-n="${esc(f.n)}">${esc(f.l || f.n)}</button><button type="button" class="x" data-act="waDelN" data-n="${esc(f.n)}" aria-label="حذف">✕</button></span>`).join('')}</div>` : ''}
+      <details class="cg"><summary>معاينة نص الرسالة</summary><pre class="wapre">${esc(waText(iso, k))}</pre></details></div></div>`;
+}
 function vWait(iso) {
   const w = D().wait[iso] || { blocks: [] }, d = wdOf(iso);
   const board = wView() === 'p' && tt0() && w.blocks.length && d >= 0;
@@ -410,11 +434,11 @@ function vWait(iso) {
 
     ${d >= 0 && !holOf(iso) ? absGrid(iso) + nowOutPanel(iso) + rulesPanel(iso) : ''}
     <div class="acts wrap">${w.blocks.length ? `${board ? '' : '<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>'}<button class="btn sm ${skipDone() ? 'on' : 'ghost'} dnt" data-act="wSkipDone" type="button" aria-pressed="${skipDone()}" title="من أنهى حصصه قبل حصة الانتظار يُؤخَّر في الاقتراح والتعبئة التلقائية">🏁 تأخير من أنهى حصصه ${skipDone() ? '✓' : '✕'}</button>` : ''}
-      <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
+      <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
     ${w.blocks.length && !board ? `<div class="wsum"><span><b>${w.blocks.filter(b => !b.part).length}</b> غائب</span>${w.blocks.some(b => b.part) ? `<span><b>${w.blocks.filter(b => b.part).length}</b> مستأذن/متأخر</span>` : ''}<span><b>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</b> حصة مسددة</span>${empty ? `<span class="warn"><b>${empty}</b> بلا منتظر</span>` : ''}${issues ? `<span class="bad"><b>${issues}</b> تعارض</span>` : ''}</div>` : '<p class="hint" style="margin-top:10px">لا يوجد غائبون مسجلون لهذا اليوم. يمكنك طباعة استمارة فارغة.</p>'}
     ${w.blocks.length && tt0() && !board ? `<div class="wlegend" aria-label="دليل الرموز"><span><b class="lg st">★</b>الأنسب (حتى 3)</span><span><b class="lg">◆</b>يدرّس الشعبة</span><span><b class="lg n">3</b>حصصه اليوم</span><span><b class="lg">⏱</b>خرج قبل الحصة</span><span><b class="lg">🏁</b>أنهى حصصه</span><button type="button" class="hlp" data-help="ترتيب الأنسب: من يدرّس الشعبة نفسها، ثم من يدرّس الصف، ثم الأقل حصصاً اليوم، ثم الأقل انتظاراً في الفصل. يُؤخَّر من بلغ 5 حصص اليوم ومن أنهى حصصه. المس «★ الأنسب» لاختياره مباشرة، أو أي اسم آخر." aria-label="شرح الترتيب">؟</button></div>` : ''}
     ${w.blocks.length && tt0() ? `<div class="wvt" role="tablist"><button type="button" class="${board ? 'on' : ''}" data-act="wView" data-v="p">☰ لوحة التسديد</button><button type="button" class="${board ? '' : 'on'}" data-act="wView" data-v="a">▦ تفصيلي</button></div>` : ''}
-    ${board ? wBoard(iso) : `<div class="wblks">${blocks}</div>`}</section>`;
+    ${board ? wBoard(iso) : `<div class="wblks">${blocks}</div>`}</section>${waSheet(iso)}`;
 }
 function tt0() { return !!D().tt; }
 /* أولوية المنتظر: 1) لا يُثقَل من عنده 5 حصص فأكثر اليوم  2) يدرّس الشعبة نفسها  3) يدرّس الصف نفسه  4) الأقل انشغالاً اليوم (حصصه + انتظاره)  5) الأقل انتظاراً في الفصل */
@@ -453,11 +477,11 @@ function vDuty(iso) {
   const duty = `<article class="dblk"><header><b>المناوبة</b><small>الموظفون المناوبون</small></header><div class="tw"><table class="et"><tr><th style="width:40px">م</th><th>اسم الموظف المناوب</th><th>ملحوظات</th></tr>${u.duty.map((r, j) => `<tr><td>${j + 1}</td><td>${sel(`${P}.duty.${j}.n`, r.n, 'd')}${r.n && dutyAway(iso).has(normName(r.n)) ? `<button class="btn sm" data-act="dDutyRep" data-j="${j}" type="button">↺ بديل من أصحاب الحصة الأخيرة</button>` : ''}</td><td>${inp(`${P}.duty.${j}.note`, r.note || '')}</td></tr>`).join('')}</table></div><div class="acts"><button class="btn sm pri" data-act="dAutoDuty" type="button">⑦ تعبئة تلقائية من أصحاب الحصة الأخيرة</button><button class="btn sm ghost" data-act="dRow" data-v="duty" type="button">+ مناوب</button></div>${admEditor()}</article>`;
   return `<section class="card"><h2>تقرير الإشراف والمناوبة اليومي — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
 
-    <div class="acts wrap"><button class="btn pri" data-act="dPrint" data-v="duty" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="duty" type="button">PDF</button><button class="btn" data-act="dWord" data-v="duty" type="button">Word</button><span class="sp1"></span>
+    <div class="acts wrap"><button class="btn pri" data-act="dPrint" data-v="duty" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="duty" type="button">PDF</button><button class="btn wa" data-act="waOpen" data-v="duty" type="button">📲 واتساب</button><button class="btn" data-act="dWord" data-v="duty" type="button">Word</button><span class="sp1"></span>
       <button class="btn" data-act="dWeek" type="button">حفظ كجدول ثابت لكل يوم ${wdOf(iso) >= 0 ? TT_DAYS[wdOf(iso)] : ''}</button>${saved ? '<button class="btn ghost" data-act="dReset" type="button">مسح تعبئة هذا اليوم</button>' : ''}</div>
     <div class="dblks">${blocks}${duty}</div>
     <details class="sub"><summary>إعدادات النموذج (الفسح والمواقع)</summary><div class="grid2">${cfg.b.map((b, i) => `<label>اسم ${i + 1} ${inp(`daily.cfg.b.${i}.t`, b.t)}</label><label>الصفوف ${inp(`daily.cfg.b.${i}.g`, b.g)}</label>`).join('')}<label>رقم النموذج ${inp('daily.cfg.no', cfg.no)}</label><label>رمز النموذج ${inp('daily.cfg.code', cfg.code)}</label></div></details>
-  </section>${vWeekDuty()}`;
+  </section>${vWeekDuty()}${waSheet(iso)}`;
 }
 function ttSrc() { return TT_WHICH === 'next' && D().ttNext ? D().ttNext : D().tt; }
 function vTT(iso) {
@@ -560,6 +584,15 @@ document.addEventListener('click', async e => {
     exitR()[normName(n)] = { n, days: [] }; save(); render(); return toast(`🚪 ${n}: يُستبعد بعد آخر حصة له كل يوم`); }
   if (a === 'rDel') { RULE_OPEN = true; delete exitR()[normName(b.dataset.n)]; save(); render(); return toast(`حُذفت قاعدة ${b.dataset.n}`); }
   if (a === 'rDay') { RULE_OPEN = true; const r = exitR()[normName(b.dataset.n)], i = +b.dataset.v; let ds = r.days && r.days.length ? r.days.slice() : [0, 1, 2, 3, 4]; ds = ds.includes(i) ? ds.filter(x => x !== i) : ds.concat(i).sort(); if (!ds.length) return toast('اختر يوماً واحداً على الأقل، أو احذف القاعدة', true); r.days = ds.length === 5 ? [] : ds; save(); render(); return; }
+  if (a === 'waOpen') { WA = b.dataset.v; WSHEET = null; render(); return; }
+  if (a === 'waClose') { WA = null; render(); return; }
+  if (a === 'waDelN') { D().cfg.waN = waNums().filter(f => f.n !== b.dataset.n); save(); render(); return; }
+  if (a === 'waTxt') { let n = b.dataset.n; if (n === '__in') { const v = (document.getElementById('waIn') || {}).value; n = waNum(v); if (!n || n.length < 10) return toast('اكتب رقم جوال صحيح', true); if (!waNums().some(f => f.n === n)) { waNums().unshift({ n, l: '0' + n.slice(3) }); D().cfg.waN = waNums().slice(0, 8); save(); } }
+    const url = `https://wa.me/${n || ''}?text=${encodeURIComponent(waText(iso, WA))}`; window.open(url, '_blank'); return; }
+  if (a === 'waPdf') { const k = WA, g = dailyGroups(k), nm = dailyName(k); if (!g[0].pages.length) return toast('لا توجد بيانات', true);
+    const blob = await downloadPdf(g, nm, { blob: true }); if (!blob) return; const f = new File([blob], nm + '.pdf', { type: 'application/pdf' });
+    try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: nm, text: waText(iso, k).split('\n').slice(0, 2).join(' — ') }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    download(blob, nm + '.pdf'); toast('نُزّل الملف — أرفقه في واتساب'); setTimeout(() => window.open(`https://wa.me/?text=${encodeURIComponent(nm)}`, '_blank'), 600); return; }
   if (a === 'wExp') { const v = +b.dataset.v; WEXP = WEXP === v ? -1 : v; render(); return; }
   if (a === 'wHintOff') { wHint(1); render(); return; }
   if (a === 'wView') { D().cfg.wview = b.dataset.v; WSHEET = null; save(); render(); return; }

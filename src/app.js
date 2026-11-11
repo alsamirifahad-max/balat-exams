@@ -707,8 +707,8 @@ async function ensureLib(id, file, ok) {
   if (!ok()) throw new Error('تعذر تشغيل مكتبة PDF');
 }
 let PDF_BUSY = false;
-async function downloadPdf(groups, name) {
-  if (PDF_BUSY) return; PDF_BUSY = true;
+async function downloadPdf(groups, name, opt) {
+  if (PDF_BUSY) return; PDF_BUSY = true; let OUT = null;
   const pages = groups.flatMap(g => g.pages.map(pg => ({ pg, land: !!g.land })));
   if (!pages.length) { PDF_BUSY = false; return toast('لا توجد صفحات', true); }
   const box = document.createElement('div'); box.className = 'pdfstage'; document.body.appendChild(box);
@@ -734,9 +734,10 @@ async function downloadPdf(groups, name) {
       await new Promise(r => setTimeout(r, 0));
     }
     $('#pdfProgB').style.width = '100%';
-    download(doc.output('blob'), name + '.pdf');
+    if (opt && opt.blob) OUT = doc.output('blob'); else download(doc.output('blob'), name + '.pdf');
   } catch (e) { console.error(e); toast('تعذر إنشاء PDF: ' + (e.message || e), true); }
   finally { box.remove(); bar.hidden = true; PDF_BUSY = false; }
+  return OUT;
 }
 async function ensurePdfJs() {
   if (window.pdfjsLib) return;
