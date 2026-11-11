@@ -808,6 +808,21 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .wstrip{padding:12px 6px 8px}
 @media (hover:hover){.sd:hover{transform:translateY(-2px);box-shadow:0 3px 8px rgba(0,0,0,.2)}.wstrip{scrollbar-width:thin}.wstrip::-webkit-scrollbar{display:block;height:6px}.wstrip::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}}
 .wprog .undo{background:color-mix(in srgb,var(--done) 16%,var(--surface));border-color:var(--done);color:var(--ink);font-weight:800;animation:undoIn .25s ease-out}@keyframes undoIn{from{transform:scale(.92);opacity:.3}to{transform:none;opacity:1}}.wprog .clr{font-size:.75rem;color:var(--muted)}
+.ttlive{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:6px 0 10px;padding:9px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--done) 45%,var(--line));background:color-mix(in srgb,var(--done) 9%,var(--surface));font-size:.82rem}.ttlive u{text-decoration:none;font-weight:800;color:var(--done)}
+.ttlive .lg{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:.74rem}.ttlive .lg i{width:14px;height:14px;border-radius:4px;display:inline-block;margin-inline-start:6px}.ttlive .lg i.a{background:#dc2626}.ttlive .lg i.n{border:2px dashed #dc2626;background:color-mix(in srgb,#dc2626 12%,transparent)}.ttlive .lg i.k{background:var(--done)}.ttprog{font-weight:800;margin-inline-start:auto}
+.ttg.live td.tn{padding:0}.ttn{font:inherit;width:100%;text-align:start;border:0;background:transparent;color:inherit;font-weight:700;padding:6px 8px;cursor:pointer;white-space:nowrap}.ttn:hover{background:color-mix(in srgb,#dc2626 10%,transparent)}
+.ttg td.tn.abs{background:#dc2626;color:#fff}.ttg td.tn.part{background:#b45309;color:#fff}.ttg tr.absr td{border-top:2px solid #dc2626;border-bottom:2px solid #dc2626}
+.ttg td.cv{padding:2px;background:color-mix(in srgb,#dc2626 14%,var(--surface))!important;color:var(--ink)!important}.ttg td.cv button{font:inherit;width:100%;min-width:64px;border:2px dashed #dc2626;border-radius:8px;background:transparent;color:inherit;cursor:pointer;padding:3px 4px;display:flex;flex-direction:column;align-items:center;line-height:1.15}.ttg td.cv b{font-size:.85rem}.ttg td.cv small{font-size:.66rem;font-weight:800;color:#dc2626;white-space:nowrap}
+.ttg td.cv.ok{background:color-mix(in srgb,var(--done) 16%,var(--surface))!important}.ttg td.cv.ok button{border:2px solid var(--done)}.ttg td.cv.ok small{color:var(--done)}
+.ttg td.wt{background:color-mix(in srgb,var(--done) 12%,var(--surface));color:var(--done);font-weight:800}.ttg td.wt small{font-size:.66rem}
+.ttg th.nowc{background:var(--done);color:#fff}
+.ttg.live{table-layout:fixed;min-width:720px}.ttg.live th:first-child{width:150px}.ttg.live th:last-child{width:52px}.ttg.live td.cv button{min-width:0}
+@media (max-width:700px){.ttg.live{min-width:0}.ttg.live th:first-child{width:104px}.ttg.live th:last-child{width:30px}.ttg.live td,.ttg.live th{padding:4px 1px;font-size:.74rem}.ttn{padding:6px 4px;font-size:.74rem;overflow:hidden;text-overflow:ellipsis}
+.ttg.live td.cv{padding:1px}.ttg.live td.cv button{padding:2px 1px;border-width:1.5px;border-radius:6px}.ttg.live td.cv small{font-size:.55rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;display:block}.ttg.live td.wt small{font-size:.55rem}}
+.ttg td.cv .f1{display:none}@media (max-width:700px){.ttg td.cv .fl{display:none}.ttg td.cv .f1{display:inline}}
+@media (max-width:700px){.ttg td.cv.ok small{font-size:.8rem}}
+.ttfoc{display:flex;gap:4px;margin:0 0 8px;padding:4px;border-radius:12px;background:var(--surface2,var(--soft));border:1px solid var(--line)}.ttfoc button{flex:1;font:inherit;font-size:.82rem;font-weight:700;border:0;border-radius:9px;padding:8px;background:transparent;color:var(--muted);cursor:pointer}.ttfoc button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}.ttfoc button.on:last-child{background:#dc2626;color:#fff}
+.absdone{font:inherit;width:100%;margin:2px 0 10px;padding:11px 12px;border:0;border-radius:12px;background:var(--done);color:#fff;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 3px 10px color-mix(in srgb,var(--done) 35%,transparent)}
 </style>
 </head>
 <body>

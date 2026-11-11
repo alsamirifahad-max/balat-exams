@@ -297,9 +297,10 @@ function absGrid(iso) {
   return `<details class="absg"${ABSG_OPEN || !nAbs ? ' open' : ''} ontoggle="ABSG_OPEN=this.open"><summary><b>من غاب اليوم؟</b> <span>${nAbs ? `${nAbs - nPart ? (nAbs - nPart) + ' غائب' : ''}${nAbs - nPart && nPart ? ' · ' : ''}${nPart ? nPart + ' مستأذن/متأخر' : ''}` : 'المس الاسم'}</span><button type="button" class="hlp" data-help="المس اسم الغائب فتظهر حصصه لهذا اليوم، والمسه ثانية للإلغاء. الرقم = حصصه اليوم." aria-label="شرح">؟</button></summary>
 
     <div class="amode" role="radiogroup"><span>عند لمس الاسم:</span>${[['full', 'غائب اليوم'], ['out', '⏱ استأذن / خرج مبكراً'], ['late', '⏰ تأخر']].map(([k, t]) => `<button type="button" role="radio" aria-checked="${ABS_MODE === k}" class="${ABS_MODE === k ? 'on' : ''}" data-act="absMode" data-v="${k}">${t}</button>`).join('')}</div>
+    ${nAbs ? `<button type="button" class="absdone" data-act="absDone">✓ انتهيت من تحديد الغائبين (${nAbs}) — إلى التسديد</button>` : ''}
     ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp g${g}"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
 }
-var NOW_P = 0, NOW_OPEN = false, RULE_OPEN = false;
+var NOW_P = 0, NOW_OPEN = false, RULE_OPEN = false, TT_FOCUS = false;
 function guessP(iso) { if (iso !== todayIso()) return 3; const d = wdOf(iso); return Math.max(1, Math.min(d >= 0 ? lastP(d) : 7, curP())); }
 /* نداء سريع: من خرج الآن؟ */
 function nowOutPanel(iso) {
@@ -513,12 +514,22 @@ function vTT(iso) {
   const t = ttSrc(); if (!t) return `<section class="card empty"><h2>لم يُرفع الجدول المدرسي العام</h2><p class="hint">ارفعه من «الملفات الأساسية» بصيغة PDF أو Excel أو Word (تصدير برنامج الجدول aSc أو غيره).</p><button class="btn pri" data-tab="files" type="button">رفع الجدول</button></section>`;
   if (TT_DAY == null) TT_DAY = Math.max(0, wdOf(iso));
   const dd = TT_DAY, free = [1, 2, 3, 4, 5, 6, 7].map(p => t.teachers.filter(x => !x.c[dd + '-' + p]).length);
+  const live = TT_WHICH !== 'next' && t === D().tt && dd === wdOf(iso) && !holOf(iso), w = D().wait[iso] || { blocks: [] }, bmap = {}, waitAt = {};
+  if (live) { w.blocks.forEach((b, i) => { if (b.abs) bmap[normName(b.abs)] = i; Object.entries(b.rows || {}).forEach(([p, r]) => { if (r && r.t) waitAt[normName(r.t) + '|' + p] = b.abs; }); }); }
+  const SL = live ? wSlots(iso) : [], nNeed = SL.length, nOk = SL.filter(slotT).length, nAbs = w.blocks.length, foc = live && TT_FOCUS && nAbs > 0;
   const sw = D().ttNext ? `<div class="dtabs sm" style="margin-bottom:8px"><button type="button" class="${TT_WHICH !== 'next' ? 'on' : ''}" data-act="ttWhich" data-v="cur">الجدول الحالي</button><button type="button" class="${TT_WHICH === 'next' ? 'on' : ''}" data-act="ttWhich" data-v="next">جدول الفصل القادم</button></div>` : '';
   return `<section class="card"><h2>${TT_WHICH === 'next' && D().ttNext ? 'جدول الفصل القادم' : 'الجدول المدرسي العام'} — ${esc(TT_DAYS[dd])}</h2>${sw}
     <div class="acts wrap"><div class="dtabs sm">${TT_DAYS.map((n, i) => `<button type="button" class="${i === dd ? 'on' : ''}" data-act="ttDay" data-v="${i}">${n}</button>`).join('')}</div><span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="tt" type="button">طباعة جدول اليوم</button><button class="btn" data-act="dPdf" data-v="tt" type="button">PDF</button><button class="btn" data-act="dXls" data-v="tt" type="button">Excel</button></div>
     <p class="hint">${t.teachers.length} معلماً — ${esc(t.src || '')}. الخانة الفارغة تعني أن المعلم متاح في تلك الحصة.</p>
-    <div class="tw"><table class="et ttg"><tr><th>المعلم</th>${[1, 2, 3, 4, 5, 6, 7].map(p => `<th>${p}</th>`).join('')}<th>حصص</th></tr>${t.teachers.map(x => `<tr><td class="tn">${esc(x.n)}</td>${[1, 2, 3, 4, 5, 6, 7].map(p => { const v = x.c[dd + '-' + p]; return `<td class="${v ? 'g' + secGrade(String(v).split('،')[0]) : 'fr'}">${v ? esc(v) : ''}</td>`; }).join('')}<td>${[1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length}</td></tr>`).join('')}
-    <tr class="tot"><td>المتاحون</td>${free.map(f => `<td>${f}</td>`).join('')}<td></td></tr></table></div></section>`;
+    ${live ? `<div class="ttlive"><b>⚡ تفاعلي:</b> المس <u>اسم المعلم</u> لتسجيل غيابه، ثم المس <u>حصته</u> لاختيار المنتظر.<span class="lg"><i class="a"></i>غائب<i class="n"></i>تحتاج منتظراً<i class="k"></i>تم</span>${nAbs ? `<span class="ttprog">${nOk} من ${nNeed} مسددة</span>${nNeed - nOk ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button>` : ''}` : ''}</div>
+      ${nAbs ? `<div class="ttfoc"><button type="button" class="${foc ? '' : 'on'}" data-act="ttFoc" data-v="0">كل المعلمين (${t.teachers.length})</button><button type="button" class="${foc ? 'on' : ''}" data-act="ttFoc" data-v="1">✕ الغائبون فقط (${nAbs})</button></div>` : ''}` : (TT_WHICH !== 'next' && wdOf(iso) >= 0 ? `<p class="hint">التفاعل (تسجيل الغياب واختيار المنتظر) متاح ليوم ${dayAr(iso)} المحدد. <button class="btn sm" data-act="ttDay" data-v="${wdOf(iso)}" type="button">انتقل ليوم ${dayAr(iso)}</button></p>` : '')}
+    <div class="tw"><table class="et ttg${live ? ' live' : ''}"><tr><th>المعلم</th>${[1, 2, 3, 4, 5, 6, 7].map(p => `<th${live && iso === todayIso() && curP() === p ? ' class="nowc"' : ''}>${p}</th>`).join('')}<th>حصص</th></tr>${t.teachers.filter(x => !foc || bmap[normName(x.n)] != null).map(x => { const k = normName(x.n), bi = live ? bmap[k] : undefined, bl = bi != null ? W(iso).blocks[bi] : null;
+      const nameC = live ? `<td class="tn${bl ? (bl.part ? ' part' : ' abs') : ''}"><button type="button" class="ttn" data-act="wAbs" data-n="${esc(x.n)}" aria-pressed="${!!bl}">${bl ? (bl.part ? '⏱ ' : '✕ ') : ''}${esc(x.n)}</button></td>` : `<td class="tn">${esc(x.n)}</td>`;
+      return `<tr class="${bl ? 'absr' : ''}">${nameC}${[1, 2, 3, 4, 5, 6, 7].map(p => { const v = x.c[dd + '-' + p], g = v ? secGrade(String(v).split('،')[0]) : 0;
+        if (bl && v && blkNeeds(bl, p)) { const r = (bl.rows || {})[p] || {}; return `<td class="cv${r.t ? ' ok' : ''} g${g}"><button type="button" data-act="wOpen" data-bi="${bi}" data-p="${p}"><b>${esc(v)}</b><small title="${esc(r.t || '')}">${r.t ? `✓<span class="fl"> ${esc(r.t)}</span>` : 'اختر'}</small></button></td>`; }
+        const wt = live && waitAt[k + '|' + p]; if (!v && wt) return `<td class="wt" title="منتظر بدل ${esc(wt)}"><small>انتظار</small></td>`;
+        return `<td class="${v ? 'g' + g : 'fr'}">${v ? esc(v) : ''}</td>`; }).join('')}<td>${[1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length}</td></tr>`; }).join('')}
+    ${foc ? '' : `<tr class="tot"><td>المتاحون</td>${free.map(f => `<td>${f}</td>`).join('')}<td></td></tr>`}</table></div>${foc ? `<button type="button" class="btn sm ghost" data-act="ttFoc" data-v="0" style="margin-top:8px">＋ إضافة غائب آخر</button>` : ''}</section>${live && WSHEET ? wSheet(iso) : ''}`;
 }
 function vLog() {
   const ws = D().wait, us = D().duty; const dates = [...new Set([...Object.keys(ws).filter(k => (ws[k].blocks || []).length), ...Object.keys(us)])].sort().reverse();
@@ -625,6 +636,8 @@ document.addEventListener('click', async e => {
   if (a === 'wOpen') { WMORE = false; WSHEET = { bi: +b.dataset.bi, p: +b.dataset.p }; render(); setTimeout(() => { const q = document.querySelector('.wsh .wsq'); if (q && window.innerWidth > 700) q.focus(); }, 30); return; }
   if (a === 'wOpenNext') { const em = wSlots(iso).filter(x => !slotT(x)), n = em[0]; if (n) { WSHEET = { bi: n.bi, p: n.p }; render(); } return; }
   if (a === 'wClose') { WSHEET = null; render(); return; }
+  if (a === 'ttFoc') { TT_FOCUS = b.dataset.v === '1'; render(); return; }
+  if (a === 'absDone') { ABSG_OPEN = false; render(); setTimeout(() => { const el = document.querySelector('.wprog') || document.querySelector('.wblks'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); return; }
   if (a === 'wNav') { const AL = wSlots(iso), i = AL.findIndex(x => x.bi === WSHEET.bi && x.p === WSHEET.p), n = AL[i + +b.dataset.v]; if (n) { WMORE = false; WSHEET = { bi: n.bi, p: n.p }; render(); } return; }
   if (a === 'wJump') { WMORE = false; WSHEET = { bi: +b.dataset.bi, p: +b.dataset.p }; render(); return; }
   if (a === 'wSkip') { const n = nextEmpty(iso, WSHEET); WSHEET = n ? { bi: n.bi, p: n.p } : null; render(); return; }
