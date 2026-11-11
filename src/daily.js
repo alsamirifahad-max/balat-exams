@@ -347,26 +347,31 @@ var WSHEET = null, WSET = -1;
 function wHint(v) { try { if (v) localStorage.setItem('balat-exams-v1-whint', '1'); return localStorage.getItem('balat-exams-v1-whint') === '1'; } catch (e) { return !!v; } }
 function wView() { const c = D().cfg; if (!c.wv2) { c.wview = 'p'; c.wv2 = 1; } return c.wview || 'p'; }
 /* ترتيب التسديد: غائب بعد غائب، وحصصه بالترتيب */
-function wSlots(iso) { const w = D().wait[iso] || { blocks: [] }, d = wdOf(iso), out = [];
-  w.blocks.forEach((b, bi) => { for (let p = 1; p <= 7; p++) if (b.abs && d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p)) out.push({ p, bi, b }); }); return out; }
+/* صف الغائب اليوم = الصف الغالب على حصصه التي تحتاج تسديداً */
+function absGrade(iso, b) { const d = wdOf(iso), c = { 1: 0, 2: 0, 3: 0 }; if (d >= 0 && b.abs) for (let p = 1; p <= 7; p++) if (ttCell(b.abs, d, p) && blkNeeds(b, p)) { const g = secGrade(ttSecs(b.abs, d, p)[0]); if (g) c[g]++; }
+  const g = [1, 2, 3].sort((x, y) => c[y] - c[x] || x - y)[0]; return c[g] ? g : (mainGrade(b.abs) || 9); }
+/* ترتيب الغائبين: أول ثانوي ثم ثاني ثم ثالث، وبترتيب التسجيل داخل كل صف */
+function absOrder(iso) { const w = D().wait[iso] || { blocks: [] }; return w.blocks.map((b, bi) => ({ b, bi, g: absGrade(iso, b) })).sort((x, y) => x.g - y.g || x.bi - y.bi); }
+function wSlots(iso) { const d = wdOf(iso), out = [];
+  absOrder(iso).forEach(({ b, bi }) => { for (let p = 1; p <= 7; p++) if (b.abs && d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p)) out.push({ p, bi, b }); }); return out; }
 const slotT = x => ((x.b.rows || {})[x.p] || {}).t;
 function nextEmpty(iso, after) { const S2 = wSlots(iso), i = after ? S2.findIndex(x => x.p === after.p && x.bi === after.bi) : -1;
   return S2.slice(i + 1).concat(S2.slice(0, Math.max(0, i))).find(x => !slotT(x)) || null; }
 const GCL = { 1: 'أول', 2: 'ثاني', 3: 'ثالث' };
 function wBoard(iso) {
   const w = D().wait[iso], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, slots = wSlots(iso), done = slots.filter(slotT).length, cnt = waitLoad(iso), dbl = Object.values(cnt).filter(v => v > 1).length;
-  const cards = w.blocks.map((b, bi) => { const my = slots.filter(x => x.bi === bi), md = my.filter(slotT).length, lv = leaveOf(iso, b.abs);
+  const ord = absOrder(iso); let lastG = -1;
+  const cards = ord.map(({ b, bi, g: ag }) => { const sec = ag !== lastG ? `<h3 class="wgh g${ag}">${GNAME[ag] || 'أخرى'}</h3>` : ''; lastG = ag; const my = slots.filter(x => x.bi === bi), md = my.filter(slotT).length, lv = leaveOf(iso, b.abs);
     const head = `<header><button type="button" class="wcn" data-act="wSetOpen" data-v="${bi}"><b>${b.part ? '⏱ ' : lv ? '🕘 ' : ''}${esc(b.abs)}</b><small>${b.part ? esc(partLbl(b, L)) : lv ? 'غياب لعدة أيام' : 'غائب اليوم'} · ⚙</small></button><i class="${my.length && md === my.length ? 'ok' : ''}">${my.length ? (md === my.length ? '✓ ' : '') + md + '/' + my.length : '—'}</i></header>`;
     const set = WSET === bi ? `<div class="wsetp"><div class="acts wrap" style="margin:0 0 6px"><span class="sp1"></span><button class="btn sm ghost" data-act="wDel" data-v="${bi}" type="button">حذف من الغياب</button><button class="btn sm ghost" data-act="wSetOpen" data-v="-1" type="button">إغلاق</button></div>${partCtl(iso, b, bi)}${b.part ? '' : leaveCtl(iso, b, bi)}</div>` : '';
     const rows = my.map(x => { const r = (b.rows || {})[x.p] || {}, sc = ttSecs(b.abs, d, x.p), g = secGrade(sc[0]), iss = subIssue(iso, bi, x.p, r.t), now = iso === todayIso() && curP() === x.p;
       return `<button type="button" class="wslot g${g}${r.t ? ' ok' : ''}${iss ? ' bad' : ''}${now ? ' now' : ''}" data-act="wOpen" data-bi="${bi}" data-p="${x.p}"><span class="pp"><b>${x.p}</b><small>${t12(((bellNow()[g === 1 ? 1 : 23] || [])[x.p - 1] || [])[0])}</small></span><span class="gp">${GCL[g] || ''} <b>${esc(sc.join('، '))}</b></span><span class="tn">${r.t ? `${iss ? '⚠' : '✓'} ${esc(r.t)}${(cnt[normName(r.t)] || 0) > 1 ? `<i class="dbl" title="عليه ${cnt[normName(r.t)]} انتظارات اليوم">×${cnt[normName(r.t)]}</i>` : ''}` : 'اختر ←'}</span>${now ? '<em class="nowtag">الآن</em>' : ''}</button>`; }).join('');
     const full = my.length && md === my.length;
-    if (full && WEXP !== bi && WSET !== bi) return `<article class="wcard full fold">${head}<button type="button" class="wfold" data-act="wExp" data-v="${bi}">${my.map(x => `<span class="g${secGrade(ttSecs(b.abs, d, x.p)[0])}"><b>ح${x.p}</b> ${esc(slotT(x))}${(cnt[normName(slotT(x))] || 0) > 1 ? `<i class="dbl">×${cnt[normName(slotT(x))]}</i>` : ''}</span>`).join('')}<em>تعديل</em></button></article>`;
-    return `<article class="wcard${full ? ' full' : ''}">${head}${set}${rows || '<p class="hint" style="margin:6px 4px">لا حصص تحتاج تسديداً.</p>'}</article>`; }).join('');
+    if (full && WEXP !== bi && WSET !== bi) return sec + `<article class="wcard g${ag} full fold">${head}<button type="button" class="wfold" data-act="wExp" data-v="${bi}">${my.map(x => `<span class="g${secGrade(ttSecs(b.abs, d, x.p)[0])}"><b>ح${x.p}</b> ${esc(slotT(x))}${(cnt[normName(slotT(x))] || 0) > 1 ? `<i class="dbl">×${cnt[normName(slotT(x))]}</i>` : ''}</span>`).join('')}<em>تعديل</em></button></article>`;
+    return sec + `<article class="wcard g${ag}${full ? ' full' : ''}">${head}${set}${rows || '<p class="hint" style="margin:6px 4px">لا حصص تحتاج تسديداً.</p>'}</article>`; }).join('');
   const pct = slots.length ? Math.round(done * 100 / slots.length) : 0;
-  return `<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : '<em class="okt">✓ اكتمل التسديد</em>'}</div>
+  return `<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة${slots.length - done ? ` · <em class="left">باقي ${slots.length - done}</em>` : ''}</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : '<em class="okt">✓ اكتمل التسديد</em>'}</div>
     <div class="wopt"><button type="button" class="wtog${oneWait() ? ' on' : ''}" data-act="wOne" aria-pressed="${oneWait()}"><i></i>انتظار واحد لكل معلم في اليوم</button>${dbl ? `<span class="dblw">⚠ ${dbl} ${dbl > 1 ? 'معلمين عليهم' : 'معلم عليه'} أكثر من انتظار (×2)</span>` : ''}</div>
-    <div class="wgkey"><span class="g1">أول ثانوي</span><span class="g2">ثاني ثانوي</span><span class="g3">ثالث ثانوي</span></div>
     <div class="wcards">${cards}</div>${WSHEET ? wSheet(iso) : ''}`;
 }
 var WMORE = false, WEXP = -1;
@@ -411,6 +416,18 @@ function waSheet(iso) {
       <div class="wanum"><input class="in" id="waIn" inputmode="tel" placeholder="أو اكتب رقم جوال محدد"><button class="btn sm pri" data-act="waTxt" data-n="__in" type="button">إرسال</button></div>
       ${favs.length ? `<div class="wafav"><small>أرقام سابقة:</small>${favs.map(f => `<span><button type="button" class="wchip" data-act="waTxt" data-n="${esc(f.n)}">${esc(f.l || f.n)}</button><button type="button" class="x" data-act="waDelN" data-n="${esc(f.n)}" aria-label="حذف">✕</button></span>`).join('')}</div>` : ''}
       <details class="cg"><summary>معاينة نص الرسالة</summary><pre class="wapre">${esc(waText(iso, k))}</pre></details></div></div>`;
+}
+/* تنبيه قبل الاعتماد: حصص بلا منتظر أو تعارض أو انتظار مكرر */
+async function waitGate(iso) {
+  if (!tt0()) return true; const em = wSlots(iso).filter(x => !slotT(x)), bad = wSlots(iso).filter(x => slotT(x) && subIssue(iso, x.bi, x.p, slotT(x))), dbl = Object.entries(waitLoad(iso)).filter(([k, v]) => v > 1);
+  if (!em.length && !bad.length && !(oneWait() && dbl.length)) return true;
+  const L = [];
+  if (em.length) L.push(`⏳ ${em.length === 1 ? 'حصة واحدة' : em.length === 2 ? 'حصتان' : em.length + (em.length <= 10 ? ' حصص' : ' حصة')} بلا منتظر:\n` + em.slice(0, 6).map(x => `• ح${x.p} ش ${ttSecs(x.b.abs, wdOf(iso), x.p).join('، ')} — بدل ${x.b.abs}`).join('\n') + (em.length > 6 ? `\n• و${em.length - 6} غيرها` : ''));
+  if (bad.length) L.push(`⚠ ${bad.length} تعارض:\n` + bad.slice(0, 4).map(x => `• ح${x.p} ${slotT(x)} — ${subIssue(iso, x.bi, x.p, slotT(x))}`).join('\n'));
+  if (oneWait() && dbl.length) L.push(`×2 ${dbl.length} ${dbl.length > 1 ? 'معلمين عليهم' : 'معلم عليه'} أكثر من انتظار.`);
+  const go = await choiceBox('قبل الاعتماد:\n\n' + L.join('\n\n'), em.length || bad.length ? '▶ أكمل التسديد' : 'مراجعة', 'متابعة على أي حال');
+  if (go) { const t = em[0] || bad[0]; if (wView() !== 'p') D().cfg.wview = 'p'; WA = null; WSHEET = t ? { bi: t.bi, p: t.p } : null; render(); return false; }
+  return true;
 }
 function vWait(iso) {
   const w = D().wait[iso] || { blocks: [] }, d = wdOf(iso);
@@ -590,7 +607,7 @@ document.addEventListener('click', async e => {
     exitR()[normName(n)] = { n, days: [] }; save(); render(); return toast(`🚪 ${n}: يُستبعد بعد آخر حصة له كل يوم`); }
   if (a === 'rDel') { RULE_OPEN = true; delete exitR()[normName(b.dataset.n)]; save(); render(); return toast(`حُذفت قاعدة ${b.dataset.n}`); }
   if (a === 'rDay') { RULE_OPEN = true; const r = exitR()[normName(b.dataset.n)], i = +b.dataset.v; let ds = r.days && r.days.length ? r.days.slice() : [0, 1, 2, 3, 4]; ds = ds.includes(i) ? ds.filter(x => x !== i) : ds.concat(i).sort(); if (!ds.length) return toast('اختر يوماً واحداً على الأقل، أو احذف القاعدة', true); r.days = ds.length === 5 ? [] : ds; save(); render(); return; }
-  if (a === 'waOpen') { WA = b.dataset.v; WSHEET = null; render(); return; }
+  if (a === 'waOpen') { if (b.dataset.v === 'wait' && !(await waitGate(iso))) return; WA = b.dataset.v; WSHEET = null; render(); return; }
   if (a === 'waClose') { WA = null; render(); return; }
   if (a === 'waDelN') { D().cfg.waN = waNums().filter(f => f.n !== b.dataset.n); save(); render(); return; }
   if (a === 'waTxt') { let n = b.dataset.n; if (n === '__in') { const v = (document.getElementById('waIn') || {}).value; n = waNum(v); if (!n || n.length < 10) return toast('اكتب رقم جوال صحيح', true); if (!waNums().some(f => f.n === n)) { waNums().unshift({ n, l: '0' + n.slice(3) }); D().cfg.waN = waNums().slice(0, 8); save(); } }
@@ -609,7 +626,7 @@ document.addEventListener('click', async e => {
   if (a === 'wSkip') { const n = nextEmpty(iso, WSHEET); WSHEET = n ? { bi: n.bi, p: n.p } : null; render(); return; }
   if (a === 'wOne') { D().cfg.oneWait = !oneWait(); save(); render(); return toast(oneWait() ? 'من أخذ انتظاراً اليوم يُؤخَّر ويُطوى، ولا تختاره التعبئة التلقائية إلا عند الضرورة' : 'أُلغي قيد الانتظار الواحد — الترتيب بالأنسب فقط'); }
   if (a === 'wPick') { wHint(1); const cur = WSHEET, prev = b.dataset.n ? waitsOf(iso, b.dataset.n, cur) : []; setPath(`daily.wait.${iso}.blocks.${cur.bi}.rows.${cur.p}.t`, b.dataset.n); save();
-    const n = b.dataset.n ? nextEmpty(iso, cur) : null; WSHEET = b.dataset.n ? (n ? { bi: n.bi, p: n.p } : null) : cur; render(); if (b.dataset.n && prev.length) toast(`⚠ ${b.dataset.n}: هذا انتظاره ${prev.length === 1 ? 'الثاني' : 'رقم ' + (prev.length + 1)} اليوم (سبق في ح${prev.join('، ح')})`, true); else if (b.dataset.n) toast(`✓ ${b.dataset.n} — الحصة ${cur.p}${n ? (n.bi !== cur.bi ? ` · الغائب التالي: ${n.b.abs}` : ` · التالي: الحصة ${n.p}`) : ' · اكتمل التسديد ✓'}`); return; }
+    const n = b.dataset.n ? nextEmpty(iso, cur) : null; WSHEET = b.dataset.n ? (n ? { bi: n.bi, p: n.p } : null) : cur; render(); if (b.dataset.n && prev.length) toast(`⚠ ${b.dataset.n}: هذا انتظاره ${prev.length === 1 ? 'الثاني' : 'رقم ' + (prev.length + 1)} اليوم (سبق في ح${prev.join('، ح')})`, true); else if (b.dataset.n) toast(`✓ ${b.dataset.n} — الحصة ${cur.p}${n ? (n.bi !== cur.bi ? ` · الغائب التالي: ${n.b.abs}` : ` · التالي: الحصة ${n.p}`) : ' · اكتمل التسديد ✓ — اطبع أو أرسل'}`); return; }
   if (a === 'wQOut') { const n = b.dataset.n, p = +b.dataset.p, x = quickOut(iso, n, p); if (x === false) return toast(`${n} مسجل غائباً اليوم`); save(); render(); const bl = W(iso).blocks.find(z => normName(z.abs) === normName(n)), dd = wdOf(iso), need = dd >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(q => ttCell(n, dd, q) && blkNeeds(bl, q)).length : 0;
     return toast(`⏱ ${n} خارج من الحصة ${p}${need ? ` · أُضيفت ${need} من حصصه للتسديد` : ''}${reflowMsg(n, x)} — للتراجع المس ↺`, x.got.some(g => !g.t)); }
   if (a === 'wQUndo') { quickUndo(iso, b.dataset.n); save(); render(); return toast(`↺ ${b.dataset.n} موجود — أُلغي الاستئذان`); }
@@ -642,7 +659,7 @@ document.addEventListener('click', async e => {
   if (a === 'dWeek') { const w = wdOf(iso); if (w < 0) return toast('اختر يوماً دراسياً', true); D().week[w] = clone(U(iso)); save(); return toast(`حُفظ كجدول ثابت — سيُعبّأ تلقائياً في كل يوم ${TT_DAYS[w]}`); }
   if (a === 'dReset') { if (await confirmBox('مسح تعبئة المناوبة لهذا اليوم؟')) { delete D().duty[iso]; save(); render(); } return; }
   if (a === 'dPrint' || a === 'dPdf' || a === 'dWord' || a === 'dXls') {
-    const k = b.dataset.v, g = dailyGroups(k), nm = dailyName(k); if (!g[0].pages.length) return toast('لا توجد بيانات', true);
+    const k = b.dataset.v; if (k === 'wait' && !(await waitGate(iso))) return; const g = dailyGroups(k), nm = dailyName(k); if (!g[0].pages.length) return toast('لا توجد بيانات', true);
     if (a === 'dPdf') return downloadPdf(g, nm); if (a === 'dWord') return wordDoc(g, nm);
     if (a === 'dXls') return xlsFromGroups(g, nm);
     return openPreview(g, nm);

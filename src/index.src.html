@@ -781,6 +781,25 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .cg.had summary{color:#b45309}.cg.had .cpick{border-style:dashed}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dblw,:root:not([data-theme="light"]) .cg.had summary{color:#fbbf24}}:root[data-theme="dark"] .dblw,:root[data-theme="dark"] .cg.had summary{color:#fbbf24}
 .wfold .dbl{font-style:normal;font-size:.62rem;font-weight:800;color:#fff;background:#d97706;border-radius:5px;padding:0 4px;margin-inline-start:4px}
+.wgh{margin:8px 2px 0;font-size:.92rem;display:flex;align-items:center;gap:8px;color:var(--ink)}.wgh::before{content:'';width:14px;height:14px;border-radius:5px;background:var(--gc)}.wgh.g1{--gc:var(--g1)}.wgh.g2{--gc:var(--g2)}.wgh.g3{--gc:var(--g3)}.wgh::after{content:'';flex:1;height:2px;border-radius:2px;background:color-mix(in srgb,var(--gc) 45%,transparent)}
+@media (min-width:900px){.wgh{grid-column:1/-1}}
+.wcards h3.wgh{background:none;border:0;box-shadow:none;padding:4px 2px 0;margin:10px 0 0;color:var(--ink);font-size:.95rem;font-weight:800;border-radius:0}
+/* الألوان: أخضر/أصفر/برتقالي للمراحل فقط — والاكتمال والاقتراح بالأزرق حتى لا يختلط الأخضر بالأول ثانوي */
+:root{--done:#0e7490}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--done:#38bdf8}}:root[data-theme="dark"]{--done:#38bdf8}
+.wcard.g1{--gc:var(--g1)}.wcard.g2{--gc:var(--g2)}.wcard.g3{--gc:var(--g3)}.wcard{border-inline-start:5px solid var(--gc,var(--line))}
+.wcard.full{border-color:var(--line);border-inline-start-color:var(--gc);background:color-mix(in srgb,var(--done) 5%,var(--surface))}
+.wcard header i.ok{background:var(--done);color:#fff}
+.wslot.ok .tn{color:var(--ink)}.wslot.ok .tn::first-letter{color:var(--done)}
+.wprog .bar i{background:var(--done)}.okt{color:var(--done)}
+.wfold{color:var(--ink)}.wfold em{color:var(--done);font-weight:700}
+.crow.top .cpick{border-color:var(--done);background:color-mix(in srgb,var(--done) 12%,var(--surface))}.cpick .st{color:var(--done)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cpick .st,:root:not([data-theme="light"]) .wslot.ok .tn::first-letter{color:var(--done)}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .wslot.ok .tn{color:var(--ink)}}:root[data-theme="dark"] .wslot.ok .tn{color:var(--ink)}
+/* الحصة المنتظِرة: بلا لون مرحلة ولا برتقالي — إطار متقطع ونص عادي، فلا يختلط بالثالث ثانوي */
+.wslot:not(.ok):not(.bad){border-style:dashed}.wslot:not(.ok):not(.bad) .tn,:root[data-theme="dark"] .wslot:not(.ok):not(.bad) .tn{color:var(--ink);opacity:.85;font-weight:700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .wslot:not(.ok):not(.bad) .tn{color:var(--ink)}}
+.wslot.bad .tn{color:#dc2626!important}
+#confMsg{white-space:pre-line;text-align:start;max-height:55vh;overflow:auto}.wprog .left{font-style:normal;font-weight:800;color:var(--ink);border:1px dashed var(--muted);border-radius:999px;padding:1px 8px}
 </style>
 </head>
 <body>
