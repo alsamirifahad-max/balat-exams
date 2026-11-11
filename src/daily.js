@@ -345,40 +345,46 @@ function leaveForm(iso, bi) {
 /* ===== لوحة الانتظار حسب الحصة: قائمة نظيفة + ورقة اختيار منبثقة ===== */
 var WSHEET = null, WSET = -1;
 function wHint(v) { try { if (v) localStorage.setItem('balat-exams-v1-whint', '1'); return localStorage.getItem('balat-exams-v1-whint') === '1'; } catch (e) { return !!v; } }
-function wView() { return D().cfg.wview || 'p'; }
+function wView() { const c = D().cfg; if (!c.wv2) { c.wview = 'p'; c.wv2 = 1; } return c.wview || 'p'; }
+/* ترتيب التسديد: غائب بعد غائب، وحصصه بالترتيب */
 function wSlots(iso) { const w = D().wait[iso] || { blocks: [] }, d = wdOf(iso), out = [];
-  for (let p = 1; p <= 7; p++) w.blocks.forEach((b, bi) => { if (b.abs && d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p)) out.push({ p, bi, b }); }); return out; }
+  w.blocks.forEach((b, bi) => { for (let p = 1; p <= 7; p++) if (b.abs && d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p)) out.push({ p, bi, b }); }); return out; }
+const slotT = x => ((x.b.rows || {})[x.p] || {}).t;
 function nextEmpty(iso, after) { const S2 = wSlots(iso), i = after ? S2.findIndex(x => x.p === after.p && x.bi === after.bi) : -1;
-  const rest = S2.slice(i + 1).concat(S2.slice(0, i + 1)); return rest.find(x => !((x.b.rows || {})[x.p] || {}).t && !(after && x.p === after.p && x.bi === after.bi)) || null; }
+  return S2.slice(i + 1).concat(S2.slice(0, Math.max(0, i))).find(x => !slotT(x)) || null; }
+const GCL = { 1: 'أول', 2: 'ثاني', 3: 'ثالث' };
 function wBoard(iso) {
-  const w = D().wait[iso], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, slots = wSlots(iso), done = slots.filter(x => ((x.b.rows || {})[x.p] || {}).t).length;
-  const strip = `<div class="wabs">${w.blocks.map((b, bi) => { const n = d >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(p => ttCell(b.abs, d, p) && blkNeeds(b, p)).length : 0, lv = leaveOf(iso, b.abs);
-      return `<button type="button" class="wab${b.part ? ' part' : ''}${WSET === bi ? ' on' : ''}" data-act="wSetOpen" data-v="${bi}"><b>${b.part ? '⏱ ' : lv ? '🕘 ' : ''}${esc(b.abs)}</b><small>${b.part ? esc(partLbl(b, L)) : lv ? 'غياب لعدة أيام' : 'غائب'} · ${n} حصص</small><i>⚙</i></button>`; }).join('')}</div>
-    ${WSET >= 0 && w.blocks[WSET] ? (() => { const b = w.blocks[WSET]; return `<div class="wsetp"><div class="acts wrap" style="margin:0 0 6px"><b>${esc(b.abs)}</b><span class="sp1"></span><button class="btn sm ghost" data-act="wDel" data-v="${WSET}" type="button">حذف من الغياب</button><button class="btn sm ghost" data-act="wSetOpen" data-v="-1" type="button">إغلاق</button></div>${partCtl(iso, b, WSET)}${b.part ? '' : leaveCtl(iso, b, WSET)}</div>`; })() : ''}`;
-  const per = [];
-  for (let p = 1; p <= 7; p++) { const ps = slots.filter(x => x.p === p); if (!ps.length) continue; const isNow = iso === todayIso() && curP() === p, pd = ps.filter(x => ((x.b.rows || {})[x.p] || {}).t).length;
-    per.push(`<section class="wper${isNow ? ' now' : ''}${pd === ps.length ? ' full' : ''}"><header><b>الحصة ${p}</b><span>${esc(pTimeAny(p))}</span>${isNow ? '<em class="nowtag">الآن</em>' : ''}<i>${pd}/${ps.length}</i></header>
-      ${ps.map(x => { const r = (x.b.rows || {})[p] || {}, sc = ttSecs(x.b.abs, d, p), g = secGrade(sc[0]), iss = subIssue(iso, x.bi, p, r.t);
-        return `<button type="button" class="wslot g${g}${r.t ? ' ok' : ''}${iss ? ' bad' : ''}" data-act="wOpen" data-bi="${x.bi}" data-p="${p}"><span class="sc"><b>${esc(sc.join('، '))}</b><small>${GSHORT[g] || ''}</small></span><span class="ab">بدل <b>${esc(x.b.abs)}</b></span><span class="tn">${r.t ? `${iss ? '⚠ ' : '✓ '}${esc(r.t)}` : 'اختر المنتظر'}</span></button>`; }).join('')}</section>`); }
+  const w = D().wait[iso], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, slots = wSlots(iso), done = slots.filter(slotT).length;
+  const cards = w.blocks.map((b, bi) => { const my = slots.filter(x => x.bi === bi), md = my.filter(slotT).length, lv = leaveOf(iso, b.abs);
+    const head = `<header><button type="button" class="wcn" data-act="wSetOpen" data-v="${bi}"><b>${b.part ? '⏱ ' : lv ? '🕘 ' : ''}${esc(b.abs)}</b><small>${b.part ? esc(partLbl(b, L)) : lv ? 'غياب لعدة أيام' : 'غائب اليوم'} · ⚙</small></button><i class="${my.length && md === my.length ? 'ok' : ''}">${my.length ? (md === my.length ? '✓ ' : '') + md + '/' + my.length : '—'}</i></header>`;
+    const set = WSET === bi ? `<div class="wsetp"><div class="acts wrap" style="margin:0 0 6px"><span class="sp1"></span><button class="btn sm ghost" data-act="wDel" data-v="${bi}" type="button">حذف من الغياب</button><button class="btn sm ghost" data-act="wSetOpen" data-v="-1" type="button">إغلاق</button></div>${partCtl(iso, b, bi)}${b.part ? '' : leaveCtl(iso, b, bi)}</div>` : '';
+    const rows = my.map(x => { const r = (b.rows || {})[x.p] || {}, sc = ttSecs(b.abs, d, x.p), g = secGrade(sc[0]), iss = subIssue(iso, bi, x.p, r.t), now = iso === todayIso() && curP() === x.p;
+      return `<button type="button" class="wslot g${g}${r.t ? ' ok' : ''}${iss ? ' bad' : ''}${now ? ' now' : ''}" data-act="wOpen" data-bi="${bi}" data-p="${x.p}"><span class="pp"><b>${x.p}</b><small>${t12(((bellNow()[g === 1 ? 1 : 23] || [])[x.p - 1] || [])[0])}</small></span><span class="gp">${GCL[g] || ''} <b>${esc(sc.join('، '))}</b></span><span class="tn">${r.t ? `${iss ? '⚠' : '✓'} ${esc(r.t)}` : 'اختر ←'}</span>${now ? '<em class="nowtag">الآن</em>' : ''}</button>`; }).join('');
+    const full = my.length && md === my.length;
+    if (full && WEXP !== bi && WSET !== bi) return `<article class="wcard full fold">${head}<button type="button" class="wfold" data-act="wExp" data-v="${bi}">${my.map(x => `<span class="g${secGrade(ttSecs(b.abs, d, x.p)[0])}"><b>ح${x.p}</b> ${esc(slotT(x))}</span>`).join('')}<em>تعديل</em></button></article>`;
+    return `<article class="wcard${full ? ' full' : ''}">${head}${set}${rows || '<p class="hint" style="margin:6px 4px">لا حصص تحتاج تسديداً.</p>'}</article>`; }).join('');
   const pct = slots.length ? Math.round(done * 100 / slots.length) : 0;
-  const hint = wHint() ? '' : `<div class="whint"><span><b>①</b> المس الغائبين</span><span><b>②</b> ⚡ وزّع، أو المس أي حصة واختر بنفسك</span><span><b>③</b> معاينة وطباعة</span><button type="button" class="x" data-act="wHintOff" aria-label="إخفاء">✕</button></div>`;
-  return `${hint}${strip}<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة</span>${slots.length - done ? `<button class="btn sm pri" data-act="wAuto" type="button">⚡ وزّع الباقي بالأنسب</button><button class="btn sm" data-act="wOpenNext" type="button">ابدأ الاختيار ←</button>` : '<em class="okt">✓ اكتمل التسديد</em>'}</div>
-    <div class="wpers">${per.join('') || '<p class="hint">لا حصص تحتاج تسديداً.</p>'}</div>${WSHEET ? wSheet(iso) : ''}`;
+  return `<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : '<em class="okt">✓ اكتمل التسديد</em>'}</div>
+    <div class="wgkey"><span class="g1">أول ثانوي</span><span class="g2">ثاني ثانوي</span><span class="g3">ثالث ثانوي</span></div>
+    <div class="wcards">${cards}</div>${WSHEET ? wSheet(iso) : ''}`;
 }
+var WMORE = false, WEXP = -1;
 function wSheet(iso) {
   const { bi, p } = WSHEET, w = D().wait[iso], b = w && w.blocks[bi]; if (!b) { WSHEET = null; return ''; }
   const d = wdOf(iso), r = (b.rows || {})[p] || {}, sc = ttSecs(b.abs, d, p), g = secGrade(sc[0]), R = waitRank(iso, b, p);
   const free = subOptsFor(iso, bi, p)[0].items, live = free.filter(n => !R.info(n).done).sort(R.cmp), dn = free.filter(n => R.info(n).done).sort((x, y) => (R.info(y).lc - R.info(x).lc) || R.cmp(x, y));
   const free2 = new Set(free.map(normName)), others = ttNames().filter(n => !free2.has(normName(n)) && normName(n) !== normName(b.abs)).sort((a, c) => AR.compare(normName(a), normName(c)));
-  const row = (n, i, kind) => { const f = R.info(n), why = kind === 'x' ? (subIssue(iso, bi, p, n) || '') : [f.ss ? '◆ يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`, `${f.term} بالفصل`, f.done ? (f.lc ? `🏁 آخر حصة ${f.lc}` : 'لا حصص اليوم') : ''].filter(Boolean).join(' · ');
-    return `<div class="crow${kind === 'x' ? ' x' : ''}${r.t && normName(r.t) === normName(n) ? ' cur' : ''}" data-q="${esc(normName(n))}"><button type="button" class="cpick" data-act="wPick" data-n="${esc(n)}">${kind === 'l' && i < 3 ? '<i class="st">★</i>' : ''}<b>${esc(n)}</b><small>${esc(why)}</small></button>${kind === 'x' ? '' : `<button type="button" class="wlv" data-act="wQOut" data-p="${p}" data-n="${esc(n)}" aria-label="${esc(n)} خرج قبل الحصة">⏱</button>`}</div>`; };
-  const nx = nextEmpty(iso, WSHEET), left = wSlots(iso).filter(x => !((x.b.rows || {})[x.p] || {}).t).length;
-  return `<div class="wsh-bg" data-act="wClose"></div><div class="wsh" role="dialog" aria-label="اختيار المنتظر"><div class="wsh-h"><div><b>الحصة ${p} · ش ${esc(sc.join('، '))}</b><small>${GSHORT[g] ? GSHORT[g] + ' ثانوي · ' : ''}بدل ${esc(b.abs)} · ${esc(pTime(p, g))}</small></div><button type="button" class="x" data-act="wClose" aria-label="إغلاق">✕</button></div>
-    <input class="in wsq" type="search" placeholder="ابحث عن اسم…" oninput="const q=normName(this.value);this.closest('.wsh').querySelectorAll('.crow').forEach(e=>e.hidden=q&&!e.dataset.q.includes(q));this.closest('.wsh').querySelectorAll('details.cg').forEach(e=>{if(q)e.open=true})">
-    <div class="wsh-b">${live.length ? `<div class="cg0">${live.map((n, i) => row(n, i, 'l')).join('')}</div>` : '<p class="hint">لا يوجد متاح ممن لديهم حصص لاحقة.</p>'}
-      ${dn.length ? `<details class="cg"${live.length ? '' : ' open'}><summary>🏁 أنهوا حصصهم — غالباً خرجوا (${dn.length})</summary>${dn.map((n, i) => row(n, i, 'd')).join('')}</details>` : ''}
-      ${others.length ? `<details class="cg"><summary>⚠ غير متاحين في هذه الحصة (${others.length})</summary>${others.map((n, i) => row(n, i, 'x')).join('')}</details>` : ''}</div>
-    <div class="wsh-f">${r.t ? `<button class="btn sm ghost" data-act="wPick" data-n="" type="button">مسح الاختيار</button>` : ''}<span class="sp1"></span><small>${left ? `باقي ${left}` : 'اكتمل ✓'}</small>${nx ? `<button class="btn sm" data-act="wSkip" type="button">تخطَّ ←</button>` : ''}</div></div>`;
+  const row = (n, i, kind) => { const f = R.info(n), why = kind === 'x' ? (subIssue(iso, bi, p, n) || '') : [f.ss ? '◆ يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`, f.term ? `${f.term} انتظار بالفصل` : '', f.done ? (f.lc ? `🏁 آخر حصة ${f.lc}` : 'لا حصص اليوم') : ''].filter(Boolean).join(' · ');
+    return `<div class="crow${kind === 'x' ? ' x' : ''}${kind === 'l' && i === 0 ? ' top' : ''}${r.t && normName(r.t) === normName(n) ? ' cur' : ''}" data-q="${esc(normName(n))}"><button type="button" class="cpick" data-act="wPick" data-n="${esc(n)}">${kind === 'l' && i === 0 ? '<i class="st">★ الأنسب</i>' : ''}<b>${esc(n)}</b><small>${esc(why)}</small></button>${kind === 'x' ? '' : `<button type="button" class="wlv" data-act="wQOut" data-p="${p}" data-n="${esc(n)}" title="خرج قبل هذه الحصة" aria-label="${esc(n)} خرج قبل الحصة">⏱</button>`}</div>`; };
+  const my = wSlots(iso).filter(x => x.bi === bi), k = my.findIndex(x => x.p === p) + 1, left = wSlots(iso).filter(x => !slotT(x)).length, nx = nextEmpty(iso, WSHEET);
+  const top = live.slice(0, 4), more = live.slice(4);
+  return `<div class="wsh-bg" data-act="wClose"></div><div class="wsh g${g}" role="dialog" aria-label="اختيار المنتظر">
+    <div class="wsh-h"><span class="gbadge g${g}">${GCL[g] || ''}</span><div><b>${esc(b.abs)}</b><small>الحصة ${p} <span dir="ltr">${esc(pTime(p, g))}</span> · ش ${esc(sc.join('، '))} · ${k} من ${my.length}</small></div><button type="button" class="x" data-act="wClose" aria-label="إغلاق">✕</button></div>
+    <div class="wsh-b">${top.length ? top.map((n, i) => row(n, i, 'l')).join('') : '<p class="hint">لا يوجد متاح ممن لديهم حصص لاحقة.</p>'}
+      ${more.length ? `<details class="cg"${WMORE ? ' open' : ''} ontoggle="WMORE=this.open"><summary>بقية المتاحين (${more.length})</summary>${more.map((n, i) => row(n, i + 4, 'm')).join('')}</details>` : ''}
+      ${dn.length ? `<details class="cg"${top.length ? '' : ' open'}><summary>🏁 أنهوا حصصهم — غالباً خرجوا (${dn.length})</summary>${dn.map((n, i) => row(n, i, 'd')).join('')}</details>` : ''}
+      <details class="cg"><summary>🔎 بحث أو اسم غير متاح</summary><input class="in wsq" type="search" placeholder="اكتب جزءاً من الاسم…" oninput="const q=normName(this.value),bx=this.closest('details');bx.querySelectorAll('.crow').forEach(e=>e.hidden=!q||!e.dataset.q.includes(q))">${others.concat(live, dn).filter((n, i, A) => A.findIndex(z => normName(z) === normName(n)) === i).map((n, i) => row(n, i, others.includes(n) ? 'x' : 'm').replace('class="crow', 'hidden class="crow')).join('')}</details></div>
+    <div class="wsh-f">${r.t ? `<button class="btn sm ghost" data-act="wPick" data-n="" type="button">مسح</button>` : ''}<span class="sp1"></span><small>${left ? `باقي ${left}` : 'اكتمل ✓'}</small>${nx ? `<button class="btn sm" data-act="wSkip" type="button">تخطَّ ←</button>` : ''}</div></div>`;
 }
 function vWait(iso) {
   const w = D().wait[iso] || { blocks: [] }, d = wdOf(iso);
@@ -407,7 +413,7 @@ function vWait(iso) {
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
     ${w.blocks.length && !board ? `<div class="wsum"><span><b>${w.blocks.filter(b => !b.part).length}</b> غائب</span>${w.blocks.some(b => b.part) ? `<span><b>${w.blocks.filter(b => b.part).length}</b> مستأذن/متأخر</span>` : ''}<span><b>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</b> حصة مسددة</span>${empty ? `<span class="warn"><b>${empty}</b> بلا منتظر</span>` : ''}${issues ? `<span class="bad"><b>${issues}</b> تعارض</span>` : ''}</div>` : '<p class="hint" style="margin-top:10px">لا يوجد غائبون مسجلون لهذا اليوم. يمكنك طباعة استمارة فارغة.</p>'}
     ${w.blocks.length && tt0() && !board ? `<div class="wlegend" aria-label="دليل الرموز"><span><b class="lg st">★</b>الأنسب (حتى 3)</span><span><b class="lg">◆</b>يدرّس الشعبة</span><span><b class="lg n">3</b>حصصه اليوم</span><span><b class="lg">⏱</b>خرج قبل الحصة</span><span><b class="lg">🏁</b>أنهى حصصه</span><button type="button" class="hlp" data-help="ترتيب الأنسب: من يدرّس الشعبة نفسها، ثم من يدرّس الصف، ثم الأقل حصصاً اليوم، ثم الأقل انتظاراً في الفصل. يُؤخَّر من بلغ 5 حصص اليوم ومن أنهى حصصه. المس «★ الأنسب» لاختياره مباشرة، أو أي اسم آخر." aria-label="شرح الترتيب">؟</button></div>` : ''}
-    ${w.blocks.length && tt0() ? `<div class="wvt" role="tablist"><button type="button" class="${board ? 'on' : ''}" data-act="wView" data-v="p">☰ حسب الحصة</button><button type="button" class="${board ? '' : 'on'}" data-act="wView" data-v="a">▦ حسب الغائب</button></div>` : ''}
+    ${w.blocks.length && tt0() ? `<div class="wvt" role="tablist"><button type="button" class="${board ? 'on' : ''}" data-act="wView" data-v="p">☰ لوحة التسديد</button><button type="button" class="${board ? '' : 'on'}" data-act="wView" data-v="a">▦ تفصيلي</button></div>` : ''}
     ${board ? wBoard(iso) : `<div class="wblks">${blocks}</div>`}</section>`;
 }
 function tt0() { return !!D().tt; }
@@ -554,15 +560,16 @@ document.addEventListener('click', async e => {
     exitR()[normName(n)] = { n, days: [] }; save(); render(); return toast(`🚪 ${n}: يُستبعد بعد آخر حصة له كل يوم`); }
   if (a === 'rDel') { RULE_OPEN = true; delete exitR()[normName(b.dataset.n)]; save(); render(); return toast(`حُذفت قاعدة ${b.dataset.n}`); }
   if (a === 'rDay') { RULE_OPEN = true; const r = exitR()[normName(b.dataset.n)], i = +b.dataset.v; let ds = r.days && r.days.length ? r.days.slice() : [0, 1, 2, 3, 4]; ds = ds.includes(i) ? ds.filter(x => x !== i) : ds.concat(i).sort(); if (!ds.length) return toast('اختر يوماً واحداً على الأقل، أو احذف القاعدة', true); r.days = ds.length === 5 ? [] : ds; save(); render(); return; }
+  if (a === 'wExp') { const v = +b.dataset.v; WEXP = WEXP === v ? -1 : v; render(); return; }
   if (a === 'wHintOff') { wHint(1); render(); return; }
   if (a === 'wView') { D().cfg.wview = b.dataset.v; WSHEET = null; save(); render(); return; }
   if (a === 'wSetOpen') { const v = +b.dataset.v; WSET = WSET === v ? -1 : v; render(); return; }
-  if (a === 'wOpen') { WSHEET = { bi: +b.dataset.bi, p: +b.dataset.p }; render(); setTimeout(() => { const q = document.querySelector('.wsh .wsq'); if (q && window.innerWidth > 700) q.focus(); }, 30); return; }
-  if (a === 'wOpenNext') { const cp = iso === todayIso() ? curP() : 1, em = wSlots(iso).filter(x => !((x.b.rows || {})[x.p] || {}).t), n = em.find(x => x.p >= cp) || em[0]; if (n) { WSHEET = { bi: n.bi, p: n.p }; render(); } return; }
+  if (a === 'wOpen') { WMORE = false; WSHEET = { bi: +b.dataset.bi, p: +b.dataset.p }; render(); setTimeout(() => { const q = document.querySelector('.wsh .wsq'); if (q && window.innerWidth > 700) q.focus(); }, 30); return; }
+  if (a === 'wOpenNext') { const em = wSlots(iso).filter(x => !slotT(x)), n = em[0]; if (n) { WSHEET = { bi: n.bi, p: n.p }; render(); } return; }
   if (a === 'wClose') { WSHEET = null; render(); return; }
   if (a === 'wSkip') { const n = nextEmpty(iso, WSHEET); WSHEET = n ? { bi: n.bi, p: n.p } : null; render(); return; }
   if (a === 'wPick') { wHint(1); const cur = WSHEET; setPath(`daily.wait.${iso}.blocks.${cur.bi}.rows.${cur.p}.t`, b.dataset.n); save();
-    const n = b.dataset.n ? nextEmpty(iso, cur) : null; WSHEET = b.dataset.n ? (n ? { bi: n.bi, p: n.p } : null) : cur; render(); if (b.dataset.n) toast(`✓ ${b.dataset.n} — الحصة ${cur.p}${n ? ` · التالي: الحصة ${n.p}` : ' · اكتمل التسديد'}`); return; }
+    const n = b.dataset.n ? nextEmpty(iso, cur) : null; WSHEET = b.dataset.n ? (n ? { bi: n.bi, p: n.p } : null) : cur; render(); if (b.dataset.n) toast(`✓ ${b.dataset.n} — الحصة ${cur.p}${n ? (n.bi !== cur.bi ? ` · الغائب التالي: ${n.b.abs}` : ` · التالي: الحصة ${n.p}`) : ' · اكتمل التسديد ✓'}`); return; }
   if (a === 'wQOut') { const n = b.dataset.n, p = +b.dataset.p, x = quickOut(iso, n, p); if (x === false) return toast(`${n} مسجل غائباً اليوم`); save(); render(); const bl = W(iso).blocks.find(z => normName(z.abs) === normName(n)), dd = wdOf(iso), need = dd >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(q => ttCell(n, dd, q) && blkNeeds(bl, q)).length : 0;
     return toast(`⏱ ${n} خارج من الحصة ${p}${need ? ` · أُضيفت ${need} من حصصه للتسديد` : ''}${reflowMsg(n, x)} — للتراجع المس ↺`, x.got.some(g => !g.t)); }
   if (a === 'wQUndo') { quickUndo(iso, b.dataset.n); save(); render(); return toast(`↺ ${b.dataset.n} موجود — أُلغي الاستئذان`); }
