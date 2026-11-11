@@ -1370,7 +1370,8 @@ function vFiles() {
       out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button><button class="btn sm" data-act="qopen" data-form="tList" type="button">معاينة وطباعة</button>` })}
     ${ttCard(4)}
     ${calCard(5)}
-  </div><div id="upMsg"></div><div id="upMsg_tch"></div><div id="upMsg_tt"></div><div id="upMsg_cal"></div>`;
+    ${bellCard(6)}
+  </div><div id="upMsg"></div><div id="upMsg_tch"></div><div id="upMsg_tt"></div><div id="upMsg_cal"></div><div id="upMsg_bell"></div>`;
   const tlist = `<section class="card" id="tchCard">
     <h2>قائمة المعلمين — تعديل يدوي</h2>
     <p class="hint">اسم في كل سطر. تُضاف أسماء معلمي الإسناد تلقائياً، وكل قوائم اختيار المعلمين في الموقع مرتبة هجائياً.</p>
@@ -1379,7 +1380,7 @@ function vFiles() {
     <div class="acts"><button class="btn sm" data-act="sortTeachers" type="button">ترتيب القائمة هجائياً</button><button class="btn sm ghost" data-act="mergeTeachers" type="button">ضم جميع معلمي الإسناد للقائمة</button></div>
     <details${S.teachers.length ? '' : ' open'}><summary>عرض القائمة وتعديلها (${S.teachers.length})</summary><textarea class="in ta" data-k="teachers" data-lines="1" rows="12" id="f_teachers">${esc(S.teachers.join('\n'))}</textarea></details>
   </section>`;
-  if (agentOnly) return `<div class="fcards">${ttCard(2)}${calCard(3, true)}${fileCard('tch', { n: 1, c: PEOPLE.agent.c, t: 'قائمة المعلمين', d: 'معلمو المدرسة لحفظك — تنعكس في الإسناد. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt', facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span>` : '<span class="fnone">القائمة فارغة</span>', out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button>` })}</div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>` + tlist;
+  if (agentOnly) return `<div class="fcards">${ttCard(2)}${calCard(3, true)}${bellCard(4)}${fileCard('tch', { n: 1, c: PEOPLE.agent.c, t: 'قائمة المعلمين', d: 'معلمو المدرسة لحفظك — تنعكس في الإسناد. حدّثها متى تغيّر المعلمون.', has: S.teachers.length > 0, fmt: 'Excel أو Word أو PDF — مع مراجعة قبل الاعتماد', accept: '.xlsx,.xls,.csv,.docx,.doc,.pdf,.txt', facts: S.teachers.length ? `<b>${S.teachers.length}</b><span>معلماً</span>` : '<span class="fnone">القائمة فارغة</span>', out: `<button class="btn sm" data-act="tchTpl" type="button">Excel</button><button class="btn sm" data-act="qpdf" data-form="tList" type="button">PDF</button><button class="btn sm" data-act="qword" data-form="tList" type="button">Word</button>` })}</div><div id="upMsg_tch"></div><div id="upMsg_tt"></div>` + tlist;
   return cards + vStudents(true) + tlist;
 }
 function vStudents(noUpload) {
@@ -1482,6 +1483,8 @@ async function processSlot(slot, file) {
       }
     } else if (slot === 'cal') {
       msg = await calUpload(file);
+    } else if (slot === 'bell') {
+      msg = await bellUpload(file);
     } else if (slot === 'tch') {
       const found = await readTeacherFile(file);
       if (!found.length) throw new Error('لم يُعثر على أسماء معلمين في الملف. اجعل الأسماء في عمود عنوانه «اسم المعلم» أو اسماً في كل سطر، أو نزّل القالب واملأه.');
@@ -2820,7 +2823,7 @@ function choiceBox(msg, yes, no) {
     const fin = v => { m.hidden = true; Y.textContent = oy; N.textContent = on; Y.className = 'btn danger'; res(v); };
     Y.onclick = () => fin(true); N.onclick = () => fin(false); });
 }
-const SLOT_NAMES = { cal: 'التقويم الدراسي', ttn: 'جدول الفصل القادم', tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
+const SLOT_NAMES = { cal: 'التقويم الدراسي', bell: 'التوقيت المدرسي', ttn: 'جدول الفصل القادم', tt: 'الجدول المدرسي العام', tch: 'قائمة المعلمين', noor: 'ملف نور', guide: 'ملف الإرشاد', ta: 'ملف إسناد المعلمين', gs: 'بيان توزيع الدرجات', com: 'ملف اللجان' };
 /* يُطلب الرمز مرة واحدة في الجلسة؛ اختيار الملف يتم أولاً بلمسة مباشرة (متطلب سفاري في الآيفون) ثم التحقق */
 let UNLOCKED = (() => { try { return sessionStorage.getItem('balat-unlock') === '1' || !!localStorage.getItem('balat-exams-v1-code'); } catch (e) { return false; } })();
 async function unlock(reason) {

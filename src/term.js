@@ -10,7 +10,8 @@ function inT2() { return /الثاني|2/.test(S.s.sem || ''); }
 function isAdmin() { return !ROLE || ROLE === 'admin'; }
 
 /* ----- رفع التقويم: صورة أو PDF أو Word أو Excel ----- */
-async function calUpload(file) {
+/* قراءة ملف (صورة / PDF / Word / Excel) إلى صور ونص */
+async function readDocFile(file) {
   const buf = new Uint8Array(await file.arrayBuffer()); let imgs = [], txt = '', html = '';
   const asUrl = (b, type) => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(new Blob([b], { type })); });
   const isImg = /^image\//.test(file.type) || /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(file.name);
@@ -37,6 +38,10 @@ async function calUpload(file) {
     txt = rows.map(r => r.join(' ')).join('\n');
     html = `<table class="et dense"><tbody>${rows.slice(0, 80).map(r => `<tr>${r.map(c => `<td>${esc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   } else throw new Error('صيغة غير مدعومة — ارفع صورة أو PDF أو Word أو Excel');
+  return { imgs, txt, html };
+}
+async function calUpload(file) {
+  const { imgs, txt, html } = await readDocFile(file);
   if (!imgs.length && !html) throw new Error('لم أجد في الملف صورة أو نصاً للتقويم');
   const c = CAL(); const found = calDetect(txt);
   c.imgs = imgs; c.html = html; c.src = file.name; c.at = stamp(); c.own = true;

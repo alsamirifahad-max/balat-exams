@@ -23,6 +23,40 @@ var ADM_OPEN = false;
 function isAdm(n) { return admList().some(a => normName(a) === normName(n)); }
 function admSplit(names, absSet) { const adm = admList(), ak = new Set(adm.map(normName)); return { adm: adm.filter(n => !absSet || !absSet.has(normName(n))), rest: names.filter(n => !ak.has(normName(n))) }; }
 function D() { S.daily = S.daily || {}; const d = S.daily; d.wait = d.wait || {}; d.duty = d.duty || {}; d.week = d.week || {}; d.cfg = d.cfg || clone(DUTY_DEF); if (!d.cfg.b) d.cfg = clone(DUTY_DEF); return d; }
+/* ---------- التوقيت المدرسي (الجرس) ---------- */
+var BELL_W = { 1: [['07:30', '08:20'], ['08:20', '09:10'], ['09:10', '09:55'], ['10:20', '11:05'], ['11:05', '11:50'], ['11:50', '12:35'], ['12:35', '13:15']],
+  23: [['07:30', '08:20'], ['08:20', '09:10'], ['09:35', '10:20'], ['10:20', '11:05'], ['11:05', '11:50'], ['11:50', '12:35'], ['12:35', '13:15']] };
+function bell() { const c = D().cfg; if (!c.bell) c.bell = { act: 'w', w: clone(BELL_W), s: clone(BELL_W) }; ['w', 's'].forEach(k => { if (!c.bell[k]) c.bell[k] = clone(BELL_W); }); return c.bell; }
+function bellNow() { const b = bell(); return b[b.act] || b.w; }
+const BELL_NAME = { w: 'الشتوي', s: 'الصيفي' };
+function tMin(t) { const m = /(\d{1,2}):(\d{2})/.exec(String(t || '')); return m ? +m[1] * 60 + +m[2] : null; }
+function t12(t) { const m = tMin(t); if (m == null) return ''; let h = Math.floor(m / 60); const mm = String(m % 60).padStart(2, '0'); if (h > 12) h -= 12; return `${h}:${mm}`; }
+/* وقت الحصة حسب الصف: أول ثانوي له جدول، وثاني وثالث جدول */
+function pTime(p, g) { const B = bellNow(), r = (B[g === 1 ? 1 : 23] || [])[p - 1]; return r ? `${t12(r[0])}–${t12(r[1])}` : ''; }
+function pTimeAny(p) { const B = bellNow(), a = (B[1] || [])[p - 1], b = (B[23] || [])[p - 1]; if (!a || !b) return pTime(p, 2); return a[0] === b[0] && a[1] === b[1] ? pTime(p, 2) : `أول ${t12(a[0])} · ثاني/ثالث ${t12(b[0])}`; }
+/* الحصة الجارية الآن (أو القادمة وقت الفسحة) */
+function curP(atMin) { const B = bellNow(), m = atMin != null ? atMin : (() => { const t = new Date(); return t.getHours() * 60 + t.getMinutes(); })();
+  for (let p = 1; p <= 7; p++) { const e = Math.max(tMin((B[1][p - 1] || [])[1]) || 0, tMin((B[23][p - 1] || [])[1]) || 0); if (m < e) return p; } return 8; }
+function bellCard(n, noUp) {
+  const b = bell(), B = bellNow(), f = D().bellF;
+  const tbl = k => { const X = b[k]; return `<div class="tw"><table class="et bellt"><tr><th>الحصة</th><th>الأول الثانوي</th><th>الثاني والثالث الثانوي</th></tr>${[1, 2, 3, 4, 5, 6, 7].map(p => `<tr><td><b>${['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة'][p - 1]}</b></td>${[1, 23].map(g => `<td><span class="bt">${noUp ? `${t12(X[g][p - 1][0])} – ${t12(X[g][p - 1][1])}` : `${inp(`daily.cfg.bell.${k}.${g}.${p - 1}.0`, X[g][p - 1][0], { type: 'time' })}<i>إلى</i>${inp(`daily.cfg.bell.${k}.${g}.${p - 1}.1`, X[g][p - 1][1], { type: 'time' })}`}</span></td>`).join('')}</tr>`).join('')}</table></div>`; };
+  return fileCard('bell', { n, c: '#0f766e', t: 'التوقيت المدرسي', d: 'أوقات الحصص والفسح — تُعرض بجانب كل حصة في الانتظار، ويُعرف منها «الحصة الآن».', has: true, noUp,
+    fmt: 'صورة أو PDF أو Word', accept: 'image/*,.png,.jpg,.jpeg,.webp,.heic,.pdf,.docx,.doc',
+    facts: `<b>${BELL_NAME[b.act]}</b><span>المعتمد</span><em>الأولى ${t12(B[23][0][0])} · السابعة تنتهي ${t12(B[23][6][1])}</em>`,
+    out: `${f && (f.imgs && f.imgs.length || f.html) ? '<button class="btn sm" data-act="bellView" type="button">عرض الملف</button>' : ''}
+      <details class="caldates"><summary>جدول الأوقات${noUp ? '' : ' (تعديل)'}</summary>
+      ${noUp ? '' : `<div class="dtabs sm" style="margin:8px 0">${['w', 's'].map(k => `<button type="button" class="${b.act === k ? 'on' : ''}" data-act="bellAct" data-v="${k}">${k === 'w' ? '❄︎' : '☀︎'} التوقيت ${BELL_NAME[k]}${b.act === k ? ' ✓' : ''}</button>`).join('')}</div><small class="hint">الزر يعتمد التوقيت مباشرة. الحصة الثالثة تختلف بين الأول وبقية الصفوف بسبب الفسحة.</small>`}
+      ${tbl(b.act)}</details>` });
+}
+async function bellUpload(file) {
+  const { imgs, txt, html } = await readDocFile(file); if (!imgs.length && !html && !txt) throw new Error('لم أجد في الملف صورة أو نصاً');
+  D().bellF = { imgs: imgs.slice(0, 2), html, src: file.name, at: stamp() }; S.uploads.bell = { name: file.name, at: stamp(), info: imgs.length ? 'صورة' : 'نص' };
+  const ts = (toWestern(txt || '').match(/\b\d{1,2}[:٫.,]\d{2}\b/g) || []).map(x => { let [h, m] = x.split(/[:٫.,]/).map(Number); if (h < 6) h += 12; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`; }).filter(x => tMin(x) >= 360 && tMin(x) <= 900);
+  const b = bell(), k = b.act; let got = '';
+  if (ts.length === 28) { for (let p = 0; p < 7; p++) { b[k][1][p] = [ts[p * 2], ts[p * 2 + 1]]; b[k][23][p] = [ts[14 + p * 2], ts[14 + p * 2 + 1]]; } got = 'وقرأت منه الأوقات — راجعها في الجدول.'; }
+  else if (ts.length === 14) { for (let p = 0; p < 7; p++) { b[k][1][p] = b[k][23][p] = [ts[p * 2], ts[p * 2 + 1]]; } got = 'وقرأت منه الأوقات — راجعها في الجدول.'; }
+  return `حُفظ ملف التوقيت المدرسي (${file.name}) ${got || '— الأوقات المعتمدة في «جدول الأوقات» بالبطاقة؛ عدّلها إن اختلفت عن الملف.'}`;
+}
 function dIso() { if (!DAILY_DATE) DAILY_DATE = todayIso(); return DAILY_DATE; }
 function wdOf(iso) { const w = isoToDate(iso).getUTCDay(); return w <= 4 ? w : -1; }
 function hijriOf(iso) { const [y, m, d] = toHijri(iso); return `${d} / ${m} / ${y}`; }
@@ -103,7 +137,11 @@ function W(iso) { const w = D().wait; w[iso] = w[iso] || { blocks: [] }; return 
 function absentSet(iso) { return new Set(((D().wait[iso] || {}).blocks || []).filter(b => !b.part).map(b => normName(b.abs)).filter(Boolean)); }
 /* الحضور الجزئي (استئذان / خروج مبكر / تأخر): b.part = {a, b} = الحصص التي يكون فيها موجوداً */
 function blkNeeds(b, p) { return !b.part || p < b.part.a || p > b.part.b; }
-function outAt(iso, p) { return new Set(((D().wait[iso] || {}).blocks || []).filter(b => b.abs && blkNeeds(b, p)).map(b => normName(b.abs))); }
+function exitR() { const c = D().cfg; c.exitR = c.exitR || {}; return c.exitR; }
+/* قاعدة دائمة: يخرج بعد آخر حصة له (كل الأيام أو أيام محددة) */
+function ruleOut(n, d, p) { const r = exitR()[normName(n)]; if (!r || d < 0 || (r.days && r.days.length && !r.days.includes(d))) return false; return lastC(n, d) < p; }
+function outAt(iso, p) { const s = new Set(((D().wait[iso] || {}).blocks || []).filter(b => b.abs && blkNeeds(b, p)).map(b => normName(b.abs))), d = wdOf(iso);
+  if (d >= 0 && D().tt) Object.values(exitR()).forEach(r => { if (ruleOut(r.n, d, p)) s.add(normName(r.n)); }); return s; }
 function partOf(iso, name) { const k = normName(name); const b = ((D().wait[iso] || {}).blocks || []).find(x => x.part && normName(x.abs) === k); return b ? b.part : null; }
 function partLbl(b, L) { const P = b.part; if (!P) return ''; L = L || 7;
   if (P.a > 1 && P.b < L) return `حاضر من الحصة ${P.a} إلى ${P.b}`; if (P.b < L) return P.b === 0 ? 'غائب طوال اليوم' : `استأذن بعد الحصة ${P.b}`; if (P.a > 1) return `تأخر — حضر من الحصة ${P.a}`; return 'حاضر طوال اليوم'; }
@@ -116,6 +154,19 @@ function reflow(iso, name) {
   const got = moved.map(({ bi, p }) => { const b = w.blocks[bi], r = b.rows[p], R = waitRank(iso, b, p), g = subOptsFor(iso, bi, p)[0].items.slice().sort(R.cmp); if (g.length) r.t = g[0]; return { p, abs: b.abs, t: r.t }; });
   return { got, freed };
 }
+function lastC(n, d) { for (let p = 7; p >= 1; p--) if (ttCell(n, d, p)) return p; return 0; }
+function skipDone() { return D().cfg.skipDone !== false; }
+/* من أنهى حصصه قبل هذه الحصة: غالباً خرج من المدرسة */
+function doneBefore(iso, n, p) { const d = wdOf(iso); return d >= 0 && skipDone() && lastC(n, d) < p; }
+function quickOut(iso, n, p) {
+  const w = W(iso), k = normName(n); let b = w.blocks.find(x => normName(x.abs) === k);
+  if (b && !b.part) return false;
+  if (!b) { b = p > 1 ? { abs: n, rows: {}, part: { a: 1, b: p - 1 }, q: 1 } : { abs: n, rows: {}, q: 1 }; w.blocks.push(b); }
+  else { if (b.prev === undefined) b.prev = clone(b.part); if (p > 1) b.part.b = Math.min(b.part.b, p - 1); else delete b.part; }
+  return reflow(iso, n);
+}
+function quickUndo(iso, n) { const w = W(iso), k = normName(n), i = w.blocks.findIndex(x => normName(x.abs) === k); if (i < 0) return; const b = w.blocks[i];
+  if (b.q) w.blocks.splice(i, 1); else if (b.prev !== undefined) { b.part = b.prev; delete b.prev; } }
 function reflowMsg(name, x) { if (!x.got.length) return ''; return ` · أُعيد توزيع ${x.got.length} انتظار كان مكلفاً به: ${x.got.map(g => `ح${g.p} ← ${g.t || 'بلا بديل!'}`).join('، ')}`; }
 function subsAt(iso, p, skip) { const out = {}; ((D().wait[iso] || {}).blocks || []).forEach((b, bi) => { const r = b.rows && b.rows[p]; if (r && r.t && !(skip && skip[0] === bi)) out[normName(r.t)] = (out[normName(r.t)] || 0) + 1; }); return out; }
 function waitLoad(iso) { const m = {}; ((D().wait[iso] || {}).blocks || []).forEach(b => Object.values(b.rows || {}).forEach(r => { if (r && r.t) m[normName(r.t)] = (m[normName(r.t)] || 0) + 1; })); return m; }
@@ -123,7 +174,7 @@ function weekLoad() { const r = statRange('t'); return loadIn(r[0], r[1]); }
 function subIssue(iso, bi, p, name) {
   if (!name) return ''; const d = wdOf(iso), k = normName(name);
   if (absentSet(iso).has(k)) return 'غائب اليوم';
-  if (outAt(iso, p).has(k)) { const b = ((D().wait[iso] || {}).blocks || []).find(x => normName(x.abs) === k); return `غير موجود في هذه الحصة (${partLbl(b, d >= 0 ? lastP(d) : 7)})`; }
+  if (outAt(iso, p).has(k)) { const b = ((D().wait[iso] || {}).blocks || []).find(x => normName(x.abs) === k); return b ? `غير موجود في هذه الحصة (${partLbl(b, d >= 0 ? lastP(d) : 7)})` : `🚪 يخرج بعد آخر حصة له (${lastC(name, d) || 'لا حصص اليوم'})`; }
   const sc = d >= 0 ? ttCell(name, d, p) : ''; if (sc) return `لديه حصة في نفس الوقت (ش ${sc})`;
   if ((subsAt(iso, p, [bi])[k] || 0) > 0) return 'مكلف بانتظار آخر في نفس الحصة';
   return '';
@@ -248,6 +299,31 @@ function absGrid(iso) {
     <div class="amode" role="radiogroup"><span>عند لمس الاسم:</span>${[['full', 'غائب اليوم'], ['out', '⏱ استأذن / خرج مبكراً'], ['late', '⏰ تأخر']].map(([k, t]) => `<button type="button" role="radio" aria-checked="${ABS_MODE === k}" class="${ABS_MODE === k ? 'on' : ''}" data-act="absMode" data-v="${k}">${t}</button>`).join('')}</div>
     ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}</details>`;
 }
+var NOW_P = 0, NOW_OPEN = false, RULE_OPEN = false;
+function guessP(iso) { if (iso !== todayIso()) return 3; const d = wdOf(iso); return Math.max(1, Math.min(d >= 0 ? lastP(d) : 7, curP())); }
+/* نداء سريع: من خرج الآن؟ */
+function nowOutPanel(iso) {
+  const d = wdOf(iso); if (d < 0 || !tt0()) return ''; if (!NOW_P) NOW_P = guessP(iso); const p = NOW_P, L = lastP(d);
+  const full = absentSet(iso), names = ttNames().filter(n => !full.has(normName(n))).sort((a, b) => AR.compare(normName(a), normName(b)));
+  const out = outAt(iso, p), grp = { 1: [], 2: [], 3: [], 0: [] }; names.forEach(n => grp[mainGrade(n)].push(n));
+  const nOut = names.filter(n => out.has(normName(n))).length;
+  const chip = n => { const k = normName(n), o = out.has(k), r = !!exitR()[k] && ruleOut(n, d, p), lc = lastC(n, d), dn = lc < p;
+    return `<button type="button" class="achip nchip${o ? ' on part' : ''}${dn && !o ? ' dn' : ''}" data-act="${r ? 'nRule' : 'nOut'}" data-n="${esc(n)}" aria-pressed="${o}" title="${lc ? 'آخر حصة له: ' + lc : 'لا حصص له اليوم'}">${r ? '🚪 ' : o ? '⏱ ' : ''}${esc(n)}<i>${dn ? '🏁' + lc : lc}</i></button>`; };
+  return `<details class="nowout"${NOW_OPEN ? ' open' : ''} ontoggle="NOW_OPEN=this.open"><summary><b>🚶 من خرج الآن؟</b> <span>${nOut ? `${nOut} خارج المدرسة في الحصة ${p}` : iso === todayIso() && curP() <= 7 ? `الآن: الحصة ${curP()} (${esc(pTimeAny(curP()))})` : 'نداء سريع أثناء اليوم'}</span></summary>
+    <div class="prow"><span>الحصة الآن</span><div class="wchips">${Array.from({ length: L }, (_, i) => `<button type="button" class="wchip pch tm${p === i + 1 ? ' on' : ''}" data-act="nP" data-p="${i + 1}" title="${esc(pTimeAny(i + 1))}">${i + 1}<small>${t12(bellNow()[23][i][0])}</small></button>`).join('')}</div></div>
+    <small class="hint">المس من خرج قبل الحصة ${p} (استأذن أو انصرف) — يُستبعد منها وما بعدها، وتُسدَّد حصصه المتبقية ويُعاد توزيع انتظاره. 🏁 = أنهى حصصه، والرقم = آخر حصة له. المسه ثانية للتراجع.</small>
+    ${[1, 2, 3, 0].filter(g => grp[g].length).map(g => `<div class="agrp"><small class="wgl g${g}">${g ? 'معلمو ' + GSHORT[g] + ' ثانوي' : 'آخرون'}</small><div class="wchips">${grp[g].map(chip).join('')}</div></div>`).join('')}
+    ${nOut ? `<div class="acts"><button class="btn sm ghost" data-act="nClr" type="button">↺ إلغاء خروج الحصة ${p}</button></div>` : ''}</details>`;
+}
+/* قواعد الخروج الدائمة */
+function rulesPanel(iso) {
+  if (!tt0()) return ''; const R = Object.values(exitR()).sort((a, b) => AR.compare(normName(a.n), normName(b.n))), d = wdOf(iso);
+  const row = r => `<div class="rrow"><b>🚪 ${esc(r.n)}</b><div class="rdays">${TT_DAYS.map((t, i) => { const on = !r.days || !r.days.length || r.days.includes(i); return `<button type="button" class="rday${on ? ' on' : ''}" data-act="rDay" data-n="${esc(r.n)}" data-v="${i}" aria-pressed="${on}">${t.replace(/^ال/, '')}</button>`; }).join('')}</div><small class="mut">${d >= 0 ? (lastC(r.n, d) ? `اليوم يخرج بعد الحصة ${lastC(r.n, d)}` : 'لا حصص له اليوم') : ''}</small><button type="button" class="x" data-act="rDel" data-n="${esc(r.n)}" aria-label="حذف القاعدة">✕</button></div>`;
+  return `<details class="rules"${RULE_OPEN ? ' open' : ''} ontoggle="RULE_OPEN=this.open"><summary><b>🚪 خروج دائم بعد آخر حصة</b> <span>${R.length ? `${R.length} معلم` : 'قاعدة تُضبط مرة واحدة'}</span></summary>
+    <small class="hint">لمن لديه خروج معتمد أو يغادر عادةً بعد آخر حصة له: يُستبعد تلقائياً كل يوم من الانتظار والمناوبة بعد آخر حصة له، دون أي لمسة. حدّد الأيام أو اتركها كلها.</small>
+    ${R.map(row).join('')}
+    <div class="admadd"><input class="in" id="rIn" list="rDl" placeholder="اسم المعلم" onkeydown="if(event.key==='Enter'){event.preventDefault();this.nextElementSibling.click()}"><button class="btn sm pri" data-act="rAdd" type="button">+ إضافة</button><datalist id="rDl">${ttNames().filter(n => !exitR()[normName(n)]).map(n => `<option value="${esc(n)}">`).join('')}</datalist></div></details>`;
+}
 function partCtl(iso, b, bi) {
   if (b.leave) return ''; const d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, P = b.part, has = p => d >= 0 && ttCell(b.abs, d, p);
   const pc = (act, p, on, t) => `<button type="button" class="wchip pch${on ? ' on' : ''}${has(p) ? ' cl' : ''}" data-act="${act}" data-bi="${bi}" data-p="${p}" title="${has(p) ? 'لديه حصة' : 'بلا حصة'}">${t}</button>`;
@@ -271,13 +347,15 @@ function vWait(iso) {
   const blocks = w.blocks.map((b, bi) => {
     const rows = []; for (let p = 1; p <= 7; p++) {
       const sc = d >= 0 ? ttSecs(b.abs, d, p) : [], r = (b.rows || {})[p] || {};
-      if (!blkNeeds(b, p)) { rows.push(`<tr class="nocls here"><td class="pn">${p}</td><td colspan="4"><span class="hint">✓ حاضر${sc.length ? ` — يدرّس حصته (ش ${sc.join('، ')})` : ''}</span></td></tr>`); continue; }
+      if (!blkNeeds(b, p)) { rows.push(`<tr class="nocls here"><td class="pn">${p}<small class="ptm">${pTime(p, rowGrade(iso, b, p))}</small></td><td colspan="4"><span class="hint">✓ حاضر${sc.length ? ` — يدرّس حصته (ش ${sc.join('، ')})` : ''}</span></td></tr>`); continue; }
       const has = sc.length > 0 || !tt0(), iss = subIssue(iso, bi, p, r.t);
-      rows.push(`<tr class="${has ? '' : 'nocls'}${iss ? ' bad' : ''}"><td class="pn">${p}</td><td>${sc.length ? [...new Set(sc.map(s => GSHORT[secGrade(s)] || ''))].join('/') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.g`, r.g || '', { ph: 'الفصل' }) : '—')}</td><td>${sc.length ? sc.join('، ') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.s`, r.s || '', { ph: 'الشعبة' }) : '')}</td>
+      const isNow = iso === todayIso() && curP() === p;
+      rows.push(`<tr class="${has ? '' : 'nocls'}${iss ? ' bad' : ''}${isNow ? ' now' : ''}"><td class="pn">${p}<small class="ptm">${pTime(p, rowGrade(iso, b, p))}</small>${isNow ? '<em class="nowtag">الآن</em>' : ''}</td><td>${sc.length ? [...new Set(sc.map(s => GSHORT[secGrade(s)] || ''))].join('/') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.g`, r.g || '', { ph: 'الفصل' }) : '—')}</td><td>${sc.length ? sc.join('، ') : (has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.s`, r.s || '', { ph: 'الشعبة' }) : '')}</td>
         <td>${has ? waitChips(iso, bi, p, r) + (iss ? `<span class="cf">⚠ ${esc(iss)}</span>` : '') : '<span class="hint">لا حصة</span>'}</td>
         <td>${has ? inp(`daily.wait.${iso}.blocks.${bi}.rows.${p}.note`, r.note || '', { ph: 'ما تم تنفيذه' }) : ''}</td></tr>`);
     }
     const n = d >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(p => ttCell(b.abs, d, p) && blkNeeds(b, p)).length : 0;
+    if (b.part && tt0() && !n && !b.pend) return `<article class="wblk wmini"><span>⏱ <b>${esc(b.abs)}</b> — ${esc(partLbl(b, d >= 0 ? lastP(d) : 7))} · لا حصص تحتاج تسديد</span><button class="btn sm ghost" data-act="wQUndo" data-n="${esc(b.abs)}" type="button">↺ تراجع</button><button class="btn sm ghost" data-act="wEdit" data-v="${bi}" type="button">تعديل</button></article>`;
     return `<article class="wblk"><header><span>${b.part ? (b.part.a > 1 && b.part.b >= (d >= 0 ? lastP(d) : 7) ? 'نظراً لتأخر الزميل:' : 'نظراً لاستئذان الزميل:') : 'نظراً لغياب الزميل:'}</span>${pickSel(`daily.wait.${iso}.blocks.${bi}.abs`, b.abs || '', [{ items: ttNames() }], { ph: '— اختر المعلم الغائب —' })}<small>${b.abs ? (tt0() ? `${n} حصص ${b.part ? 'تحتاج تسديد' : 'اليوم'}` : '') : ''}</small><button class="x" data-act="wDel" data-v="${bi}" type="button" aria-label="حذف">×</button></header>${b.abs ? partCtl(iso, b, bi) + (b.part ? '' : leaveCtl(iso, b, bi)) : ''}
       <div class="tw"><table class="et wtab"><tr><th style="width:52px">الحصة</th><th style="width:70px">الفصل</th><th style="width:80px">الشعبة</th><th>المعلم المنتظر</th><th>ما تم تنفيذه</th></tr>${rows.join('')}</table></div></article>`;
   }).join('');
@@ -285,8 +363,8 @@ function vWait(iso) {
   const empty = w.blocks.reduce((a, b, bi) => a + [1, 2, 3, 4, 5, 6, 7].filter(p => d >= 0 && ttCell(b.abs, d, p) && blkNeeds(b, p) && !((b.rows || {})[p] || {}).t).length, 0);
   return `<section class="card"><h2>استمارة حصص الانتظار — ${dayAr(iso)} ${hijriOf(iso)} هـ</h2>
 
-    ${d >= 0 && !holOf(iso) ? absGrid(iso) : ''}
-    <div class="acts wrap">${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button>` : ''}
+    ${d >= 0 && !holOf(iso) ? absGrid(iso) + nowOutPanel(iso) + rulesPanel(iso) : ''}
+    <div class="acts wrap">${w.blocks.length ? `<button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button><button class="btn sm ${skipDone() ? 'on' : 'ghost'} dnt" data-act="wSkipDone" type="button" aria-pressed="${skipDone()}" title="من أنهى حصصه قبل حصة الانتظار يُؤخَّر في الاقتراح والتعبئة التلقائية">🏁 تأخير من أنهى حصصه ${skipDone() ? '✓' : '✕'}</button>` : ''}
       <span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="wait" type="button">معاينة وطباعة</button><button class="btn" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn" data-act="dXls" data-v="wait" type="button">Excel</button></div>
     ${w.blocks.length ? `<div class="wsum"><span><b>${w.blocks.filter(b => !b.part).length}</b> غائب</span>${w.blocks.some(b => b.part) ? `<span><b>${w.blocks.filter(b => b.part).length}</b> مستأذن/متأخر</span>` : ''}<span><b>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</b> حصة مسددة</span>${empty ? `<span class="warn"><b>${empty}</b> بلا منتظر</span>` : ''}${issues ? `<span class="bad"><b>${issues}</b> تعارض</span>` : ''}</div>` : '<p class="hint" style="margin-top:10px">لا يوجد غائبون مسجلون لهذا اليوم. يمكنك طباعة استمارة فارغة.</p>'}
     <div class="wblks">${blocks}</div></section>`;
@@ -296,8 +374,8 @@ function tt0() { return !!D().tt; }
 function waitRank(iso, b, p) {
   const d = wdOf(iso), secs = b && b.abs && d >= 0 ? ttSecs(b.abs, d, p).map(String) : [], gr = rowGrade(iso, b, p), ld = waitLoad(iso), wk = weekLoad();
   const info = n => { const k = normName(n), row = ttRow(n), cells = row ? Object.values(row.c).join(' ').split(/[^0-9]+/).filter(Boolean) : [];
-    const busy = (d >= 0 ? ttDayLoad(n, d) : 0) + (ld[k] || 0); return { ss: secs.some(s => cells.includes(s)), sg: teachesGrade(n, gr), busy, heavy: busy >= 5, term: wk[k] || 0 }; };
-  const cmp = (a, b2) => { const x = info(a), y = info(b2); return (x.heavy - y.heavy) || (y.ss - x.ss) || (y.sg - x.sg) || (x.busy - y.busy) || (x.term - y.term) || AR.compare(normName(a), normName(b2)); };
+    const busy = (d >= 0 ? ttDayLoad(n, d) : 0) + (ld[k] || 0); return { done: doneBefore(iso, n, p), lc: d >= 0 ? lastC(n, d) : 7, ss: secs.some(s => cells.includes(s)), sg: teachesGrade(n, gr), busy, heavy: busy >= 5, term: wk[k] || 0 }; };
+  const cmp = (a, b2) => { const x = info(a), y = info(b2); return (x.done - y.done) || (x.heavy - y.heavy) || (y.ss - x.ss) || (y.sg - x.sg) || (x.busy - y.busy) || (x.term - y.term) || AR.compare(normName(a), normName(b2)); };
   return { info, cmp, gr };
 }
 /* اختيار المنتظر بلمسة: المتاحون في الحصة نفسها أمامك مباشرة، مرتبين هجائياً، والأقل انتظاراً مميزون */
@@ -306,12 +384,15 @@ function waitChips(iso, bi, p, r) {
   if (r.t) return `<div class="wpick done"><span class="wname">${esc(r.t)}</span><button class="btn sm ghost" data-act="wClr" data-bi="${bi}" data-p="${p}" type="button">تغيير</button></div>`;
   const g = subOptsFor(iso, bi, p), all = g[0].items.slice().sort((a, b) => AR.compare(normName(a), normName(b)));
   if (!tt0()) return pickSel(path, '', g, { ph: '— اختر المنتظر —' });
-  const gr = rowGrade(iso, D().wait[iso].blocks[bi], p), same = gr ? all.filter(n => teachesGrade(n, gr)) : [], rest = all.filter(n => !same.includes(n));
-  const R = waitRank(iso, D().wait[iso].blocks[bi], p), sug = new Set(all.slice().sort(R.cmp).slice(0, 3));
-  const chip = n => { const f = R.info(n), why = [f.ss ? 'يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`].filter(Boolean).join(' · ');
-    return `<button type="button" class="wchip${sug.has(n) ? ' sug' : ''}${same.includes(n) ? ' sg g' + gr : ''}${f.heavy ? ' heavy' : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}" title="${esc(why)}">${f.ss ? '◆ ' : ''}${esc(n)}<i class="ld">${f.busy}</i></button>`; };
-  return `<div class="wpick">${all.length ? `${same.length ? `<small class="wgl g${gr}">① معلمو ${GSHORT[gr]} ثانوي المتاحون (${same.length}) — ◆ يدرّس الشعبة · الرقم = حصصه اليوم</small><div class="wchips">${same.map(chip).join('')}</div>` : ''}
-    ${rest.length ? (same.length ? `<details class="wrest"><summary>② بقية المتاحين (${rest.length}) — عرض</summary><div class="wchips">${rest.map(chip).join('')}</div></details>` : `<small class="wgl">المتاحون في الحصة ${p} (${rest.length})</small><div class="wchips">${rest.map(chip).join('')}</div>`) : ''}` : '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}
+  const gr = rowGrade(iso, D().wait[iso].blocks[bi], p), R = waitRank(iso, D().wait[iso].blocks[bi], p);
+  const done = all.filter(n => R.info(n).done).sort((x, y) => (R.info(y).lc - R.info(x).lc) || R.cmp(x, y)), live = all.filter(n => !done.includes(n));
+  const same = gr ? live.filter(n => teachesGrade(n, gr)) : [], rest = live.filter(n => !same.includes(n)), sug = new Set(live.slice().sort(R.cmp).slice(0, 3));
+  const chip = n => { const f = R.info(n), why = [f.ss ? 'يدرّس الشعبة' : f.sg ? 'يدرّس الصف' : '', `${f.busy} حصص اليوم`, f.done ? (f.lc ? `آخر حصة له: ${f.lc}` : 'لا حصص له اليوم') : ''].filter(Boolean).join(' · ');
+    return `<span class="wcw${f.done ? ' dn' : ''}"><button type="button" class="wchip${sug.has(n) ? ' sug' : ''}${same.includes(n) ? ' sg g' + gr : ''}${f.heavy ? ' heavy' : ''}" data-act="wSet" data-bi="${bi}" data-p="${p}" data-n="${esc(n)}" title="${esc(why)}">${f.ss ? '◆ ' : ''}${esc(n)}<i class="ld">${f.done ? (f.lc ? '🏁' + f.lc : '0') : f.busy}</i></button><button type="button" class="wlv" data-act="wQOut" data-p="${p}" data-n="${esc(n)}" title="${esc(n)} خارج المدرسة قبل الحصة ${p} (استأذن أو انصرف)" aria-label="${esc(n)} استأذن قبل الحصة ${p}">⏱</button></span>`; };
+  const outs = ((D().wait[iso] || {}).blocks || []).filter(x => x.part && blkNeeds(x, p) && x.abs && x.abs !== D().wait[iso].blocks[bi].abs);
+  return `<div class="wpick">${outs.length ? `<div class="wouts"><span>⏱ خارجون في هذه الحصة:</span>${outs.map(x => `<button type="button" class="wout" data-act="wQUndo" data-n="${esc(x.abs)}" title="تراجع — ${esc(x.abs)} موجود">${esc(x.abs)} ↺</button>`).join('')}</div>` : ''}${live.length ? `${same.length ? `<small class="wgl g${gr}">① معلمو ${GSHORT[gr]} ثانوي المتاحون (${same.length}) — ◆ يدرّس الشعبة · الرقم = حصصه اليوم · ⏱ = استأذن</small><div class="wchips">${same.map(chip).join('')}</div>` : ''}
+    ${rest.length ? (same.length ? `<details class="wrest"><summary>② بقية المتاحين (${rest.length}) — عرض</summary><div class="wchips">${rest.map(chip).join('')}</div></details>` : `<small class="wgl">المتاحون في الحصة ${p} (${rest.length}) — ⏱ = استأذن</small><div class="wchips">${rest.map(chip).join('')}</div>`) : ''}` : done.length ? '<span class="hint">كل المتاحين في هذه الحصة أنهوا حصصهم — اختر ممن ما زال موجوداً:</span>' : '<span class="hint">لا يوجد متاح في هذه الحصة</span>'}
+    ${done.length ? `<details class="wrest wdone"${live.length ? '' : ' open'}><summary>🏁 أنهوا حصصهم قبل الحصة ${p} — غالباً خرجوا (${done.length})</summary><small class="hint">إن كان أحدهم ما زال موجوداً فاختره مباشرة، أو المس ⏱ لتأكيد خروجه. مرتبون من الأقرب انتهاءً (الأرجح بقاءً).</small><div class="wchips">${done.map(chip).join('')}</div></details>` : ''}
     <details class="wother"><summary>اسم آخر…</summary>${pickSel(path, '', g, { ph: '— كل المعلمين —' })}</details></div>`;
 }
 function vDuty(iso) {
@@ -361,7 +442,7 @@ function waitPages(iso) {
   const hd = [H('الحصة', { w: '8%' }), H('الشعبة', { w: '9%' }), H('المعلم الغائب', { w: '20%' }), H('المعلم المنتظر', { w: '22%' }), H('ما تم تنفيذه في حصة الانتظار'), H('التوقيع', { w: '12%' })];
   const secs = [1, 2, 3, 0].map(g => ({ g, rows: rows.filter(r => r.g === g) })).filter(x => x.rows.length);
   const head = (x, k, cont) => { const ab = [...new Set(x.rows.map(r => r.abs))]; return [{ v: `<b>${ORD[k] || ''}: ${x.g ? GNAME[x.g] : 'حصص أخرى'}${cont ? ' (تابع)' : ''}</b> &nbsp;—&nbsp; نظراً لغياب ${ab.length > 1 ? 'الزملاء' : 'الزميل'}: <b>${ab.map(esc).join('، ')}</b>`, cs: 6, al: 'right', bg: GCOL[x.g] || '#eeeeee' }]; };
-  const line = r => [`<b>${r.p}</b>`, esc(r.sec), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), ''];
+  const line = r => [`<b>${r.p}</b><br><small style="font-size:7.5pt">${pTime(r.p, r.g)}</small>`, esc(r.sec), esc(r.abs), `<b>${esc(r.t)}</b>`, esc(r.note), ''];
   const ttl = () => title('استمارة حصص الانتظار', `${dayAr(iso)} ${hijriOf(iso)} هـ`);
   if (!secs.length) return [ttl() + intro + T([hd, ...Array.from({ length: 14 }, () => ['', '', '', '', '', ''])], { cls: 'dense' }) + sp(10) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep]])];
   const CAP = 24, pages = []; let top = ttl() + intro, body = '', used = 2;
@@ -417,6 +498,23 @@ document.addEventListener('click', async e => {
   if (a === 'ttnApply') { const n = D().ttNext; if (n && await confirmBox(`اعتماد جدول الفصل القادم (${n.teachers.length} معلماً) جدولاً حالياً؟ تُبنى عليه حصص الانتظار من الآن، ويُحفظ الجدول الحالي لاسترجاعه عند الحاجة.`)) { D().ttPrev = D().tt; D().tt = n; delete D().ttNext; TT_WHICH = 'cur'; S.uploads.tt = { name: n.src, at: stamp(), info: `${n.teachers.length} معلماً` }; save(); render(); toast('اعتُمد جدول الفصل الجديد ✓'); } return; }
   if (a === 'ttPrev') { const p = D().ttPrev; if (p && await confirmBox(`استرجاع الجدول السابق (${p.src || ''})؟ يحل محل الجدول الحالي، ويُحفظ الحالي بدلاً منه.`)) { D().ttPrev = D().tt; D().tt = p; save(); render(); toast('استُرجع الجدول السابق'); } return; }
   if (a === 'wDel') { const bl = W(iso).blocks[+b.dataset.v], l = bl && (leaveOf(iso, bl.abs)); if (l) { if (await confirmBox(`${bl.abs} مسجل غائباً لعدة أيام حتى ${dayAr(l.b)} ${hijriOf(l.b)}. إزالته من اليوم وما بعده (عاد للعمل)؟`)) { endLeave(l, iso); save(); render(); } return; } if (await confirmBox('حذف هذا المعلم الغائب واستمارته لهذا اليوم؟')) { W(iso).blocks.splice(+b.dataset.v, 1); save(); render(); } return; }
+  if (a === 'bellAct') { bell().act = b.dataset.v; save(); render(); return toast(`اعتُمد التوقيت ${BELL_NAME[bell().act]} ✓`); }
+  if (a === 'bellView') { const f = D().bellF; if (!f) return; openPreview([{ land: false, pages: f.imgs && f.imgs.length ? f.imgs.map(im => `<p style="text-align:center;margin:0"><img src="${im.src || im}" alt="التوقيت المدرسي" style="width:100%;max-height:245mm;object-fit:contain"></p>`) : [f.html], t: 'التوقيت المدرسي' }], fname('التوقيت المدرسي')); return; }
+  if (a === 'nP') { NOW_P = +b.dataset.p; NOW_OPEN = true; render(); return; }
+  if (a === 'nOut') { NOW_OPEN = true; const n = b.dataset.n, k = normName(n), bl = W(iso).blocks.find(z => normName(z.abs) === k);
+    if (bl && bl.part && blkNeeds(bl, NOW_P)) { quickUndo(iso, n); save(); render(); return toast(`↺ ${n} موجود`); }
+    const x = quickOut(iso, n, NOW_P); if (x === false) return toast(`${n} مسجل غائباً اليوم`); save(); render(); return toast(`⏱ ${n} خارج من الحصة ${NOW_P}${reflowMsg(n, x)}`, x.got.some(g => !g.t)); }
+  if (a === 'nClr') { NOW_OPEN = true; W(iso).blocks.filter(z => z.part && blkNeeds(z, NOW_P)).map(z => z.abs).forEach(n => quickUndo(iso, n)); save(); render(); return toast('أُلغي تسجيل الخروج'); }
+  if (a === 'nRule') return toast(`🚪 ${b.dataset.n} عليه قاعدة خروج دائم — عدّلها من «خروج دائم بعد آخر حصة»`);
+  if (a === 'rAdd') { RULE_OPEN = true; const el = document.getElementById('rIn'), v = (el && el.value || '').trim(); const n = ttNames().find(x => normName(x) === normName(v)) || v; if (!n) return toast('اكتب اسم المعلم', true);
+    exitR()[normName(n)] = { n, days: [] }; save(); render(); return toast(`🚪 ${n}: يُستبعد بعد آخر حصة له كل يوم`); }
+  if (a === 'rDel') { RULE_OPEN = true; delete exitR()[normName(b.dataset.n)]; save(); render(); return toast(`حُذفت قاعدة ${b.dataset.n}`); }
+  if (a === 'rDay') { RULE_OPEN = true; const r = exitR()[normName(b.dataset.n)], i = +b.dataset.v; let ds = r.days && r.days.length ? r.days.slice() : [0, 1, 2, 3, 4]; ds = ds.includes(i) ? ds.filter(x => x !== i) : ds.concat(i).sort(); if (!ds.length) return toast('اختر يوماً واحداً على الأقل، أو احذف القاعدة', true); r.days = ds.length === 5 ? [] : ds; save(); render(); return; }
+  if (a === 'wQOut') { const n = b.dataset.n, p = +b.dataset.p, x = quickOut(iso, n, p); if (x === false) return toast(`${n} مسجل غائباً اليوم`); save(); render(); const bl = W(iso).blocks.find(z => normName(z.abs) === normName(n)), dd = wdOf(iso), need = dd >= 0 ? [1, 2, 3, 4, 5, 6, 7].filter(q => ttCell(n, dd, q) && blkNeeds(bl, q)).length : 0;
+    return toast(`⏱ ${n} خارج من الحصة ${p}${need ? ` · أُضيفت ${need} من حصصه للتسديد` : ''}${reflowMsg(n, x)} — للتراجع المس ↺`, x.got.some(g => !g.t)); }
+  if (a === 'wQUndo') { quickUndo(iso, b.dataset.n); save(); render(); return toast(`↺ ${b.dataset.n} موجود — أُلغي الاستئذان`); }
+  if (a === 'wSkipDone') { D().cfg.skipDone = !skipDone(); save(); render(); return toast(skipDone() ? 'من أنهى حصصه قبل حصة الانتظار يُؤخَّر ويُطوى في آخر القائمة' : 'يُعامل من أنهى حصصه كبقية المتاحين'); }
+  if (a === 'wEdit') { const bl = W(iso).blocks[+b.dataset.v]; bl.pend = 'out'; render(); return; }
   if (a === 'absMode') { ABS_MODE = b.dataset.v; render(); return toast(ABS_MODE === 'full' ? 'المس اسم الغائب طوال اليوم' : ABS_MODE === 'out' ? 'المس اسم المستأذن، ثم اختر الحصة التي خرج بعدها' : 'المس اسم المتأخر، ثم اختر الحصة التي حضر فيها'); }
   if (a === 'wOut' || a === 'wLate' || a === 'wFull') { const bl = W(iso).blocks[+b.dataset.bi], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, p = +b.dataset.p;
     if (a === 'wFull') delete bl.part; else { const P = bl.part || { a: 1, b: L }; if (a === 'wOut') P.b = P.b === p ? L : p; else P.a = P.a === p ? 1 : p; if (P.a > P.b) return toast('وقت الحضور يسبق وقت الخروج — راجع الاختيار', true); bl.part = (P.a === 1 && P.b === L) ? null : P; if (!bl.part) delete bl.part; }
