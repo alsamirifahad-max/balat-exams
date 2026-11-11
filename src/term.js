@@ -711,8 +711,14 @@ document.addEventListener('click', async e => {
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
 var BUILD_ID = '__BUILD__';
+/* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
+var VER_RELOADING = false;
+function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
+  const modal = (typeof WSHEET !== 'undefined' && WSHEET) || !($('#pvModal') || {}).hidden || document.querySelector('#pickModal:not([hidden]), .modal:not([hidden]), .palmodal:not([hidden]), dialog[open]');
+  return document.visibilityState === 'hidden' || (!typing && !modal); }
 async function checkVersion() {
   try { const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; const v = (await r.text()).trim(); if (!v || v === BUILD_ID || BUILD_ID.startsWith('__')) return;
+    if (verSafe()) { try { save(true); } catch (e) { } VER_RELOADING = true; setTimeout(() => location.reload(), 600); return; }
     if ($('#newVer')) return; const d = document.createElement('div'); d.id = 'newVer'; d.className = 'newver'; d.innerHTML = '<span>✨ تحديث جديد للموقع متاح</span><button class="btn sm pri" type="button">تحديث الآن</button>'; d.querySelector('button').onclick = () => location.reload(); document.body.appendChild(d);
   } catch (e) { }
 }
