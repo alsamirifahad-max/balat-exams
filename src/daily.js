@@ -373,7 +373,7 @@ function wBoard(iso) {
     if (full && WEXP !== bi && WSET !== bi) return sec + `<article class="wcard g${ag} full fold">${head}<button type="button" class="wfold" data-act="wExp" data-v="${bi}">${my.map(x => `<span class="g${secGrade(ttSecs(b.abs, d, x.p)[0])}"><b>ح${x.p}</b> ${esc(slotT(x))}${(cnt[normName(slotT(x))] || 0) > 1 ? `<i class="dbl">×${cnt[normName(slotT(x))]}</i>` : ''}</span>`).join('')}<em>تعديل</em></button></article>`;
     return sec + `<article class="wcard g${ag}${full ? ' full' : ''}">${head}${set}${rows || '<p class="hint" style="margin:6px 4px">لا حصص تحتاج تسديداً.</p>'}</article>`; }).join('');
   const pct = slots.length ? Math.round(done * 100 / slots.length) : 0;
-  return `<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة${slots.length - done ? ` · <em class="left">باقي ${slots.length - done}</em>` : ''}</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : `<em class="okt">✓ اكتمل التسديد</em><span class="wdone"><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 اطبع</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 أرسل</button></span>`}${WUNDO && WUNDO.iso === iso ? `<button class="btn sm undo" data-act="wUndo" type="button">↺ تراجع عن ${WUNDO.k === 'clr' ? 'المسح' : 'التوزيع التلقائي'} (${WUNDO.n})</button>` : done ? `<button class="btn sm ghost clr" data-act="wClrAll" type="button">✕ مسح الاختيارات</button>` : ''}</div>
+  return `${cancelCard(iso)}<div class="wprog"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${done}</b> من <b>${slots.length}</b> حصة مسددة${slots.length - done ? ` · <em class="left">باقي ${slots.length - done}</em>` : ''}</span>${slots.length - done ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : `<em class="okt">✓ اكتمل التسديد</em><span class="wdone"><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 اطبع</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 أرسل</button></span>`}${WUNDO && WUNDO.iso === iso ? `<button class="btn sm undo" data-act="wUndo" type="button">↺ تراجع عن ${WUNDO.k === 'clr' ? 'المسح' : 'التوزيع التلقائي'} (${WUNDO.n})</button>` : done ? `<button class="btn sm ghost clr" data-act="wClrAll" type="button">✕ مسح الاختيارات</button>` : ''}</div>
     ${dbl ? `<div class="wopt"><span class="dblw">⚠ ${dbl} ${dbl > 1 ? 'معلمين عليهم' : 'معلم عليه'} أكثر من انتظار (×2)</span></div>` : ''}
     <div class="wcards">${cards}</div>${WSHEET ? wSheet(iso) : ''}`;
 }
@@ -434,6 +434,25 @@ async function waitGate(iso) {
   if (go) { const t = em[0] || bad[0]; if (wView() !== 'p') D().cfg.wview = 'p'; WA = null; WSHEET = t ? { bi: t.bi, p: t.p } : null; render(); return false; }
   return true;
 }
+/* ===== حضور الغائب: إلغاء الانتظارات وإبلاغ المنتظرين ===== */
+var WBACK = null;
+function cancelList(iso) { const w = D().wait[iso]; return w && Array.isArray(w.cancel) ? w.cancel : []; }
+function waCancelMsg(c) { return `السلام عليكم أ. ${c.t}،\nنفيدكم بإلغاء حصة الانتظار (الحصة ${c.p}${c.sec ? ' — ش ' + c.sec : ''}) بدل الأستاذ ${c.abs} لحضوره.\nشاكرين تعاونكم.`; }
+function backSheet(iso) {
+  if (!WBACK) return ''; const w = W(iso), bi = w.blocks.findIndex(x => normName(x.abs) === normName(WBACK.n)); if (bi < 0) { WBACK = null; return ''; }
+  const b = w.blocks[bi], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, p0 = WBACK.p, rows = Object.entries(b.rows || {}).filter(([p, r]) => r && r.t).map(([p, r]) => ({ p: +p, t: r.t })).sort((x, y) => x.p - y.p);
+  const lost = rows.filter(r => r.p >= p0), kept = rows.filter(r => r.p < p0);
+  return `<div class="wsh-bg" data-act="wBackX"></div><div class="wsh bk" role="dialog" aria-label="حضور المعلم"><div class="wsh-h"><span class="gbadge" style="background:#16a34a">✓</span><div><b>حضر ${esc(b.abs)}؟</b><small>اختر الحصة التي حضر منها</small></div><button type="button" class="x" data-act="wBackX" aria-label="إغلاق">✕</button></div>
+    <div class="wsh-b"><div class="prow"><span>حضر من الحصة</span><div class="wchips">${Array.from({ length: L }, (_, k) => k + 1).map(p => `<button type="button" class="wchip pch${p === p0 ? ' on' : ''}${d >= 0 && ttCell(b.abs, d, p) ? ' cl' : ''}" data-act="wBackP" data-p="${p}">${p}</button>`).join('')}</div></div>
+      <div class="bkl">${kept.length ? `<p><b>تبقى</b> (حصص مضت): ${kept.map(r => `ح${r.p} ${esc(r.t)}`).join('، ')}</p>` : ''}${lost.length ? `<p class="lost"><b>تُلغى ويُبلَّغ أصحابها:</b> ${lost.map(r => `ح${r.p} ${esc(r.t)}`).join('، ')}</p>` : '<p>لا انتظارات تُلغى.</p>'}</div></div>
+    <div class="wsh-f"><button class="btn pri" data-act="wBackGo" type="button">✓ حضر من الحصة ${p0}${lost.length ? ` — إلغاء ${lost.length}` : ''}</button><span class="sp1"></span><button class="btn sm ghost" data-act="wBackAll" type="button">لم يغب أصلاً (حذف كامل)</button></div></div>`;
+}
+function cancelCard(iso) {
+  const C = cancelList(iso); if (!C.length) return '';
+  return `<div class="wcancel"><div class="wch"><b>📣 أبلغ المنتظرين بإلغاء انتظارهم (${C.length})</b><button type="button" class="x" data-act="wCanDone" title="تم الإبلاغ — إخفاء">✓ تم</button></div>
+    ${C.map((c, k) => `<div class="wcr"><span><b>ح${c.p}</b> ${esc(c.t)} <small>بدل ${esc(c.abs)}</small></span><button type="button" class="btn sm wa" data-act="wCanWa" data-v="${k}">📲 إبلاغ</button></div>`).join('')}
+    ${C.length > 1 ? `<button type="button" class="btn sm" data-act="wCanAll">📲 رسالة واحدة للجميع</button>` : ''}</div>`;
+}
 function vWait(iso) {
   const w = D().wait[iso] || { blocks: [] }, d = wdOf(iso);
   const board = wView() === 'p' && tt0() && w.blocks.length && d >= 0;
@@ -466,7 +485,7 @@ function vWait(iso) {
     ${d >= 0 && !holOf(iso) && tt0() ? `<details class="wopts"${WOPT ? ' open' : ''} ontoggle="WOPT=this.open"><summary>⚙ خيارات الانتظار</summary>
       <div class="wopt"><button type="button" class="wtog${oneWait() ? ' on' : ''}" data-act="wOne" aria-pressed="${oneWait()}"><i></i>انتظار واحد لكل معلم في اليوم</button><button type="button" class="wtog${skipDone() ? ' on' : ''}" data-act="wSkipDone" aria-pressed="${skipDone()}"><i></i>🏁 تأخير من أنهى حصصه</button></div>
       <div class="wvt" role="tablist"><button type="button" class="${wView() === 'p' ? 'on' : ''}" data-act="wView" data-v="p">☰ لوحة التسديد</button><button type="button" class="${wView() === 'p' ? '' : 'on'}" data-act="wView" data-v="a">▦ العرض التفصيلي</button></div>
-      ${rulesPanel(iso)}<button type="button" class="tttip sm" data-act="goTT"><i>💡</i><span>التسجيل والتسديد متاحان أيضاً من <b>«الجدول المدرسي»</b></span><em>افتحه ←</em></button></details>` : ''}</section>${waSheet(iso)}`;
+      ${rulesPanel(iso)}<button type="button" class="tttip sm" data-act="goTT"><i>💡</i><span>التسجيل والتسديد متاحان أيضاً من <b>«الجدول المدرسي»</b></span><em>افتحه ←</em></button></details>` : ''}</section>${waSheet(iso)}${backSheet(iso)}`;
 }
 function tt0() { return !!D().tt; }
 /* أولوية المنتظر: 1) لا يُثقَل من عنده 5 حصص فأكثر اليوم  2) يدرّس الشعبة نفسها  3) يدرّس الصف نفسه  4) الأقل انشغالاً اليوم (حصصه + انتظاره)  5) الأقل انتظاراً في الفصل */
@@ -528,7 +547,7 @@ function vTT(iso) {
     <div class="acts wrap"><div class="dtabs sm">${TT_DAYS.map((n, i) => `<button type="button" class="${i === dd ? 'on' : ''}" data-act="ttDay" data-v="${i}">${n}</button>`).join('')}</div><span class="sp1"></span><button class="btn pri" data-act="dPrint" data-v="tt" type="button">طباعة جدول اليوم</button><button class="btn" data-act="dPdf" data-v="tt" type="button">PDF</button><button class="btn" data-act="dXls" data-v="tt" type="button">Excel</button></div>
     <p class="hint">${t.teachers.length} معلماً — ${esc(t.src || '')}. الخانة الفارغة تعني أن المعلم متاح في تلك الحصة.</p>
     ${live ? `<div class="ttlive">
-      <div class="tth"><b>⚡ جدول تفاعلي</b><span>① المس <u>اسم الغائب</u> ② المس <u>حصته</u> لاختيار المنتظر</span></div>
+      ${cancelCard(iso)}<div class="tth"><b>⚡ جدول تفاعلي</b><span>① المس <u>اسم الغائب</u> ② المس <u>حصته</u> لاختيار المنتظر</span></div>
       ${nAbs ? `<div class="wprog tt"><div class="bar"><i style="width:${nNeed ? Math.round(nOk * 100 / nNeed) : 0}%"></i></div><span><b>${nOk}</b> من <b>${nNeed}</b> حصة مسددة${nNeed - nOk ? ` · <em class="left">باقي ${nNeed - nOk}</em>` : ''}</span>${nNeed - nOk ? '' : `<em class="okt">✓ اكتمل التسديد</em><span class="wdone"><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 اطبع</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 أرسل</button></span>`}</div>
       <div class="ttact">${nNeed - nOk ? `<button class="btn sm pri" data-act="wOpenNext" type="button">▶ ابدأ التسديد</button><button class="btn sm" data-act="wAuto" type="button">⚡ وزّع الباقي تلقائياً</button>` : ''}${WUNDO && WUNDO.iso === iso ? `<button class="btn sm undo" data-act="wUndo" type="button">↺ تراجع عن ${WUNDO.k === 'clr' ? 'المسح' : 'التوزيع'} (${WUNDO.n})</button>` : nOk ? `<button class="btn sm ghost clr" data-act="wClrAll" type="button">✕ مسح الاختيارات</button>` : ''}</div>
       ${nNeed - nOk ? `<div class="ttout"><button class="btn sm" data-act="dPrint" data-v="wait" type="button">🖨 طباعة الاستمارة</button><button class="btn sm" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn sm wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button></div>` : ''}` : ''}
@@ -540,7 +559,7 @@ function vTT(iso) {
         if (bl && v && blkNeeds(bl, p)) { const r = (bl.rows || {})[p] || {}; return `<td class="cv${r.t ? ' ok' : ''} g${g}"><button type="button" data-act="wOpen" data-bi="${bi}" data-p="${p}"><b>${esc(v)}</b><small title="${esc(r.t || '')}">${r.t ? `✓<span class="fl"> ${esc(r.t)}</span>` : 'اختر'}</small></button></td>`; }
         const wt = live && waitAt[k + '|' + p]; if (!v && wt) return `<td class="wt" title="منتظر بدل ${esc(wt)}"><small>منتظر</small><small class="wb">بدل ${esc(String(wt).split(' ')[0])}</small></td>`;
         return `<td class="${v ? 'g' + g : 'fr'}">${v ? esc(v) : ''}</td>`; }).join('')}<td>${[1, 2, 3, 4, 5, 6, 7].filter(p => x.c[dd + '-' + p]).length}</td></tr>`; }).join('')}
-    ${foc ? '' : `<tr class="tot"><td>المتاحون</td>${free.map(f => `<td>${f}</td>`).join('')}<td></td></tr>`}</table></div>${foc ? `<button type="button" class="btn sm ghost" data-act="ttFoc" data-v="0" style="margin-top:8px">＋ إضافة غائب آخر</button>` : ''}</section>${live && WSHEET ? wSheet(iso) : ''}${waSheet(iso)}`;
+    ${foc ? '' : `<tr class="tot"><td>المتاحون</td>${free.map(f => `<td>${f}</td>`).join('')}<td></td></tr>`}</table></div>${foc ? `<button type="button" class="btn sm ghost" data-act="ttFoc" data-v="0" style="margin-top:8px">＋ إضافة غائب آخر</button>` : ''}</section>${live && WSHEET ? wSheet(iso) : ''}${waSheet(iso)}${backSheet(iso)}`;
 }
 function vLog() {
   const ws = D().wait, us = D().duty; const dates = [...new Set([...Object.keys(ws).filter(k => (ws[k].blocks || []).length), ...Object.keys(us)])].sort().reverse();
@@ -665,11 +684,22 @@ document.addEventListener('click', async e => {
   if (a === 'wOut' || a === 'wLate' || a === 'wFull') { const bl = W(iso).blocks[+b.dataset.bi], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, p = +b.dataset.p;
     if (a === 'wFull') delete bl.part; else { const P = bl.part || { a: 1, b: L }; if (a === 'wOut') P.b = P.b === p ? L : p; else P.a = P.a === p ? 1 : p; if (P.a > P.b) return toast('وقت الحضور يسبق وقت الخروج — راجع الاختيار', true); bl.part = (P.a === 1 && P.b === L) ? null : P; if (!bl.part) delete bl.part; }
     delete bl.pend; const x = reflow(iso, bl.abs); save(); render(); return toast(`${bl.abs}: ${bl.part ? partLbl(bl, L) : 'غائب طوال اليوم'}${x.freed ? ` · أُلغي ${x.freed} انتظار لم يعد لازماً` : ''}${reflowMsg(bl.abs, x)}`, x.got.some(g => !g.t)); }
+  if (a === 'wBackX') { WBACK = null; render(); return; }
+  if (a === 'wBackP') { WBACK.p = +b.dataset.p; render(); return; }
+  if (a === 'wBackGo' || a === 'wBackAll') { const w = W(iso), bi = w.blocks.findIndex(x => normName(x.abs) === normName(WBACK.n)), bl = w.blocks[bi], d = wdOf(iso), L = d >= 0 ? lastP(d) : 7, p0 = a === 'wBackAll' ? 1 : WBACK.p;
+    if (!Array.isArray(w.cancel)) w.cancel = []; let k = 0;
+    Object.entries(bl.rows || {}).forEach(([p, r]) => { p = +p; if (r && r.t && p >= p0) { w.cancel.push({ p, t: r.t, abs: bl.abs, sec: d >= 0 ? ttSecs(bl.abs, d, p).join('، ') : '' }); r.t = ''; k++; } });
+    if (p0 <= 1) w.blocks.splice(bi, 1); else { const P = bl.part || { a: 1, b: L }; P.a = Math.max(P.a, p0); bl.part = P; }
+    const nm = WBACK.n; WBACK = null; save(); render(); return toast(`✓ ${nm} ${p0 <= 1 ? 'أُلغي غيابه' : 'حضر من الحصة ' + p0}${k ? ` · أُلغي ${k} انتظار — أبلغ المنتظرين من البطاقة` : ''}`); }
+  if (a === 'wCanWa') { const c = cancelList(iso)[+b.dataset.v]; if (c) window.open(`https://wa.me/?text=${encodeURIComponent(waCancelMsg(c))}`, '_blank'); return; }
+  if (a === 'wCanAll') { const C = cancelList(iso), msg = `السلام عليكم،\nنفيدكم بإلغاء حصص الانتظار التالية لحضور المعلم:\n${C.map(c => `• ح${c.p} — أ. ${c.t} (بدل ${c.abs})`).join('\n')}\nشاكرين تعاونكم.`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); return; }
+  if (a === 'wCanDone') { W(iso).cancel = []; save(); render(); return toast('✓ تم الإبلاغ'); }
   if (a === 'wAbs') { WSET = -1; WSHEET = null; WUNDO = null; const n = b.dataset.n, w = W(iso), i = w.blocks.findIndex(x => normName(x.abs) === normName(n));
     if (i < 0) { const nb = { abs: n, rows: {} }; if (ABS_MODE !== 'full') nb.pend = ABS_MODE; w.blocks.push(nb); const x = ABS_MODE === 'full' ? reflow(iso, n) : { got: [] }; save(); render(); if (x.got.length) toast(`${n} غائب${reflowMsg(n, x)}`, x.got.some(g => !g.t)); else if (ABS_MODE !== 'full') toast(ABS_MODE === 'out' ? `اختر الحصة التي خرج ${n} بعدها` : `اختر الحصة التي حضر فيها ${n}`); setTimeout(() => { const el = document.querySelectorAll('.wblk')[w.blocks.length - 1]; if (el && window.innerWidth < 700) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); return; }
     const bl = w.blocks[i], filled = Object.values(bl.rows || {}).filter(r => r && r.t).length, l = leaveOf(iso, n);
     if (l) { if (await confirmBox(`${n} مسجل غائباً حتى ${dayAr(l.b)} ${hijriOf(l.b)}. إلغاء غيابه من اليوم وما بعده؟`)) { endLeave(l, iso); save(); render(); } return; }
-    if (filled && !await confirmBox(`إلغاء غياب ${n}؟ سيُحذف ${filled} انتظار مسجل له اليوم.`)) return; w.blocks.splice(i, 1); save(); render(); return; }
+    if (filled) { const dd = wdOf(iso), cp = iso === todayIso() ? Math.min(curP(), dd >= 0 ? lastP(dd) : 7) : 1; WBACK = { n, p: cp }; render(); return; }
+    w.blocks.splice(i, 1); save(); render(); return toast(`أُلغي غياب ${n}`); }
   if (a === 'wLvOpen') { const bi = +b.dataset.bi, art = b.closest('.wblk'), ex = art.querySelector('.lvform'); if (ex) { ex.remove(); return; } art.querySelector('.lvbar').insertAdjacentHTML('afterend', leaveForm(iso, bi)); return; }
   if (a === 'wLv') { const bl = W(iso).blocks[+b.dataset.bi]; setLeave(iso, bl, nthSchoolDay(iso, +b.dataset.n)); return; }
   if (a === 'wBack') { const bl = W(iso).blocks[+b.dataset.bi], l = bl && leaveOf(iso, bl.abs); if (l && await confirmBox(`تسجيل عودة ${bl.abs} اليوم؟ يُزال غيابه من اليوم وما بعده.`)) { endLeave(l, iso); save(); render(); toast(`سُجّلت عودة ${bl.abs}`); } return; }
