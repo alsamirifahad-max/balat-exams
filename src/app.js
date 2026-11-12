@@ -9,7 +9,9 @@ const HCOL = '#d9e2f3', LCOL = '#eef1f5', EMPTY = '#b4c6e7';
 const DAYS_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+/* تصحيح الحروف: «ى» في وسط الكلمة تُكتب «ي» (تظهر بلا نقاط)، والياء والكاف الفارسيتان تُوحَّدان */
+const fixAr = v => String(v).replace(/\u0649(?=[\u0620-\u064A\u066E-\u06D3])/g, 'ي').replace(/\u06CC/g, 'ي').replace(/\u06A9/g, 'ك').replace(/\u06C1/g, 'ه');
+const esc = v => fixAr(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const clone = o => JSON.parse(JSON.stringify(o));
 const toWestern = s => String(s == null ? '' : s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
 
@@ -2088,7 +2090,7 @@ function stListPages(o = {}) {
   return out;
 }
 function tListPages() {
-  const t = arSort(S.teachers.filter(Boolean)), D = densOf(), half = D.per, out = [];
+  const t = arSort(S.teachers.filter(Boolean)), D = densOf(), pg = Math.max(1, Math.ceil(t.length / (D.per * 2))), half = Math.max(1, Math.ceil(t.length / (pg * 2))), out = [];
   for (let k = 0; k < Math.max(1, t.length); k += half * 2) {
     const rows = [[H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' }), H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' })]];
     const a = t.slice(k, k + half), b = t.slice(k + half, k + half * 2);
@@ -2222,7 +2224,8 @@ function stuGuidePage() {
 function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
-  return `<div class="qbar"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn sm pri" data-act="qopen" data-form="${id}"${od} type="button">معاينة قبل الطباعة</button><button class="btn sm" data-act="qprint" data-form="${id}"${od} type="button">طباعة</button><button class="btn sm" data-act="qpdf" data-form="${id}"${od} type="button">PDF</button><button class="btn sm" data-act="qword" data-form="${id}"${od} type="button">Word</button></div>`;
+  const dl = id === 'assign' ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
+  return `<div class="qbar"><span class="qlbl">${label}</span>${extra}${fdCtl(id)}${dl}<span class="sp1"></span><button class="btn sm pri" data-act="qopen" data-form="${id}"${od} type="button">معاينة قبل الطباعة</button><button class="btn sm" data-act="qprint" data-form="${id}"${od} type="button">طباعة</button><button class="btn sm" data-act="qpdf" data-form="${id}"${od} type="button">PDF</button><button class="btn sm" data-act="qword" data-form="${id}"${od} type="button">Word</button></div>`;
 }
 let PV = null;
 function openPreview(groups, name) {
@@ -2287,9 +2290,23 @@ function vForms() {
 function pageWrap(content, land) {
   return `<div class="page${land ? ' land' : ''}"><img class="brand-hdr phdr" src="${HDR}" alt=""><div class="pbody">${content}</div><img class="brand-ftr pftr" src="${FTR}" alt=""></div>`;
 }
+/* ===== تاريخ النموذج (للنماذج التي تُوزَّع قبل الاختبارات) ===== */
+const FD_IDS = ['assign', 'complete', 'receipt', 'stList', 'tList', 'obsInstr', 'gradeStmt', 'taSheet', 'taLoad', 'correct', 'comCounts', 'comPlaces', 'special', 'absBySub', 'lateList', 'stuGuide', 'qData', 'qOrig', 'errQ', 'errA', 'gradeEst'];
+function fdOf(id) { if (!S.s.fdate) S.s.fdate = {}; const x = S.s.fdate[id] || {}, g = S.s.fdate._all || { m: 'none' }; return x.m && x.m !== 'all' ? x : g; }
+function hDate(iso) { const [y, m, d] = toHijri(iso); return `${DAYS_AR[isoToDate(iso).getUTCDay()]} ${d} / ${m} / ${y} هـ`; }
+function fdText(id) { const x = fdOf(id); if (x.m === 'today') return hDate(todayIso()); if (x.m === 'fix' && x.d) return hDate(x.d); if (x.m === 'blank') return `......... / ......... / ${toHijri(todayIso())[0]} هـ`; return ''; }
+function fdCtl(id) {
+  if (!FD_IDS.includes(id)) return ''; if (!S.s.fdate) S.s.fdate = {}; const own = S.s.fdate[id] || { m: 'all' }, g = S.s.fdate._all || { m: 'none' }, txt = fdText(id);
+  const lbl = { none: 'بدون تاريخ', blank: 'خانة فارغة للكتابة', today: 'تاريخ يوم الطباعة', fix: 'تاريخ محدد' };
+  const m = own.m || 'all', cur = m === 'all' ? g : own;
+  return `<div class="qdate"><span>📅 التاريخ على النموذج</span><select class="in" data-fd="${id}" data-f="m"><option value="all"${m === 'all' ? ' selected' : ''}>الموحّد لكل النماذج (${lbl[g.m] || 'بدون'})</option>${Object.entries(lbl).map(([k, t]) => `<option value="${k}"${m === k ? ' selected' : ''}>${t}</option>`).join('')}</select>
+    ${cur.m === 'fix' ? `<input class="in" type="date" data-fd="${m === 'all' ? '_all' : id}" data-f="d" value="${esc(cur.d || '')}">` : ''}${txt ? `<b class="fdv">${esc(txt)}</b>` : ''}
+    ${m !== 'all' ? `<button type="button" class="btn sm ghost" data-act="fdAll" data-form="${id}" title="اجعل هذا التاريخ هو الموحّد لكل النماذج">تعميم على الكل</button>` : ''}</div>`;
+}
+function fdInject(id, pages) { const t = FD_IDS.includes(id) ? fdText(id) : ''; return t ? pages.map(p => `<p class="fdl" style="text-align:left;font-size:11pt;font-weight:bold;margin:0 0 4px">التاريخ: ${esc(t)}</p>` + p) : pages; }
 function buildForm(f, o) {
   if (f.needs === 'dist' && !S.distributed) return [];
-  try { return f.build(o || {}) || []; } catch (e) { console.error(e); return [`<p class="txt">تعذر بناء النموذج: ${esc(e.message)}</p>`]; }
+  try { return fdInject(f.id, f.build(o || {}) || []); } catch (e) { console.error(e); return [`<p class="txt">تعذر بناء النموذج: ${esc(e.message)}</p>`]; }
 }
 function renderPreview() {
   const f = formDef(); const pages = buildForm(f, FO);
@@ -2897,6 +2914,9 @@ document.addEventListener('change', async e => {
   if (el.dataset.k && (el.tagName === 'SELECT' || el.type === 'checkbox')) { setPath(el.dataset.k, el.type === 'checkbox' ? el.checked : el.dataset.num ? Number(el.value) : el.value); save(); render(); return; }
   if (el.dataset.k && /^(days|com|s\.(codes|secOff|manualTot))/.test(el.dataset.k) && TAB !== 'forms') { if (TAB === 'committees' || /txt$/.test(el.dataset.k)) render(); return; }
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
+  if (el.dataset.fd) { if (!S.s.fdate) S.s.fdate = {}; const k = el.dataset.fd, o = S.s.fdate[k] = S.s.fdate[k] || {}; o[el.dataset.f] = el.value;
+    if (el.dataset.f === 'm' && el.value === 'fix' && !o.d) o.d = todayIso(); if (el.dataset.f === 'm' && el.value === 'all') delete S.s.fdate[k]; save(); render(); return; }
+  if (el.dataset.dl) { S.s.deadlineIso = el.value; S.s.deadline = el.value ? hDate(el.value) : ''; save(); render(); return toast(el.value ? `آخر موعد للتسليم: ${S.s.deadline}` : 'أُزيل الموعد'); }
   if (el.classList.contains('fo')) { FO[el.dataset.o] = el.value; renderPreview(); return; }
   if (el.id === 'devName') { try { localStorage.setItem(LS_KEY + '-dev', el.value.trim()); } catch (e) { } toast('حُفظ اسم الجهاز — يظهر للأجهزة الأخرى عند وصول تعديلاتك'); return; }
   if (el.dataset.mode) { setSyncMode(el.dataset.mode, el.value); toast(el.value === 'ask' ? 'سيُعرض عليك أي تعديل من جهاز آخر قبل تطبيقه' : 'ستُطبَّق تعديلات الأجهزة الأخرى تلقائياً'); if (el.value === 'auto') syncNow({ silent: true }); return; }
@@ -2980,6 +3000,7 @@ document.addEventListener('click', async e => {
     case 'pickOpen': { const s = b.parentElement.querySelector('select'); if (s) openPicker(s); return; }
     case 'sortTeachers': S.teachers = arSort(S.teachers); toast('رُتبت القائمة هجائياً'); return re();
     case 'mergeTeachers': { const have = new Set(S.teachers.map(normName)); let n = 0; allTeachers().forEach(t => { if (!have.has(normName(t))) { S.teachers.push(t); n++; } }); S.teachers = arSort(S.teachers); toast(n ? `أضيف ${n} معلماً` : 'القائمة مكتملة'); return re(); }
+    case 'fdAll': { const id = b.dataset.form; S.s.fdate._all = Object.assign({}, S.s.fdate[id]); Object.keys(S.s.fdate).forEach(k => { if (k !== '_all') delete S.s.fdate[k]; }); save(); render(); toast('اعتُمد هذا التاريخ لكل النماذج ✓'); break; }
     case 'qprint': case 'qword': case 'qpdf': case 'qopen': {
       const f = b.dataset.form, o = qopts(b), nm = fname(FORMS.find(x => x.id === f).t + (TA_FORMS.includes(f) ? ' - ' + setMeta(ACTIVE).n + ' - الفصل ' + setMeta(ACTIVE).sem : ''));
       const run = () => { const g = groupsOf(f, o); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : openPreview(g, nm); };
