@@ -18,7 +18,7 @@ function load() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { saved = null; }
   S = saved && saved.v ? deepMerge(clone(DEFAULT_STATE), saved) : clone(DEFAULT_STATE);
-  normState();
+  normState(); DH = null; stampDaily();
 }
 function normState() {
   S.days.forEach(fixDay);
@@ -38,11 +38,27 @@ function deepMerge(base, over) {
   return base;
 }
 let saveT;
+/* ===== دمج ذكي لقسم «الانتظار والمناوبة» بين الأجهزة =====
+   كل يوم (انتظار/مناوبة) وكل إعداد يحمل وقت آخر تعديل؛ عند تعديل جهازين في الوقت نفسه
+   يُؤخذ الأحدث لكل يوم على حدة بدل استبدال القسم كاملاً — فلا يمحو عمل الوكيل عمل المدير والعكس. */
+let DH = null;
+function dailyKeys(d) { const o = {}; if (!d) return o; Object.keys(d).forEach(k => { if (k === '_ts') return; if ((k === 'wait' || k === 'duty' || k === 'cfg') && d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) Object.keys(d[k]).forEach(i => o[k[0] + ':' + i] = d[k][i]); else o['k:' + k] = d[k]; }); return o; }
+function stampDaily() { const d = S && S.daily; if (!d) { DH = DH || {}; return; } const ks = dailyKeys(d), now = Date.now(); if (!d._ts) d._ts = {};
+  if (!DH) { DH = {}; Object.keys(ks).forEach(k => DH[k] = hashStr(JSON.stringify(ks[k]))); return; }
+  const all = new Set([...Object.keys(ks), ...Object.keys(DH)]); all.forEach(k => { const h = ks[k] === undefined ? '-' : hashStr(JSON.stringify(ks[k])); if (DH[k] !== h) { d._ts[k] = now; DH[k] = h; } }); }
+function mergeDaily(loc, rem) {
+  const L = loc || {}, R = rem || {}, lt = L._ts || {}, rt = R._ts || {}, out = clone(R); out._ts = Object.assign({}, rt);
+  const lk = dailyKeys(L), rk = dailyKeys(R); let n = 0;
+  new Set([...Object.keys(lk), ...Object.keys(lt)]).forEach(k => { if ((lt[k] || 0) <= (rt[k] || 0)) return; n++; out._ts[k] = lt[k]; const v = lk[k], [t, ...rest] = k.split(':'), key = rest.join(':');
+    if (t === 'k') { if (v === undefined) delete out[key]; else out[key] = clone(v); }
+    else { const box = t === 'w' ? 'wait' : t === 'c' ? 'cfg' : 'duty'; out[box] = out[box] || {}; if (v === undefined) delete out[box][key]; else out[box][key] = clone(v); } });
+  return { data: out, n };
+}
 function save(now) {
   window.__thumbs = {};
   clearTimeout(saveT);
   const f = () => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(S)); setSaved(true); }
+    try { stampDaily(); localStorage.setItem(LS_KEY, JSON.stringify(S)); setSaved(true); }
     catch (e) { setSaved(false); }
     syncSoon();
   };
@@ -2625,7 +2641,7 @@ function secData(sec) {
   return o;
 }
 function applySec(sec, d) {
-  if (sec === 'daily') { S.daily = d || {}; return; }
+  if (sec === 'daily') { S.daily = d || {}; DH = null; stampDaily(); return; }
   if (isSet(sec)) {
     if (sec !== ACTIVE) { setStoreSave(sec, d); return; }
     S.ta = d.ta || []; S.teachers = d.teachers || []; if (d.taPrint) S.s.taPrint = d.taPrint;
@@ -2717,6 +2733,11 @@ async function syncNow(opts = {}) {
         } else if (lm.at && syncMode(sec) === 'ask') {
           /* وضع «اسألني»: لا يُطبَّق التعديل حتى توافق */
           if (!PENDING[sec] || PENDING[sec].at !== rm.at) { const p = await pullSec(sec); if (p) { PENDING[sec] = { at: p.at, by: p.by, byRaw: p.byRaw, data: p.data, diff: secDiff(sec, secData(sec), p.data) }; pendShow(); } }
+          continue;
+        } else if (sec === 'daily' && dirty && lm.at) {
+          const p = await pullSec('daily'); if (!p) continue; const m = mergeDaily(S.daily, p.data);
+          applySec('daily', m.data); SYNC.daily = { at: p.at, h: hashStr(JSON.stringify(p.data)), t: Date.now() }; syncSave(); changed = true;
+          if (m.n) { await pushSec('daily'); toast('دُمجت تعديلاتك مع تعديلات الجهاز الآخر في «الانتظار والمناوبة» ✓'); }
           continue;
         } else if (dirty && lm.at) { localStorage.setItem(LS_KEY + '-conflict-' + sec, JSON.stringify({ at: new Date().toISOString(), data: secData(sec) })); toast(`حُدّث «${SYNC_SECS[sec]}» من جهاز آخر — حُفظت تعديلاتك غير المتزامنة كنسخة في «النسخ الاحتياطي»`); }
         else if (busyTyping()) continue;

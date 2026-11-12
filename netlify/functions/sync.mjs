@@ -21,7 +21,9 @@ export async function handle(req, ip, store, env) {
   if (now - rl.t > WINDOW) { rl.n = 0; rl.t = now; }
   const g = (await store.get('rl/_all', { type: 'json' })) || { n: 0, t: now };
   if (now - g.t > WINDOW) { g.n = 0; g.t = now; }
-  if (rl.n >= MAX_FAILS || g.n >= 60) return json({ error: 'locked', retry: Math.ceil((WINDOW - (now - rl.t)) / 60000) }, 429);
+  /* القفل العام لا يحجب جهازاً سبق أن دخل بالرمز الصحيح — حتى لا يستطيع مهاجم إيقاف المدرسة بمحاولات خاطئة */
+  const known = !!(await store.get('okip/' + rk.slice(3)));
+  if (rl.n >= MAX_FAILS || (g.n >= 60 && !known)) return json({ error: 'locked', retry: Math.ceil((WINDOW - (now - rl.t)) / 60000) }, 429);
 
   const code = (req.headers.get('x-code') || '').trim();
   if (!code || sha(env.SYNC_SALT + '|' + code) !== env.SYNC_HASH) {
@@ -29,6 +31,7 @@ export async function handle(req, ip, store, env) {
     return json({ error: 'auth', left: Math.max(0, MAX_FAILS - rl.n) }, 401);
   }
   if (rl.n) await store.delete(rk);
+  if (!known) await store.set('okip/' + rk.slice(3), String(now));
 
   const by = (req.headers.get('x-by') || '').replace(/[^A-Za-z0-9%._-]/g, '').slice(0, 220);
   const enc = req.headers.get('x-enc') === 'json' ? 'json' : 'gzip';
