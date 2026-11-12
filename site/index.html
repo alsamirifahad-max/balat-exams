@@ -4518,7 +4518,9 @@ function rowGrade(iso, b, p) { const d = wdOf(iso), sc = b && b.abs && d >= 0 ? 
 
 /* ---------- الجدول المدرسي ---------- */
 function ttNames() { const t = D().tt; return t ? arSort(t.teachers.map(x => x.n)) : tchAll(); }
-function ttRow(name) { const t = D().tt; if (!t || !name) return null; const k = normName(name), pk = personKey(name); return t.teachers.find(x => normName(x.n) === k) || t.teachers.find(x => personKey(x.n) === pk) || null; }
+const TTR = new WeakMap();
+function ttRow(name) { const t = D().tt; if (!t || !name) return null; let m = TTR.get(t); if (!m || m.n !== t.teachers.length) { m = new Map(); m.n = t.teachers.length; TTR.set(t, m); } if (m.has(name)) return m.get(name);
+  const k = normName(name), pk = personKey(name), r = t.teachers.find(x => normName(x.n) === k) || t.teachers.find(x => personKey(x.n) === pk) || null; m.set(name, r); return r; }
 function ttCell(name, d, p) { const r = ttRow(name); return r && r.c[d + '-' + p] || ''; }
 function ttSecs(name, d, p) { return String(ttCell(name, d, p)).split(/[^0-9]+/).filter(Boolean); }
 function ttDayLoad(name, d) { let n = 0; for (let p = 1; p <= 7; p++) if (ttCell(name, d, p)) n++; return n; }
@@ -4617,7 +4619,8 @@ function quickUndo(iso, n) { const w = W(iso), k = normName(n), i = w.blocks.fin
 function reflowMsg(name, x) { if (!x.got.length) return ''; return ` · أُعيد توزيع ${x.got.length} انتظار كان مكلفاً به: ${x.got.map(g => `ح${g.p} ← ${g.t || 'بلا بديل!'}`).join('، ')}`; }
 function subsAt(iso, p, skip) { const out = {}; ((D().wait[iso] || {}).blocks || []).forEach((b, bi) => { const r = b.rows && b.rows[p]; if (r && r.t && !(skip && skip[0] === bi)) out[normName(r.t)] = (out[normName(r.t)] || 0) + 1; }); return out; }
 function waitLoad(iso) { const m = {}; ((D().wait[iso] || {}).blocks || []).forEach(b => Object.values(b.rows || {}).forEach(r => { if (r && r.t) m[normName(r.t)] = (m[normName(r.t)] || 0) + 1; })); return m; }
-function weekLoad() { const r = statRange('t'); return loadIn(r[0], r[1]); }
+let WL = null; /* يُحسب مرة واحدة لكل عملية ثم يُلغى تلقائياً */
+function weekLoad() { if (WL) return Object.assign({}, WL); const r = statRange('t'); WL = loadIn(r[0], r[1]); queueMicrotask(() => { WL = null; }); return Object.assign({}, WL); }
 function subIssue(iso, bi, p, name) {
   if (!name) return ''; const d = wdOf(iso), k = normName(name);
   if (absentSet(iso).has(k)) return 'غائب اليوم';
@@ -4633,9 +4636,9 @@ function subOptsFor(iso, bi, p) {
   return [{ label: `✓ متاحون في الحصة ${p} (${free.length})`, items: free }, { label: '⚠ لديهم حصة أو انتظار في نفس الوقت', items: busy }, { label: `✕ غائبون أو مستأذنون في الحصة ${p}`, items: away }];
 }
 function autoFill(iso) {
-  const w = W(iso), d = wdOf(iso); let n = 0;
+  const w = W(iso), d = wdOf(iso), wk = weekLoad(); let n = 0;
   w.blocks.forEach((b, bi) => { for (let p = 1; p <= 7; p++) { if (!(d >= 0 && ttCell(b.abs, d, p)) || !blkNeeds(b, p)) continue; b.rows = b.rows || {}; const r = b.rows[p] = b.rows[p] || {}; if (r.t) continue;
-    const R = waitRank(iso, b, p); const g = subOptsFor(iso, bi, p)[0].items.slice().sort(R.cmp); if (g.length) { r.t = g[0]; n++; } } });
+    const R = waitRank(iso, b, p, wk); const g = subOptsFor(iso, bi, p)[0].items.slice().sort(R.cmp); if (g.length) { r.t = g[0]; n++; const k = normName(g[0]); wk[k] = (wk[k] || 0) + 1; } } });
   return n;
 }
 
@@ -4939,11 +4942,12 @@ function tt0() { return !!D().tt; }
 function oneWait() { return D().cfg.oneWait !== false; }
 /* أين انتظر المعلم اليوم (للتنبيه على الانتظار الثاني) */
 function waitsOf(iso, n, skip) { const k = normName(n), out = []; ((D().wait[iso] || {}).blocks || []).forEach((b, bi) => Object.entries(b.rows || {}).forEach(([p, r]) => { if (r && r.t && normName(r.t) === k && !(skip && skip.bi === bi && skip.p === +p)) out.push(+p); })); return out.sort((a, c) => a - c); }
-function waitRank(iso, b, p) {
+function waitRank(iso, b, p, wkIn) {
   const bi0 = ((D().wait[iso] || {}).blocks || []).indexOf(b), cur = b && b.rows && b.rows[p] && b.rows[p].t ? normName(b.rows[p].t) : '';
-  const d = wdOf(iso), secs = b && b.abs && d >= 0 ? ttSecs(b.abs, d, p).map(String) : [], gr = rowGrade(iso, b, p), ld = waitLoad(iso), wk = weekLoad();
-  const info = n => { const k = normName(n), row = ttRow(n), cells = row ? Object.values(row.c).join(' ').split(/[^0-9]+/).filter(Boolean) : [];
+  const d = wdOf(iso), secs = b && b.abs && d >= 0 ? ttSecs(b.abs, d, p).map(String) : [], gr = rowGrade(iso, b, p), ld = waitLoad(iso), wk = wkIn || weekLoad(), memo = new Map();
+  const info0 = n => { const k = normName(n), row = ttRow(n), cells = row ? Object.values(row.c).join(' ').split(/[^0-9]+/).filter(Boolean) : [];
     const today = (ld[k] || 0) - (cur === k ? 1 : 0), busy = (d >= 0 ? ttDayLoad(n, d) : 0) + today; return { today, had: oneWait() && today >= 1, hadP: today ? waitsOf(iso, n, { bi: bi0, p }) : [], done: doneBefore(iso, n, p), lc: d >= 0 ? lastC(n, d) : 7, ss: secs.some(s => cells.includes(s)), sg: teachesGrade(n, gr), busy, heavy: busy >= 5, term: wk[k] || 0 }; };
+  const info = n => { let v = memo.get(n); if (!v) { v = info0(n); memo.set(n, v); } return v; };
   const cmp = (a, b2) => { const x = info(a), y = info(b2); return (x.done - y.done) || (x.had - y.had) || (x.heavy - y.heavy) || (y.ss - x.ss) || (y.sg - x.sg) || (x.busy - y.busy) || (x.term - y.term) || AR.compare(normName(a), normName(b2)); };
   return { info, cmp, gr };
 }
@@ -5906,7 +5910,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794496510';
+var BUILD_ID = '1794497962';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
