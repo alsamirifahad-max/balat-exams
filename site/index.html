@@ -856,6 +856,12 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .wsh.bk .wsh-f{flex-wrap:wrap}.wsh.bk .wsh-f .btn{flex:1 1 auto}
 .fdl{text-align:left;font-size:11pt;font-weight:700;margin:0 0 4px}
 .qdate{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;width:100%;margin:6px 0 2px;padding:8px 10px;border-radius:12px;background:var(--surface2,var(--soft));border:1px dashed var(--line)}.qdate>span{font-size:.85rem;font-weight:700}.qdate select,.qdate input{flex:1 1 160px;min-width:0}.qdate .fdv{color:var(--info);font-size:.9rem}.qdate .btn{margin:0}
+.qbar.q1 .qgo{font-weight:800;padding-inline:20px}.qopt{flex:1 1 100%;margin-top:2px}.qopt>summary{cursor:pointer;font-size:.8rem;color:var(--muted);padding:4px 2px}.qopt>summary b{color:var(--info);font-weight:700}.qopt .qdate{margin-top:6px}
+@media (max-width:600px){.qbar.q1 .qgo{flex:1 1 100%}}
+.pvbar{row-gap:8px}.pvx{font:inherit;flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:1.05rem;cursor:pointer}.pva{flex:1 1 100%;flex-wrap:nowrap}.pva .btn{margin:0;flex:1 1 0;padding-inline:6px;white-space:nowrap}.pva .pvp{flex:2 1 0;font-weight:800}
+@media (min-width:760px){.pva{flex:0 1 auto}.pva .btn{flex:0 0 auto;padding-inline:14px}}
+.spadd{margin:8px 0}.spres{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.spres small{opacity:.75}
+.woutbar .btn{flex:1 1 0}
 </style>
 </head>
 <body>
@@ -878,9 +884,8 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
   <div class="acts"><button class="btn danger" id="confYes" type="button">نعم</button><button class="btn ghost" id="confNo" type="button">إلغاء</button></div></div></div>
 <div class="pvmodal" id="pvModal" hidden role="dialog" aria-label="معاينة قبل الطباعة">
   <div class="pvbar">
-    <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div>
-    <div class="pvz"><button type="button" class="chip on" data-act="pvZoom" data-v="fit">ملء العرض</button><button type="button" class="chip" data-act="pvZoom" data-v="0.6">60%</button><button type="button" class="chip" data-act="pvZoom" data-v="1">100%</button></div>
-    <div class="pva"><button class="btn sm pri" data-act="pvPrint" type="button">طباعة</button><button class="btn sm" data-act="pvPdf" type="button">تحميل PDF</button><button class="btn sm" data-act="pvWord" type="button">تحميل Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvClose" type="button" aria-label="إغلاق">✕ إغلاق</button></div>
+    <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div><button class="pvx" data-act="pvClose" type="button" aria-label="إغلاق">✕</button>
+    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
   </div>
   <div class="pvbody" id="pvBody"></div>
 </div>
@@ -2650,10 +2655,11 @@ function vStaff() {
       <div class="acts wrap"><label class="inl">العنوان ${inp(`special.${li}.title`, sl.title, { style: 'width:18rem' })}</label>
       <label class="inl">العمود الأخير <select class="in" data-k="special.${li}.kind" id="sp_k_${li}"><option value="grade"${sl.kind === 'grade' ? ' selected' : ''}>الدرجة</option><option value="sign"${sl.kind === 'sign' ? ' selected' : ''}>التوقيع</option></select></label>
       <button class="btn sm danger" data-act="delSpecial" data-i="${li}" type="button">حذف القائمة</button></div>
-      ${qbar('special', 'كشف هذه القائمة:', '', { li })}
-      <div class="tw"><table class="et"><tr><th>اسم الطالب</th><th>الصف</th><th></th></tr>
-      ${sl.rows.map((r, ri) => `<tr><td>${inp(`special.${li}.rows.${ri}.n`, r.n, { list: 'stulist' })}</td><td><select class="in" data-k="special.${li}.rows.${ri}.g" data-num="1" id="sp_${li}_${ri}">${G.map(g => `<option value="${g}"${+r.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td><button class="x" data-act="delSpRow" data-i="${li}" data-j="${ri}" type="button" title="حذف">×</button></td></tr>`).join('')}
-      </table></div><button class="btn sm" data-act="addSpRow" data-i="${li}" type="button">إضافة طالب</button></div>`).join('')}
+      ${qbar('specialRoll', 'بيان الأسماء واللجان:', '', { li })}${qbar('special', 'الكشف اليومي بالمواد:', '', { li })}
+      <div class="spadd"><input class="in" type="search" placeholder="🔎 اكتب اسم الطالب لإضافته بلمسة…" oninput="spSearch(this, ${li})"><div class="spres"></div></div>
+      <div class="tw"><table class="et"><tr><th>اسم الطالب</th><th>الصف</th><th>الشعبة</th><th>اللجنة</th><th>الجلوس</th><th></th></tr>
+      ${sl.rows.map((r, ri) => `<tr><td>${inp(`special.${li}.rows.${ri}.n`, r.n, { list: 'stulist' })}</td><td><select class="in" data-k="special.${li}.rows.${ri}.g" data-num="1" id="sp_${li}_${ri}">${G.map(g => `<option value="${g}"${+r.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td>${(st => `<td>${st ? st.sec : ''}</td><td>${st && st.com != null ? st.com : '—'}</td><td>${st && st.seat != null ? st.seat : '—'}</td>`)(spStu(r))}<td><button class="x" data-act="delSpRow" data-i="${li}" data-j="${ri}" type="button" title="حذف">×</button></td></tr>`).join('')}
+      </table></div><div class="acts wrap"><button class="btn sm" data-act="addSpRow" data-i="${li}" type="button">إضافة يدوية</button>${sl.rows.length > 1 ? `<button class="btn sm" data-act="sortSp" data-i="${li}" type="button">ترتيب حسب الصف والشعبة</button>` : ''}<small class="mut">${sl.rows.filter(r => r.n).length} طالب</small></div></div>`).join('')}
     <button class="btn sm pri" data-act="addSpecial" type="button">إضافة قائمة جديدة</button>
     <datalist id="stulist">${S.students.slice(0, 1500).map(x => `<option value="${esc(x.n)}"></option>`).join('')}</datalist>
   </section>`;
@@ -2798,6 +2804,7 @@ const FORMS = [
   { id: 'agree', grp: 'الأعمال اليومية', t: 'محضر اتفاقية التصحيح وسلامة الأسئلة', opts: ['ses'], build: o => sesOpt(o).map(agreePage) },
   { id: 'qEnv', grp: 'الأعمال اليومية', t: 'ظرف أسئلة الطلاب (لكل لجنة)', opts: ['ses', 'com'], build: o => qEnvPages(o) },
   { id: 'aEnv', grp: 'الأعمال اليومية', t: 'ظرف أوراق إجابات الطلاب (لكل مادة)', opts: ['ses'], build: o => aEnvPages(o) },
+  { id: 'specialRoll', grp: 'الأعمال اليومية', t: 'بيان القوائم الخاصة (الأسماء واللجان)', opts: ['list'], build: o => specialRollPages(o) },
   { id: 'special', grp: 'الأعمال اليومية', t: 'القوائم الخاصة (انتساب / عوق بصري)', opts: ['list'], build: o => specialPages(o) },
   // ===== المعلمون
   { id: 'taSheet', grp: 'المعلمون والأسئلة', t: 'كشف إسناد المعلمين', opts: ['grade', 'taopts'], build: o => taSheetPages(o) },
@@ -2990,6 +2997,18 @@ function aEnvPages(o) {
     ]) + sp(14) + T([[H('المصحح الأول'), H('المصحح الثاني'), H('المراجع'), H('الراصد')], [{ v: '&nbsp;', h: '60px' }, '', '', '']]));
   }));
   return out;
+}
+function spStu(r) { const k = normName(r.n || ''); return k ? S.students.find(x => normName(x.n) === k) || null : null; }
+function spSearch(el, li) { const q = normName(el.value), box = el.parentElement.querySelector('.spres'); if (q.length < 2) { box.innerHTML = ''; return; }
+  const have = new Set(S.special[li].rows.map(r => normName(r.n || ''))), out = []; for (let i = 0; i < S.students.length && out.length < 12; i++) { const x = S.students[i]; if (normName(x.n).includes(q) && !have.has(normName(x.n))) out.push([i, x]); }
+  box.innerHTML = out.length ? out.map(([i, x]) => `<button type="button" class="wchip" data-act="spPick" data-i="${li}" data-j="${i}">＋ ${esc(x.n)} <small>${GSHORT[x.g]} / ${x.sec}</small></button>`).join('') : '<small class="mut">لا نتائج — تأكد من الاسم أو أضفه يدوياً</small>'; }
+function specialRollPages(o) {
+  const sl = S.special[+o.li || 0]; if (!sl) return ['<p class="txt">أضف قائمة من صفحة «المعلمون والمواد».</p>'];
+  const L2 = sl.rows.filter(r => r.n && r.n.trim()).map(r => ({ r, st: spStu(r) })).sort((x, y) => (x.r.g - y.r.g) || ((x.st ? x.st.sec : 0) - (y.st ? y.st.sec : 0)) || AR.compare(normName(x.r.n), normName(y.r.n)));
+  const rows = [[H('م', { w: '6%' }), H('اسم الطالب'), H('الصف', { w: '10%' }), H('الشعبة', { w: '9%' }), H('اللجنة', { w: '9%' }), H('رقم الجلوس', { w: '11%' }), H('ملاحظات', { w: '20%' })]];
+  L2.forEach((x, i) => rows.push([i + 1, { v: `<b>${esc(x.r.n)}</b>`, al: 'right' }, Gc(x.r.g, GSHORT[x.r.g]), x.st ? x.st.sec : '', x.st && x.st.com != null ? x.st.com : '', x.st && x.st.seat != null ? x.st.seat : '', '']));
+  if (rows.length === 1) rows.push([{ v: 'لا يوجد طلاب في القائمة بعد', cs: 7 }]);
+  const nm = sl.title.includes(' - ') ? sl.title.split(' - ').slice(1).join(' - ') : sl.title; return [title('بيان بأسماء ' + esc(nm), yearLine()) + T(rows)];
 }
 function specialPages(o) {
   const sl = S.special[+o.li || 0]; if (!sl) return ['<p class="txt">أضف قائمة من صفحة «المعلمون والمواد».</p>'];
@@ -3213,9 +3232,10 @@ function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   const dl = id === 'assign' ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
-  return `<div class="qbar"><span class="qlbl">${label}</span>${extra}${fdCtl(id)}${dl}<span class="sp1"></span><button class="btn sm pri" data-act="qopen" data-form="${id}"${od} type="button">معاينة قبل الطباعة</button><button class="btn sm" data-act="qprint" data-form="${id}"${od} type="button">طباعة</button><button class="btn sm" data-act="qpdf" data-form="${id}"${od} type="button">PDF</button><button class="btn sm" data-act="qword" data-form="${id}"${od} type="button">Word</button></div>`;
+  const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
+  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}</div>`;
 }
-let PV = null;
+let PV = null; var QOPEN = {};
 function openPreview(groups, name) {
   const pages = groups.flatMap(g => g.pages.map(pg => ({ pg, land: !!g.land })));
   if (!pages.length) return toast('لا توجد صفحات للمعاينة', true);
@@ -3279,7 +3299,7 @@ function pageWrap(content, land) {
   return `<div class="page${land ? ' land' : ''}"><img class="brand-hdr phdr" src="${HDR}" alt=""><div class="pbody">${content}</div><img class="brand-ftr pftr" src="${FTR}" alt=""></div>`;
 }
 /* ===== تاريخ النموذج (للنماذج التي تُوزَّع قبل الاختبارات) ===== */
-const FD_IDS = ['assign', 'complete', 'receipt', 'stList', 'tList', 'obsInstr', 'gradeStmt', 'taSheet', 'taLoad', 'correct', 'comCounts', 'comPlaces', 'special', 'absBySub', 'lateList', 'stuGuide', 'qData', 'qOrig', 'errQ', 'errA', 'gradeEst'];
+const FD_IDS = ['assign', 'complete', 'receipt', 'stList', 'tList', 'obsInstr', 'gradeStmt', 'taSheet', 'taLoad', 'correct', 'comCounts', 'comPlaces', 'special', 'specialRoll', 'absBySub', 'lateList', 'stuGuide', 'qData', 'qOrig', 'errQ', 'errA', 'gradeEst'];
 function fdOf(id) { if (!S.s.fdate) S.s.fdate = {}; const x = S.s.fdate[id] || {}, g = S.s.fdate._all || { m: 'none' }; return x.m && x.m !== 'all' ? x : g; }
 function hDate(iso) { const [y, m, d] = toHijri(iso); return `${DAYS_AR[isoToDate(iso).getUTCDay()]} ${d} / ${m} / ${y} هـ`; }
 function fdText(id) { const x = fdOf(id); if (x.m === 'today') return hDate(todayIso()); if (x.m === 'fix' && x.d) return hDate(x.d); if (x.m === 'blank') return `......... / ......... / ${toHijri(todayIso())[0]} هـ`; return ''; }
@@ -4011,13 +4031,15 @@ document.addEventListener('click', async e => {
     case 'pvPdf': if (PV) downloadPdf(PV.groups, PV.name); return;
     case 'pvWord': if (PV) wordDoc(PV.groups, PV.name); return;
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
-    case 'pvZoom': if (PV) { PV.z = b.dataset.v === 'fit' ? 0 : +b.dataset.v; $$('[data-act=pvZoom]').forEach(x => x.classList.toggle('on', x === b)); pvFit(); } return;
+    case 'pvZoom': if (PV) { PV.z = PV.z ? 0 : 1; b.textContent = PV.z ? '↔ ملء العرض' : '🔍 تكبير'; pvFit(); } return;
     case 'pvClose': return closePreview();
     case 'pdf': { const g = currentGroups(); if (!g[0].pages.length) return toast('لا توجد صفحات', true); return downloadPdf(g, fname(formDef().t)); }
     case 'stuPdf': return downloadPdf([{ land: false, pages: stuPages() }], fname(SF.title.trim() || 'كشف الطلاب'));
     case 'delTa': S.ta.splice(i, 1); return re();
     case 'addSpecial': S.special.push({ title: 'قائمة جديدة', kind: 'sign', rows: [] }); return re();
     case 'delSpecial': if (await confirmBox('حذف القائمة؟')) { S.special.splice(i, 1); re(); } return;
+    case 'spPick': { const x = S.students[j], L3 = S.special[i]; if (x && !L3.rows.some(r => normName(r.n || '') === normName(x.n))) { L3.rows = L3.rows.filter(r => r.n && r.n.trim()); L3.rows.push({ n: x.n, g: x.g }); toast(`أُضيف ${x.n} ✓`); } return re(); }
+    case 'sortSp': { S.special[i].rows.sort((p, q) => (p.g - q.g) || (((spStu(p) || {}).sec || 0) - ((spStu(q) || {}).sec || 0)) || AR.compare(normName(p.n || ''), normName(q.n || ''))); return re(); }
     case 'addSpRow': S.special[i].rows.push({ n: '', g: 1 }); return re();
     case 'delSpRow': S.special[i].rows.splice(j, 1); return re();
     case 'form': FORM = b.dataset.v; FO = {}; try { localStorage.setItem(LS_KEY + '-form', FORM); } catch (x) { } return render();
@@ -4340,7 +4362,7 @@ function vToday() {
   const when = diff === 0 ? '<em class="tdy now">اليوم</em>' : diff === 1 ? '<em class="tdy">غداً</em>' : diff > 1 ? `<em class="tdy">بعد ${diff} أيام</em>` : '<em class="tdy past">انتهى</em>';
   const chips = S.days.map((x, i) => `<button type="button" class="dchip${i === di ? ' on' : ''}${x.g === t ? ' today' : ''}" data-act="todayDay" data-v="${i}"><b>${dayName(x)}</b><small>${dateShort(x)}</small></button>`).join('');
   const pers = d.p.map((p, pi) => `<div class="tper"><div class="tph"><b>الفترة ${esc(p.n || pi + 1)}</b><span>${esc(p.t || '')}</span></div><div class="tsubs">${G.map(g => (p.s[g] || '').trim() ? `<span class="tsub" style="--gc:${GCOL[g]}"><small>${GSHORT[g]}</small>${esc(p.s[g])}</span>` : '').join('') || '<span class="hint">لا مواد</span>'}</div></div>`).join('');
-  const tile = (id, ttl, ic, sub, extra = '') => `<article class="ttile"><div class="tti">${ic}</div><div class="ttx"><b>${ttl}</b><small>${sub}</small></div><div class="tta"><button class="btn sm pri" data-act="todayForm" data-op="pv" data-f="${id}"${extra} type="button">معاينة وطباعة</button><button class="btn sm" data-act="todayForm" data-op="pdf" data-f="${id}"${extra} type="button">PDF</button></div></article>`;
+  const tile = (id, ttl, ic, sub, extra = '') => `<article class="ttile"><div class="tti">${ic}</div><div class="ttx"><b>${ttl}</b><small>${sub}</small></div><div class="tta"><button class="btn sm pri" data-act="todayForm" data-op="pv" data-f="${id}"${extra} type="button">🖨 معاينة وطباعة</button></div></article>`;
   const dayTiles = DAY_ITEMS.map(it => tile(it.k, it.t, it.per === 'day' ? '📅' : '🕘', it.per === 'day' ? 'لهذا اليوم' : (d.p.length > 1 ? `لكل فترة (${d.p.length})` : 'لفترة اليوم'))).join('');
   return `<section class="card todayhero">
     <div class="tdays" role="tablist" aria-label="أيام الاختبار">${chips}</div>
@@ -4954,7 +4976,7 @@ function vWait(iso) {
     ${w.blocks.length && !board ? `${tt0() ? '<div class="acts wrap"><button class="btn" data-act="wAuto" type="button">تعبئة تلقائية للمتاحين</button></div>' : ''}<div class="wsum"><span><b>${w.blocks.filter(b => !b.part).length}</b> غائب</span>${w.blocks.some(b => b.part) ? `<span><b>${w.blocks.filter(b => b.part).length}</b> مستأذن/متأخر</span>` : ''}<span><b>${w.blocks.reduce((a, b) => a + Object.values(b.rows || {}).filter(r => r && r.t).length, 0)}</b> حصة مسددة</span>${empty ? `<span class="warn"><b>${empty}</b> بلا منتظر</span>` : ''}${issues ? `<span class="bad"><b>${issues}</b> تعارض</span>` : ''}</div>` : ''}
     ${w.blocks.length && tt0() && !board ? `<div class="wlegend" aria-label="دليل الرموز"><span><b class="lg st">★</b>الأنسب (حتى 3)</span><span><b class="lg">◆</b>يدرّس الشعبة</span><span><b class="lg n">3</b>حصصه اليوم</span><span><b class="lg">⏱</b>خرج قبل الحصة</span><span><b class="lg">🏁</b>أنهى حصصه</span><button type="button" class="hlp" data-help="ترتيب الأنسب: من يدرّس الشعبة نفسها، ثم من يدرّس الصف، ثم الأقل حصصاً اليوم، ثم الأقل انتظاراً في الفصل. يُؤخَّر من بلغ 5 حصص اليوم ومن أنهى حصصه. المس «★ الأنسب» لاختياره مباشرة، أو أي اسم آخر." aria-label="شرح الترتيب">؟</button></div>` : ''}
     ${board ? wBoard(iso) : `<div class="wblks">${blocks}</div>`}
-    <div class="woutbar"><b>الإخراج</b><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 معاينة وطباعة</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button><button class="btn sm" data-act="dPdf" data-v="wait" type="button">PDF</button><button class="btn sm" data-act="dWord" data-v="wait" type="button">Word</button><button class="btn sm" data-act="dXls" data-v="wait" type="button">Excel</button></div>
+    <div class="woutbar"><button class="btn pri" data-act="dPrint" data-v="wait" type="button">🖨 معاينة وطباعة</button><button class="btn wa" data-act="waOpen" data-v="wait" type="button">📲 واتساب</button></div>
     ${d >= 0 && !holOf(iso) && tt0() ? `<details class="wopts"${WOPT ? ' open' : ''} ontoggle="WOPT=this.open"><summary>⚙ خيارات الانتظار</summary>
       <div class="wopt"><button type="button" class="wtog${oneWait() ? ' on' : ''}" data-act="wOne" aria-pressed="${oneWait()}"><i></i>انتظار واحد لكل معلم في اليوم</button><button type="button" class="wtog${skipDone() ? ' on' : ''}" data-act="wSkipDone" aria-pressed="${skipDone()}"><i></i>🏁 تأخير من أنهى حصصه</button></div>
       <div class="wvt" role="tablist"><button type="button" class="${wView() === 'p' ? 'on' : ''}" data-act="wView" data-v="p">☰ لوحة التسديد</button><button type="button" class="${wView() === 'p' ? '' : 'on'}" data-act="wView" data-v="a">▦ العرض التفصيلي</button></div>
@@ -5933,7 +5955,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1794515840';
+var BUILD_ID = '1794672481';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';

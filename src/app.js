@@ -1662,10 +1662,11 @@ function vStaff() {
       <div class="acts wrap"><label class="inl">العنوان ${inp(`special.${li}.title`, sl.title, { style: 'width:18rem' })}</label>
       <label class="inl">العمود الأخير <select class="in" data-k="special.${li}.kind" id="sp_k_${li}"><option value="grade"${sl.kind === 'grade' ? ' selected' : ''}>الدرجة</option><option value="sign"${sl.kind === 'sign' ? ' selected' : ''}>التوقيع</option></select></label>
       <button class="btn sm danger" data-act="delSpecial" data-i="${li}" type="button">حذف القائمة</button></div>
-      ${qbar('special', 'كشف هذه القائمة:', '', { li })}
-      <div class="tw"><table class="et"><tr><th>اسم الطالب</th><th>الصف</th><th></th></tr>
-      ${sl.rows.map((r, ri) => `<tr><td>${inp(`special.${li}.rows.${ri}.n`, r.n, { list: 'stulist' })}</td><td><select class="in" data-k="special.${li}.rows.${ri}.g" data-num="1" id="sp_${li}_${ri}">${G.map(g => `<option value="${g}"${+r.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td><button class="x" data-act="delSpRow" data-i="${li}" data-j="${ri}" type="button" title="حذف">×</button></td></tr>`).join('')}
-      </table></div><button class="btn sm" data-act="addSpRow" data-i="${li}" type="button">إضافة طالب</button></div>`).join('')}
+      ${qbar('specialRoll', 'بيان الأسماء واللجان:', '', { li })}${qbar('special', 'الكشف اليومي بالمواد:', '', { li })}
+      <div class="spadd"><input class="in" type="search" placeholder="🔎 اكتب اسم الطالب لإضافته بلمسة…" oninput="spSearch(this, ${li})"><div class="spres"></div></div>
+      <div class="tw"><table class="et"><tr><th>اسم الطالب</th><th>الصف</th><th>الشعبة</th><th>اللجنة</th><th>الجلوس</th><th></th></tr>
+      ${sl.rows.map((r, ri) => `<tr><td>${inp(`special.${li}.rows.${ri}.n`, r.n, { list: 'stulist' })}</td><td><select class="in" data-k="special.${li}.rows.${ri}.g" data-num="1" id="sp_${li}_${ri}">${G.map(g => `<option value="${g}"${+r.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td>${(st => `<td>${st ? st.sec : ''}</td><td>${st && st.com != null ? st.com : '—'}</td><td>${st && st.seat != null ? st.seat : '—'}</td>`)(spStu(r))}<td><button class="x" data-act="delSpRow" data-i="${li}" data-j="${ri}" type="button" title="حذف">×</button></td></tr>`).join('')}
+      </table></div><div class="acts wrap"><button class="btn sm" data-act="addSpRow" data-i="${li}" type="button">إضافة يدوية</button>${sl.rows.length > 1 ? `<button class="btn sm" data-act="sortSp" data-i="${li}" type="button">ترتيب حسب الصف والشعبة</button>` : ''}<small class="mut">${sl.rows.filter(r => r.n).length} طالب</small></div></div>`).join('')}
     <button class="btn sm pri" data-act="addSpecial" type="button">إضافة قائمة جديدة</button>
     <datalist id="stulist">${S.students.slice(0, 1500).map(x => `<option value="${esc(x.n)}"></option>`).join('')}</datalist>
   </section>`;
@@ -1810,6 +1811,7 @@ const FORMS = [
   { id: 'agree', grp: 'الأعمال اليومية', t: 'محضر اتفاقية التصحيح وسلامة الأسئلة', opts: ['ses'], build: o => sesOpt(o).map(agreePage) },
   { id: 'qEnv', grp: 'الأعمال اليومية', t: 'ظرف أسئلة الطلاب (لكل لجنة)', opts: ['ses', 'com'], build: o => qEnvPages(o) },
   { id: 'aEnv', grp: 'الأعمال اليومية', t: 'ظرف أوراق إجابات الطلاب (لكل مادة)', opts: ['ses'], build: o => aEnvPages(o) },
+  { id: 'specialRoll', grp: 'الأعمال اليومية', t: 'بيان القوائم الخاصة (الأسماء واللجان)', opts: ['list'], build: o => specialRollPages(o) },
   { id: 'special', grp: 'الأعمال اليومية', t: 'القوائم الخاصة (انتساب / عوق بصري)', opts: ['list'], build: o => specialPages(o) },
   // ===== المعلمون
   { id: 'taSheet', grp: 'المعلمون والأسئلة', t: 'كشف إسناد المعلمين', opts: ['grade', 'taopts'], build: o => taSheetPages(o) },
@@ -2002,6 +2004,18 @@ function aEnvPages(o) {
     ]) + sp(14) + T([[H('المصحح الأول'), H('المصحح الثاني'), H('المراجع'), H('الراصد')], [{ v: '&nbsp;', h: '60px' }, '', '', '']]));
   }));
   return out;
+}
+function spStu(r) { const k = normName(r.n || ''); return k ? S.students.find(x => normName(x.n) === k) || null : null; }
+function spSearch(el, li) { const q = normName(el.value), box = el.parentElement.querySelector('.spres'); if (q.length < 2) { box.innerHTML = ''; return; }
+  const have = new Set(S.special[li].rows.map(r => normName(r.n || ''))), out = []; for (let i = 0; i < S.students.length && out.length < 12; i++) { const x = S.students[i]; if (normName(x.n).includes(q) && !have.has(normName(x.n))) out.push([i, x]); }
+  box.innerHTML = out.length ? out.map(([i, x]) => `<button type="button" class="wchip" data-act="spPick" data-i="${li}" data-j="${i}">＋ ${esc(x.n)} <small>${GSHORT[x.g]} / ${x.sec}</small></button>`).join('') : '<small class="mut">لا نتائج — تأكد من الاسم أو أضفه يدوياً</small>'; }
+function specialRollPages(o) {
+  const sl = S.special[+o.li || 0]; if (!sl) return ['<p class="txt">أضف قائمة من صفحة «المعلمون والمواد».</p>'];
+  const L2 = sl.rows.filter(r => r.n && r.n.trim()).map(r => ({ r, st: spStu(r) })).sort((x, y) => (x.r.g - y.r.g) || ((x.st ? x.st.sec : 0) - (y.st ? y.st.sec : 0)) || AR.compare(normName(x.r.n), normName(y.r.n)));
+  const rows = [[H('م', { w: '6%' }), H('اسم الطالب'), H('الصف', { w: '10%' }), H('الشعبة', { w: '9%' }), H('اللجنة', { w: '9%' }), H('رقم الجلوس', { w: '11%' }), H('ملاحظات', { w: '20%' })]];
+  L2.forEach((x, i) => rows.push([i + 1, { v: `<b>${esc(x.r.n)}</b>`, al: 'right' }, Gc(x.r.g, GSHORT[x.r.g]), x.st ? x.st.sec : '', x.st && x.st.com != null ? x.st.com : '', x.st && x.st.seat != null ? x.st.seat : '', '']));
+  if (rows.length === 1) rows.push([{ v: 'لا يوجد طلاب في القائمة بعد', cs: 7 }]);
+  const nm = sl.title.includes(' - ') ? sl.title.split(' - ').slice(1).join(' - ') : sl.title; return [title('بيان بأسماء ' + esc(nm), yearLine()) + T(rows)];
 }
 function specialPages(o) {
   const sl = S.special[+o.li || 0]; if (!sl) return ['<p class="txt">أضف قائمة من صفحة «المعلمون والمواد».</p>'];
@@ -2225,9 +2239,10 @@ function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   const dl = id === 'assign' ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
-  return `<div class="qbar"><span class="qlbl">${label}</span>${extra}${fdCtl(id)}${dl}<span class="sp1"></span><button class="btn sm pri" data-act="qopen" data-form="${id}"${od} type="button">معاينة قبل الطباعة</button><button class="btn sm" data-act="qprint" data-form="${id}"${od} type="button">طباعة</button><button class="btn sm" data-act="qpdf" data-form="${id}"${od} type="button">PDF</button><button class="btn sm" data-act="qword" data-form="${id}"${od} type="button">Word</button></div>`;
+  const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
+  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}</div>`;
 }
-let PV = null;
+let PV = null; var QOPEN = {};
 function openPreview(groups, name) {
   const pages = groups.flatMap(g => g.pages.map(pg => ({ pg, land: !!g.land })));
   if (!pages.length) return toast('لا توجد صفحات للمعاينة', true);
@@ -2291,7 +2306,7 @@ function pageWrap(content, land) {
   return `<div class="page${land ? ' land' : ''}"><img class="brand-hdr phdr" src="${HDR}" alt=""><div class="pbody">${content}</div><img class="brand-ftr pftr" src="${FTR}" alt=""></div>`;
 }
 /* ===== تاريخ النموذج (للنماذج التي تُوزَّع قبل الاختبارات) ===== */
-const FD_IDS = ['assign', 'complete', 'receipt', 'stList', 'tList', 'obsInstr', 'gradeStmt', 'taSheet', 'taLoad', 'correct', 'comCounts', 'comPlaces', 'special', 'absBySub', 'lateList', 'stuGuide', 'qData', 'qOrig', 'errQ', 'errA', 'gradeEst'];
+const FD_IDS = ['assign', 'complete', 'receipt', 'stList', 'tList', 'obsInstr', 'gradeStmt', 'taSheet', 'taLoad', 'correct', 'comCounts', 'comPlaces', 'special', 'specialRoll', 'absBySub', 'lateList', 'stuGuide', 'qData', 'qOrig', 'errQ', 'errA', 'gradeEst'];
 function fdOf(id) { if (!S.s.fdate) S.s.fdate = {}; const x = S.s.fdate[id] || {}, g = S.s.fdate._all || { m: 'none' }; return x.m && x.m !== 'all' ? x : g; }
 function hDate(iso) { const [y, m, d] = toHijri(iso); return `${DAYS_AR[isoToDate(iso).getUTCDay()]} ${d} / ${m} / ${y} هـ`; }
 function fdText(id) { const x = fdOf(id); if (x.m === 'today') return hDate(todayIso()); if (x.m === 'fix' && x.d) return hDate(x.d); if (x.m === 'blank') return `......... / ......... / ${toHijri(todayIso())[0]} هـ`; return ''; }
@@ -3023,13 +3038,15 @@ document.addEventListener('click', async e => {
     case 'pvPdf': if (PV) downloadPdf(PV.groups, PV.name); return;
     case 'pvWord': if (PV) wordDoc(PV.groups, PV.name); return;
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
-    case 'pvZoom': if (PV) { PV.z = b.dataset.v === 'fit' ? 0 : +b.dataset.v; $$('[data-act=pvZoom]').forEach(x => x.classList.toggle('on', x === b)); pvFit(); } return;
+    case 'pvZoom': if (PV) { PV.z = PV.z ? 0 : 1; b.textContent = PV.z ? '↔ ملء العرض' : '🔍 تكبير'; pvFit(); } return;
     case 'pvClose': return closePreview();
     case 'pdf': { const g = currentGroups(); if (!g[0].pages.length) return toast('لا توجد صفحات', true); return downloadPdf(g, fname(formDef().t)); }
     case 'stuPdf': return downloadPdf([{ land: false, pages: stuPages() }], fname(SF.title.trim() || 'كشف الطلاب'));
     case 'delTa': S.ta.splice(i, 1); return re();
     case 'addSpecial': S.special.push({ title: 'قائمة جديدة', kind: 'sign', rows: [] }); return re();
     case 'delSpecial': if (await confirmBox('حذف القائمة؟')) { S.special.splice(i, 1); re(); } return;
+    case 'spPick': { const x = S.students[j], L3 = S.special[i]; if (x && !L3.rows.some(r => normName(r.n || '') === normName(x.n))) { L3.rows = L3.rows.filter(r => r.n && r.n.trim()); L3.rows.push({ n: x.n, g: x.g }); toast(`أُضيف ${x.n} ✓`); } return re(); }
+    case 'sortSp': { S.special[i].rows.sort((p, q) => (p.g - q.g) || (((spStu(p) || {}).sec || 0) - ((spStu(q) || {}).sec || 0)) || AR.compare(normName(p.n || ''), normName(q.n || ''))); return re(); }
     case 'addSpRow': S.special[i].rows.push({ n: '', g: 1 }); return re();
     case 'delSpRow': S.special[i].rows.splice(j, 1); return re();
     case 'form': FORM = b.dataset.v; FO = {}; try { localStorage.setItem(LS_KEY + '-form', FORM); } catch (x) { } return render();

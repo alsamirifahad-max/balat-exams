@@ -856,6 +856,12 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .wsh.bk .wsh-f{flex-wrap:wrap}.wsh.bk .wsh-f .btn{flex:1 1 auto}
 .fdl{text-align:left;font-size:11pt;font-weight:700;margin:0 0 4px}
 .qdate{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;width:100%;margin:6px 0 2px;padding:8px 10px;border-radius:12px;background:var(--surface2,var(--soft));border:1px dashed var(--line)}.qdate>span{font-size:.85rem;font-weight:700}.qdate select,.qdate input{flex:1 1 160px;min-width:0}.qdate .fdv{color:var(--info);font-size:.9rem}.qdate .btn{margin:0}
+.qbar.q1 .qgo{font-weight:800;padding-inline:20px}.qopt{flex:1 1 100%;margin-top:2px}.qopt>summary{cursor:pointer;font-size:.8rem;color:var(--muted);padding:4px 2px}.qopt>summary b{color:var(--info);font-weight:700}.qopt .qdate{margin-top:6px}
+@media (max-width:600px){.qbar.q1 .qgo{flex:1 1 100%}}
+.pvbar{row-gap:8px}.pvx{font:inherit;flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:1.05rem;cursor:pointer}.pva{flex:1 1 100%;flex-wrap:nowrap}.pva .btn{margin:0;flex:1 1 0;padding-inline:6px;white-space:nowrap}.pva .pvp{flex:2 1 0;font-weight:800}
+@media (min-width:760px){.pva{flex:0 1 auto}.pva .btn{flex:0 0 auto;padding-inline:14px}}
+.spadd{margin:8px 0}.spres{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.spres small{opacity:.75}
+.woutbar .btn{flex:1 1 0}
 </style>
 </head>
 <body>
@@ -878,9 +884,8 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
   <div class="acts"><button class="btn danger" id="confYes" type="button">نعم</button><button class="btn ghost" id="confNo" type="button">إلغاء</button></div></div></div>
 <div class="pvmodal" id="pvModal" hidden role="dialog" aria-label="معاينة قبل الطباعة">
   <div class="pvbar">
-    <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div>
-    <div class="pvz"><button type="button" class="chip on" data-act="pvZoom" data-v="fit">ملء العرض</button><button type="button" class="chip" data-act="pvZoom" data-v="0.6">60%</button><button type="button" class="chip" data-act="pvZoom" data-v="1">100%</button></div>
-    <div class="pva"><button class="btn sm pri" data-act="pvPrint" type="button">طباعة</button><button class="btn sm" data-act="pvPdf" type="button">تحميل PDF</button><button class="btn sm" data-act="pvWord" type="button">تحميل Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvClose" type="button" aria-label="إغلاق">✕ إغلاق</button></div>
+    <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div><button class="pvx" data-act="pvClose" type="button" aria-label="إغلاق">✕</button>
+    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
   </div>
   <div class="pvbody" id="pvBody"></div>
 </div>
