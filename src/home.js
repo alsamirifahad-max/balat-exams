@@ -309,9 +309,10 @@ function stageTasks(k) {
     files: ROLE === 'agent' ? [['رفع الجدول المدرسي العام', !!(S.daily && S.daily.tt), 'fc_tt'], ['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch']] : [
       ['رفع ملف نور', S.students.length > 0, 'fc_noor'], ['رفع ملف الإرشاد الطلابي', S.guide.length > 0, 'fc_guide'], ['تحديث قائمة المعلمين', S.teachers.length > 0, 'fc_tch'], ['رفع الجدول المدرسي العام', !!(S.daily && S.daily.tt), 'fc_tt']],
     assign: [['اختيار الحفظ الذي تعمل عليه', chosen, 'setsCard'], ['إدخال الإسناد (رفع ملف أو تعديل)', S.ta.length > 0, 'h:ملف الإسناد'], ['لكل سطر معلم', S.ta.length > 0 && S.ta.every(x => tx(x.t)), 'h:تعديل الإسناد']],
+    plan: [['مراجعة أسماء اللجان العاملة (إحلال / إضافة)', typeof planTouched === 'function' && planTouched(), 'first'], ['لكل لجنة رئيس ولا خانات فارغة', typeof planStats === 'function' && !(planStats().empty + planStats().noHead), 'first'], ['اعتماد الخطة لهذا العام', !!(S.s.plan && S.s.plan.ok), 'first']],
     schedule: [['إدخال أيام الاختبار وتواريخها', S.days.length > 0, 'first'], ['إدخال مواد كل صف', sched.length > 0, 'first']],
     committees: [['أعداد اللجان تطابق الطلاب', G.every(g => gt[g] === ct[g]), 'first'], ['توزيع الطلاب بالأسماء وأرقام الجلوس', !!S.distributed, 'first']],
-    staff: [['معلم لكل مادة مختبرة', sched.length > 0 && sched.every(x => { const r = S.st.find(y => +y.g === x.g && tx(y.sub) === x.sub); return r && tx(r.t); }), 'h:معلمو المواد'], ['توزيع الملاحظين على كل اللجان', need > 0 && filled >= need, 'h:توزيع الملاحظين']]
+    staff: [['معلم لكل مادة مختبرة', sched.length > 0 && sched.every(x => { const r = S.st.find(y => +y.g === x.g && tx(y.sub) === x.sub); return r && tx(r.t); }), 'h:المكلفون بوضع'], ['توزيع الملاحظين على كل اللجان', need > 0 && filled >= need, 'h:توزيع الملاحظين']]
   };
   return (T[k] || []).map(([t, ok, go]) => ({ t, ok, go }));
 }

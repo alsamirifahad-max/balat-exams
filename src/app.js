@@ -1039,9 +1039,10 @@ function buildStFromTa() {
 const FLOW = [
   { k: 'files', n: 1, t: 'الملفات الأساسية', d: 'ملف نور · ملف الإرشاد الطلابي · قائمة المعلمين — الأساس الذي يُبنى عليه كل شيء', c: '#2563eb', ic: '<path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5 12 11l2.5 2.5"/>' },
   { k: 'assign', n: 2, t: 'الإسناد', d: 'توزيع المواد والشعب على المعلمين — تنعكس فيه قائمة المعلمين', c: '#7c3aed', ic: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' },
+  { k: 'plan', n: 3, t: 'خطة الاختبارات', d: 'اللجان العاملة وأعضاؤها ومهامهم وتوزيع الأدوار بين المكلفين — إحلال وإضافة وطباعة القرارات', c: '#0e7490', ic: '<path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><rect x="5" y="6" width="14" height="15" rx="2"/><path d="m9 13 2 2 4-4"/>' },
+  { k: 'committees', n: 4, t: 'اللجان وتوزيع الطلاب', d: 'اللجان ومقارها ثم توزيع الطلاب وأرقام الجلوس — مع تسجيل المستجد والمنسحب دون إعادة التوزيع', c: '#c2410c', ic: '<path d="M4 20v-6h16v6M7 14V9h10v5M9 9V5h6v4"/>' },
   { k: 'schedule', n: 3, t: 'جدول الاختبارات', d: 'الأيام والفترات ومواد كل صف', c: '#0f766e', ic: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>' },
-  { k: 'committees', n: 4, t: 'اللجان والجلوس', d: 'أعداد اللجان وتوزيع الطلاب وأرقام الجلوس', c: '#c2410c', ic: '<path d="M4 20v-6h16v6M7 14V9h10v5M9 9V5h6v4"/>' },
-  { k: 'staff', n: 5, t: 'التكليفات والملاحظة', d: 'واضعو الأسئلة وبيان الدرجات وتوزيع الملاحظين والقوائم الخاصة', c: '#be185d', ic: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="m16 11 2 2 4-4"/>' },
+  { k: 'staff', n: 5, t: 'المنهج والأسئلة والملاحظة', d: 'إقرار إنهاء المنهج · المكلفون بوضع الأسئلة · بيان الدرجات · توزيع الملاحظين · القوائم الخاصة', c: '#be185d', ic: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="m16 11 2 2 4-4"/>' },
   { k: 'forms', n: 6, t: 'المطبوعات', d: 'كل النماذج والكشوف والمحاضر — طباعة وPDF وWord', c: '#4338ca', ic: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>' }
 ];
 const UTILS = [
@@ -1058,7 +1059,7 @@ let TABS = ALL_TABS;
 let TAB = 'files';
 const ALIAS = { students: 'files' };
 function stageDone(k) {
-  return { files: S.students.length > 0 && S.teachers.length > 0, assign: S.ta.length > 0, schedule: S.days.length > 0 && S.days.some(d => d.p.some(p => G.some(g => (p.s[g] || '').trim()))), committees: !!S.distributed, staff: Object.values(S.obs || {}).some(l => (l || []).some(Boolean)), forms: null }[k];
+  return { files: S.students.length > 0 && S.teachers.length > 0, assign: S.ta.length > 0, schedule: S.days.length > 0 && S.days.some(d => d.p.some(p => G.some(g => (p.s[g] || '').trim()))), committees: !!S.distributed, plan: !!(S.s.plan && S.s.plan.ok), staff: Object.values(S.obs || {}).some(l => (l || []).some(Boolean)), forms: null }[k];
 }
 const svgI = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function updSetChip() { const c = $('#setChip'); if (!c) return; const m = setMeta(ACTIVE); c.textContent = 'الفصل ' + m.sem + (ROLE === 'agent' || ACTIVE !== 'ta' ? '' : ''); c.title = `الإسناد الذي تعمل عليه: ${m.n} — الفصل الدراسي ${m.sem} ${m.y}`; c.style.setProperty('--scc', SET_DEF[ACTIVE].c); }
@@ -1091,7 +1092,7 @@ function render() {
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
   const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && (p.k === 'assign' || p.k === 'daily');
-  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
     j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
@@ -1335,7 +1336,8 @@ function vCommittees() {
       ${G.map(g => `<td>${inp(`com.${i}.c.${g}`, c.c[g], { num: 1, type: 'number', style: 'width:4.5rem' })}</td>`).join('')}<td class="sum" data-sum="${i}">${comSum(c)}</td>
       <td><button class="x" data-act="delCom" data-i="${i}" type="button" title="حذف اللجنة">×</button></td></tr>`).join('')}
     <tr class="tot"><td colspan="4">المجموع</td>${G.map(g => `<td>${ct[g]}</td>`).join('')}<td>${ct.all}</td><td></td></tr></table></div>
-  </section>`;
+  </section>
+  ${typeof movesCard === 'function' ? movesCard() : ''}`;
 }
 
 /* ----- الطلاب ----- */
@@ -1615,7 +1617,12 @@ function vStaff() {
 
 
   <section class="card">
-    <h2>معلمو المواد المختبرة (واضعو الأسئلة)</h2>
+    <h2>إقرار إنهاء المنهج</h2>
+    <p class="hint">يوقّع كل معلم على إنهاء مقرره قبل الاختبارات. يُبنى من الإسناد تلقائياً — اختر الصف ثم اطبع.</p>
+    ${qbar('complete', 'إقرار إنهاء المقرر الدراسي:')}
+  </section>
+  <section class="card">
+    <h2>المكلفون بوضع الأسئلة</h2>
     ${qbar('stList', 'كشف المعلمين المكلفين:')}
     ${qbar('assign', 'خطابات التكليف:')}
     ${qbar('receipt', 'بيان استلام الأسئلة:')}
