@@ -10,7 +10,7 @@ const DAYS_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأرب
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 /* تصحيح الحروف: «ى» في وسط الكلمة تُكتب «ي» (تظهر بلا نقاط)، والياء والكاف الفارسيتان تُوحَّدان */
-const fixAr = v => String(v).replace(/\u0649(?=[\u0620-\u064A\u066E-\u06D3])/g, 'ي').replace(/\u06CC/g, 'ي').replace(/\u06A9/g, 'ك').replace(/\u06C1/g, 'ه');
+const fixAr = v => String(v).replace(/\u0649(?=[\u0620-\u064A\u066E-\u06D3])/g, 'ي').replace(/\u06CC/g, 'ي').replace(/\u06A9/g, 'ك').replace(/\u06C1/g, 'ه').replace(/([0-9٠-٩])[ \u00A0]*ه(?:ـ+)?(?![\u0621-\u064A])/g, '$1\u00A0هـ');
 const esc = v => fixAr(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const clone = o => JSON.parse(JSON.stringify(o));
 const toWestern = s => String(s == null ? '' : s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -740,7 +740,7 @@ async function downloadPdf(groups, name, opt) {
       $('#pdfProgT').textContent = `جارٍ تجهيز ملف PDF… صفحة ${i + 1} من ${pages.length}`; $('#pdfProgB').style.width = Math.round((i / pages.length) * 100) + '%';
       box.innerHTML = pageWrap(pages[i].pg, pages[i].land);
       const el = box.firstElementChild; el.style.zoom = '';
-      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let tn; while ((tn = tw.nextNode())) { const v = tn.nodeValue; const nv = v.replace(/([\u0600-\u06FF])(\d)/g, '$1 $2').replace(/(\d)([\u0600-\u06FF])/g, '$1 $2'); if (nv !== v) tn.nodeValue = nv; }
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let tn; while ((tn = tw.nextNode())) { const v = tn.nodeValue; const nv = fixAr(toWestern(v)).replace(/([\u0600-\u06FF])(\d)/g, '$1 $2').replace(/(\d)([\u0600-\u06EF])/g, '$1 $2'); if (nv !== v) tn.nodeValue = nv; }
       const imgs = $$('img', el); await Promise.all(imgs.map(im => im.complete ? 1 : new Promise(r => { im.onload = r; im.onerror = r; })));
       layoutPages([el]);
       const cv = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true });
@@ -1087,14 +1087,38 @@ function flowBar() {
   ];
   return `<nav class="flow" aria-label="خطوات الإعداد">${st.map((x, i) => `<button type="button" class="fstep ${x[2] === true ? 'ok' : x[2] === false ? 'todo' : ''}${TAB === x[0] ? ' cur' : ''}" data-tab="${x[0]}"><i>${x[2] === true ? '✓' : i + 1}</i>${x[1]}</button>`).join('<span class="fsep"></span>')}</nav>`;
 }
+/* ===== خطوات داخل المرحلة: قسم واحد ظاهر في كل مرة ===== */
+const SUBP = ['committees', 'staff', 'settings'];
+let SUB = {}; try { SUB = JSON.parse(localStorage.getItem(LS_KEY + '-sub') || '{}'); } catch (e) { }
+function subName(h) { return h.textContent.replace(/[؟?]/g, '').replace(/\s*\(.*?\)\s*/g, ' ').split(/[:：]/)[0].trim(); }
+function subSteps(m, hs) {
+  const body = $('.sbody', m), secs = [...body.children].filter(e => e.matches('section.card'));
+  const heads = hs.map(h => h.parentElement); let cur = Math.min(SUB[TAB] || 0, heads.length - 1);
+  // كل قسم بلا عنوان يتبع أقرب قسم معنون قبله، والأقسام قبل الأول تتبع الأول
+  let g = 0; const grp = secs.map(s => { const x = heads.indexOf(s); if (x >= 0) g = x; return g; });
+  secs.forEach((s, i) => { s.hidden = grp[i] !== cur; });
+  const nav = document.createElement('nav'); nav.className = 'substeps'; nav.setAttribute('aria-label', 'خطوات هذه المرحلة');
+  nav.innerHTML = heads.map((s, i) => `<button type="button" class="${i === cur ? 'on' : ''}" data-sub="${i}"><i>${i + 1}</i><span>${esc(subName(s.querySelector(':scope > h2')))}</span></button>`).join('');
+  const tk = $('.sbody > .tasks', m); if (tk) tk.after(nav); else body.prepend(nav);
+  { const on = $('.on', nav); if (on) { const a = on.getBoundingClientRect(), b = nav.getBoundingClientRect(); nav.scrollLeft += (a.left + a.width / 2) - (b.left + b.width / 2); } }
+  const last = secs.filter((s, i) => grp[i] === cur).pop();
+  if (last && cur < heads.length - 1) { const n = document.createElement('div'); n.className = 'subnext'; n.innerHTML = `<button type="button" class="btn" data-sub="${cur + 1}">التالي: ${cur + 2}. ${esc(subName(heads[cur + 1].querySelector(':scope > h2')))} ←</button>`; last.after(n); }
+  const sn = $('.snext', m); if (sn) sn.hidden = cur < heads.length - 1;
+}
+function subGo(i) { SUB[TAB] = +i; try { localStorage.setItem(LS_KEY + '-sub', JSON.stringify(SUB)); } catch (e) { } render(); const n = $('.substeps'); if (n) scrollTo({ top: Math.max(0, n.getBoundingClientRect().top + scrollY - 70), behavior: 'smooth' }); }
+function subReveal(card) { if (!card || !card.hidden || !SUBP.includes(TAB)) return card; const heads = $$('.sbody > section.card > h2').filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim())).map(h => h.parentElement);
+  let k = heads.indexOf(card); if (k < 0) { const all = $$('.sbody > section.card'); for (let i = all.indexOf(card); i >= 0; i--) { k = heads.indexOf(all[i]); if (k >= 0) break; } }
+  if (k < 0) return card; SUB[TAB] = k; render(); return null; }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-sub]'); if (b) subGo(b.dataset.sub); });
 function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
   const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && (p.k === 'assign' || p.k === 'daily');
-  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
-  if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
+  if (SUBP.includes(TAB) && cards.length >= 2) subSteps(m, cards);
+  else if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
     j.innerHTML = cards.map((h, i) => { h.parentElement.id = h.parentElement.id || 'sec_' + i; return `<button type="button" data-jump="${h.parentElement.id}">${esc(h.textContent.replace(/[:：]\s*$/, '').trim())}</button>`; }).join('');
     const tk = $('.sbody > .tasks', m); if (tk) tk.after(j); else $('.sbody', m).prepend(j); }
   $$('.brand-hdr').forEach(i => i.src = HDR); $$('.brand-ftr').forEach(i => i.src = FTR);
@@ -1309,9 +1333,8 @@ function vCommittees() {
   const ct = comTotals(), gt = gradeTotals(), src = S.students.length ? 'من ملف الطلاب المرفوع' : 'من الأعداد اليدوية في الإعدادات';
   const warn = G.filter(g => ct[g] !== gt[g]);
   return `
-  ${typeof distCard === 'function' ? distCard() : ''}
   <section class="card">
-    <h2>اللجان وأعداد الطلاب فيها</h2>
+    <h2>اللجان ومقارها وتوزيع الطلاب</h2>
     ${typeof bldCtl === 'function' ? bldCtl() : ''}
     ${qbar('comCounts', 'أعداد الطلاب في اللجان:')}
     ${qbar('comPlaces', 'مقرات اللجان:')}
@@ -1337,7 +1360,8 @@ function vCommittees() {
       <td><button class="x" data-act="delCom" data-i="${i}" type="button" title="حذف اللجنة">×</button></td></tr>`).join('')}
     <tr class="tot"><td colspan="4">المجموع</td>${G.map(g => `<td>${ct[g]}</td>`).join('')}<td>${ct.all}</td><td></td></tr></table></div>
   </section>
-  ${typeof movesCard === 'function' ? movesCard() : ''}`;
+  ${typeof movesCard === 'function' ? movesCard() : ''}
+  ${typeof distCard === 'function' ? distCard() : ''}`;
 }
 
 /* ----- الطلاب ----- */
@@ -2191,7 +2215,7 @@ function cheatPage() {
   const full = (v, x = {}) => Object.assign({ v, cs: 4, al: 'right' }, x);
   return `<table dir="rtl" border="0" width="100%"><tr><td style="width:30%"></td><td style="width:40%">${T([[{ v: '<b style="font-size:18pt">محضر حالة غش</b>', h: '46px', st: 'border:2px solid #5a9e4b' }]])}</td><td style="width:30%"></td></tr></table>` + sp(10) +
     T([
-      [full(`<b>إنه في يوم : ...................................... الموافق : &nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp; / &nbsp;&nbsp; ${yr}هـ</b>`, { h: '34px' })],
+      [full(`<b>إنه في يوم : ...................................... الموافق : &nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp; / &nbsp;&nbsp; ${yr}\u00A0هـ</b>`, { h: '34px' })],
       [LB('اسم الطالب'), { v: '', w: '33%' }, LB('الصف / الشعبة'), ''],
       [LB('رقم الجلوس'), '', LB('المادة'), ''],
       [LB('الفصل الدراسي'), `<b>${esc(S.s.sem)}</b>`, LB('العام الدراسي'), `<b>${esc(S.s.yearTxt)}</b>`],
@@ -2315,8 +2339,8 @@ function pageWrap(content, land) {
 /* ===== تاريخ النموذج (للنماذج التي تُوزَّع قبل الاختبارات) ===== */
 const FD_IDS = ['assign', 'complete', 'receipt', 'stList', 'tList', 'obsInstr', 'gradeStmt', 'taSheet', 'taLoad', 'correct', 'comCounts', 'comPlaces', 'special', 'specialRoll', 'absBySub', 'lateList', 'stuGuide', 'qData', 'qOrig', 'errQ', 'errA', 'gradeEst'];
 function fdOf(id) { if (!S.s.fdate) S.s.fdate = {}; const x = S.s.fdate[id] || {}, g = S.s.fdate._all || { m: 'none' }; return x.m && x.m !== 'all' ? x : g; }
-function hDate(iso) { const [y, m, d] = toHijri(iso); return `${DAYS_AR[isoToDate(iso).getUTCDay()]} ${d} / ${m} / ${y} هـ`; }
-function fdText(id) { const x = fdOf(id); if (x.m === 'today') return hDate(todayIso()); if (x.m === 'fix' && x.d) return hDate(x.d); if (x.m === 'blank') return `......... / ......... / ${toHijri(todayIso())[0]} هـ`; return ''; }
+function hDate(iso) { const [y, m, d] = toHijri(iso); return `${DAYS_AR[isoToDate(iso).getUTCDay()]}\u00A0${d}\u00A0/\u00A0${m}\u00A0/\u00A0${y}\u00A0هـ`; }
+function fdText(id) { const x = fdOf(id); if (x.m === 'today') return hDate(todayIso()); if (x.m === 'fix' && x.d) return hDate(x.d); if (x.m === 'blank') return `......... / ......... / ${toHijri(todayIso())[0]}\u00A0هـ`; return ''; }
 function fdCtl(id) {
   if (!FD_IDS.includes(id)) return ''; if (!S.s.fdate) S.s.fdate = {}; const own = S.s.fdate[id] || { m: 'all' }, g = S.s.fdate._all || { m: 'none' }, txt = fdText(id);
   const lbl = { none: 'بدون تاريخ', blank: 'خانة فارغة للكتابة', today: 'تاريخ يوم الطباعة', fix: 'تاريخ محدد' };
@@ -3084,6 +3108,7 @@ window.addEventListener('hashchange', () => { const h = location.hash.slice(1); 
   renderNav(); setSaved(true);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
   await drawBrand();
+  { const h2 = ALIAS[location.hash.slice(1)] || location.hash.slice(1); if (ALL_TABS.some(t => t[0] === h2)) TAB = h2; }
   TABS = ALL_TABS.filter(x => roleAllows(x[0])); if (!location.hash.slice(1) || !TABS.some(x => x[0] === TAB)) TAB = PEOPLE[ROLE || 'admin'].home;
   renderNav(); render();
   if (!SYNC_CODE && typeof autoSeed === 'function') autoSeed(null);

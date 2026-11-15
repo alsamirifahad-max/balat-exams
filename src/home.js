@@ -328,7 +328,8 @@ function tasksHtml(k) {
 document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('[data-tgo]'); if (!b) return;
   const g = b.dataset.tgo; let el = null;
-  if (g === 'first') el = $('.sbody > section.card'); else if (g.startsWith('h:')) el = $$('.sbody > section.card > h2').find(h => h.textContent.trim().startsWith(g.slice(2))); else el = document.getElementById(g);
+  if (g === 'first') el = $('.sbody > section.card:not([hidden])') || $('.sbody > section.card'); else if (g.startsWith('h:')) el = $$('.sbody > section.card > h2').find(h => h.textContent.trim().startsWith(g.slice(2))); else el = document.getElementById(g);
+  if (el && typeof subReveal === 'function') { const c0 = el.closest('section,article'); if (c0 && c0.hidden) { const id = el.id, hh = g; subReveal(c0); el = id ? document.getElementById(id) : (hh === 'first' ? $('.sbody > section.card:not([hidden])') : $$('.sbody > section.card > h2').find(h => h.textContent.trim().startsWith(hh.slice(2)))); } }
   if (el) { const card = el.closest('section,article') || el; scrollTo({ top: card.getBoundingClientRect().top + scrollY - 80, behavior: 'smooth' }); card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 1400); }
 });
 
@@ -342,6 +343,12 @@ var HELP = {
   'قائمة المعلمين': 'معلمو المدرسة لهذا الحفظ. تظهر أسماؤهم في كل قوائم الاختيار وكشوف التوقيع والملاحظة.',
   'حصر أعداد الطلاب': 'أعداد الطلاب في كل صف وشعبة من ملف نور، وعليها تُبنى اللجان.',
   'كشوف الطلاب': 'اطبع أو حمّل كشوف الطلاب بأي ترتيب: حسب الصف أو الشعبة، مع الجوالات أو أرقام الجلوس.',
+  'اللجان ومقارها': 'أولاً: رقم كل لجنة ومقرها (الدور والقاعة) وسعتها. ثانياً: «توزيع الأعداد تلقائياً» يملأ أعداد كل صف حسب السعة. ثالثاً: «توزيع الطلاب بالأسماء» يعطي كل طالب لجنته ورقم جلوسه — بعدها تصبح كشوف المناداة والكروكي جاهزة.',
+  'حركة الطلاب': 'للتغييرات بعد التوزيع: طالب مستجد يُضاف للجنة فيها مكان برقم جلوس جديد، والمنسحب يُخصم ويبقى رقمه شاغراً، والنقل بين لجنتين. لا يتغير رقم جلوس أي طالب آخر.',
+  'اللجان حسب المادة والمعلم': 'لكل صف: أي اللجان تُصحَّح عند أي معلم لكل مادة. «توزيع بالتساوي» يقسمها تلقائياً، ويُطبع منها نموذج توزيع الطلاب على اللجان حسب المادة والمعلم.',
+  'إقرار إنهاء المنهج': 'يُبنى من الإسناد: كل مقرر وشعبه ومعلمه مع خانة التوقيع. اختر الصف أو «جميع الصفوف» ثم اطبع.',
+  'المكلفون بوضع الأسئلة': 'لكل مادة في الجدول معلم يكلّف بوضع أسئلتها. يُقترح تلقائياً من الإسناد ويمكنك تغييره. ومنها تُطبع خطابات التكليف وبيان استلام الأسئلة.',
+  'اللجان العاملة': 'لجان الخطة (الاختبارات، التحكم والضبط، الإشراف والملاحظة…) بأعضائها ومهامهم. افتح أي لجنة لتعديل الأسماء والمهام، أو انتقل إلى «حسب الشخص» لترى تكليفات كل شخص وتُحلّ بديلاً عنه في كل اللجان مرة واحدة.',
   'معلمو المواد': 'لكل مادة في الجدول معلم يكلّف بوضع أسئلتها. يُقترح تلقائياً من الإسناد ويمكنك تغييره.',
   'بيان توزيع الدرجات': 'بيان مستقل يُطبع وحده. يمكنك رفع بيان جديد (Word أو PDF) ليحل محل البيان المعتمد.',
   'توزيع الملاحظين': 'ملاحظ أو أكثر لكل لجنة في كل فترة. التوزيع التلقائي يتجنب معلم المادة المختبرة في فترتها، ويمكنك الإحلال والتبديل.',

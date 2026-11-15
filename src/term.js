@@ -5,7 +5,7 @@ function CAL() { S.cal = S.cal || {}; Object.keys(CAL_DEF).forEach(k => { if (!S
 function calImgs() { const c = CAL(); return c.own && c.imgs && c.imgs.length ? c.imgs : (c.y === '1448' ? [{ src: CAL_IMG, w: 481, h: 681 }, { src: 'cal-1448-t2.jpg', w: 1179, h: 1313 }] : (c.imgs || [])); }
 function daysTo(iso) { return Math.round((isoToDate(iso) - isoToDate(todayIso())) / 864e5); }
 const WDN = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-function calTxt(iso) { if (!iso) return '—'; const d = isoToDate(iso); return `${WDN[d.getUTCDay()]} ${hijriOf(iso)}هـ (${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}م)`; }
+function calTxt(iso) { if (!iso) return '—'; const d = isoToDate(iso); return `${WDN[d.getUTCDay()]} ${hijriOf(iso)}\u00A0هـ (${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}م)`; }
 function inT2() { return /الثاني|2/.test(S.s.sem || ''); }
 function isAdmin() { return !ROLE || ROLE === 'admin'; }
 
@@ -281,7 +281,7 @@ var STAT_P = 't';
 function statRange(p) {
   const t = todayIso(), c = CAL();
   if (p === 'w') { const s = weekSun(t); return [s, addDays(s, 4), 'هذا الأسبوع']; }
-  if (p === 'm') { const [y, m] = toHijri(t); const s = hijriToIso(y, m, 1), e = addDays(hijriToIso(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, 1), -1); return [s, e, `شهر ${HMONTHS[m - 1] || m} ${y}هـ`]; }
+  if (p === 'm') { const [y, m] = toHijri(t); const s = hijriToIso(y, m, 1), e = addDays(hijriToIso(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, 1), -1); return [s, e, `شهر ${HMONTHS[m - 1] || m} ${y}\u00A0هـ`]; }
   if (p === 't') { const t2 = t >= (c.t2 || '9999'); return t2 ? [c.t2, '9999-12-31', 'الفصل الدراسي الثاني'] : [c.t1 || '0000', addDays(c.t2 || '9999-12-31', -1), 'الفصل الدراسي الأول']; }
   return ['0000', '9999-12-31', 'كل الأيام المسجلة'];
 }
@@ -471,7 +471,7 @@ function obsNamesPages(o) {
     const d = se.day, h = toHijri(d.g);
     const top = `<div style="text-align:center;margin:2px 0 6px"><span style="display:inline-block;border:2px solid #4a6b2f;background:#c5e0a5;padding:6px 46px;font-size:17pt;font-weight:800;border-radius:4px">أسماء الملاحظين على اللجان</span></div>
       <p style="text-align:center;font-weight:800;margin:4px 0;font-size:12pt">اختبار نهاية الفصل الدراسي ${esc(S.s.sem)} من العام الدراسي ${esc(S.s.yearTxt)}</p>
-      <table width="100%" style="font-weight:800;font-size:11.5pt;margin:2px 0 4px" dir="rtl"><tr><td style="text-align:right">الملاحظين لهذا اليوم / ${dayName(d)}</td><td style="text-align:center">وتاريخ: ${h[2]} / ${h[1]} / ${h[0]}هـ</td><td style="text-align:left">الفترة / ${esc(se.per.n || '')}</td></tr></table>`;
+      <table width="100%" style="font-weight:800;font-size:11.5pt;margin:2px 0 4px" dir="rtl"><tr><td style="text-align:right">الملاحظين لهذا اليوم / ${dayName(d)}</td><td style="text-align:center">وتاريخ: ${h[2]} / ${h[1]} / ${h[0]}\u00A0هـ</td><td style="text-align:left">الفترة / ${esc(se.per.n || '')}</td></tr></table>`;
     const cols = '<colgroup><col style="width:3.5%"><col style="width:21%"><col style="width:15%"><col style="width:10.5%"><col style="width:3.5%"><col style="width:21%"><col style="width:15%"><col style="width:10.5%"></colgroup>';
     const tbl = T([head, ...body], { cls: 'dense obsN' }).replace(/^(<table[^>]*>)/, '$1' + cols);
     const lg = obsLog(se.key); out.push(top + tbl + (lg.length ? `<p style="font-size:9pt;margin:4px 0 0"><b>الاستبدالات:</b> ${lg.map(x => `${esc(x.inn)} بدلاً عن ${esc(x.out)} (لجنة ${esc(x.com)})`).join('، ')}</p>` : '') + sp(10) + sigs([['نائب رئيس لجنة الاختبارات', S.s.eduDep], ['رئيس لجنة الاختبارات', S.s.principal]]));
@@ -670,7 +670,7 @@ function distCard() {
       <label>المعلم ${pickSel(`dist.${g}.blocks.${i}.t`, b.t, tchOpts(b.sub ? teachersOfSubject(b.sub, g) : [], 'معلمو المادة'), { ph: '— المعلم —' })}</label></div>
       <div class="dsc">${last ? `<span class="dsall">الباقي</span>` : `<button type="button" class="btn sm" data-tact="distN" data-i="${i}" data-d="-1">−</button><b>${part.length}</b><button type="button" class="btn sm" data-tact="distN" data-i="${i}" data-d="1">+</button>`}<small>${part.length ? `لجان ${part[0].no}–${part[part.length - 1].no} · ${tot} طالباً` : 'لا لجان'}</small></div>
       <button type="button" class="x" data-tact="distDel" data-i="${i}" aria-label="حذف">×</button></div>`; }).join('');
-  return `<section class="card distc"><h2>توزيع الطلاب على لجان الاختبارات</h2>
+  return `<section class="card distc"><h2>اللجان حسب المادة والمعلم</h2>
     <div class="semchips gtabs" role="tablist">${tabs}</div>
     <div class="dsmeta"><span><b>${coms.length}</b> لجنة فيها طلاب ${GSHORT[g]} · <b>${coms.reduce((a, c) => a + (+c.c[g] || 0), 0)}</b> طالباً</span><label class="inl">عمود الشعب ${inp(`dist.${g}.sec`, d.sec || '', { ph: 'جميع الشعب' })}</label></div>
     <div class="dsrows">${rows}</div>

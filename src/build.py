@@ -1,7 +1,7 @@
 import pathlib
 d = pathlib.Path(__file__).parent
 src = (d / 'index.src.html').read_text(encoding='utf-8')
-app = ((d / 'app.js').read_text(encoding='utf-8') + '\n' + (d / 'home.js').read_text(encoding='utf-8') + '\n' + (d / 'daily.js').read_text(encoding='utf-8') + '\n' + (d / 'term.js').read_text(encoding='utf-8') + '\n' + (d / 'plan.js').read_text(encoding='utf-8')).replace('__LOGO__', (d / 'logo_white.b64').read_text().strip())
+app = ((d / 'app.js').read_text(encoding='utf-8') + '\n' + (d / 'home.js').read_text(encoding='utf-8') + '\n' + (d / 'daily.js').read_text(encoding='utf-8') + '\n' + (d / 'term.js').read_text(encoding='utf-8') + '\n' + (d / 'plan.js').read_text(encoding='utf-8') + '\n' + (d / 'road.js').read_text(encoding='utf-8')).replace('__LOGO__', (d / 'logo_white.b64').read_text().strip())
 import time
 BUILD = str(int(time.time()))
 app = app.replace('__BUILD__', BUILD)
