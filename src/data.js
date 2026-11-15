@@ -26,6 +26,7 @@ const DEFAULT_STATE = {
     phoneFmt: '05',
     stuSort: 'section',
     plan: null,
+    planX: null,
     road: {},
     moves: [],
     instr: [

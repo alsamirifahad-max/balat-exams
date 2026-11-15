@@ -1092,14 +1092,14 @@ const SUBP = ['committees', 'staff', 'settings'];
 let SUB = {}; try { SUB = JSON.parse(localStorage.getItem(LS_KEY + '-sub') || '{}'); } catch (e) { }
 function subName(h) { return h.textContent.replace(/[؟?]/g, '').replace(/\s*\(.*?\)\s*/g, ' ').split(/[:：]/)[0].trim(); }
 function subSteps(m, hs) {
-  const body = $('.sbody', m), secs = [...body.children].filter(e => e.matches('section.card'));
+  const body = $('.sbody', m), secs = [...body.children].filter(e => e.matches('section.card') && !e.classList.contains('keep'));
   const heads = hs.map(h => h.parentElement); let cur = Math.min(SUB[TAB] || 0, heads.length - 1);
   // كل قسم بلا عنوان يتبع أقرب قسم معنون قبله، والأقسام قبل الأول تتبع الأول
   let g = 0; const grp = secs.map(s => { const x = heads.indexOf(s); if (x >= 0) g = x; return g; });
   secs.forEach((s, i) => { s.hidden = grp[i] !== cur; });
   const nav = document.createElement('nav'); nav.className = 'substeps'; nav.setAttribute('aria-label', 'خطوات هذه المرحلة');
   nav.innerHTML = heads.map((s, i) => `<button type="button" class="${i === cur ? 'on' : ''}" data-sub="${i}"><i>${i + 1}</i><span>${esc(subName(s.querySelector(':scope > h2')))}</span></button>`).join('');
-  const tk = $('.sbody > .tasks', m); if (tk) tk.after(nav); else body.prepend(nav);
+  const kp = [...body.children].filter(e => e.classList.contains('keep')).pop(), tk = $('.sbody > .tasks', m); if (kp) kp.after(nav); else if (tk) tk.after(nav); else body.prepend(nav);
   { const on = $('.on', nav); if (on) { const a = on.getBoundingClientRect(), b = nav.getBoundingClientRect(); nav.scrollLeft += (a.left + a.width / 2) - (b.left + b.width / 2); } }
   const last = secs.filter((s, i) => grp[i] === cur).pop();
   if (last && cur < heads.length - 1) { const n = document.createElement('div'); n.className = 'subnext'; n.innerHTML = `<button type="button" class="btn" data-sub="${cur + 1}">التالي: ${cur + 2}. ${esc(subName(heads[cur + 1].querySelector(':scope > h2')))} ←</button>`; last.after(n); }
@@ -1113,9 +1113,9 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 function render() {
   const m = $('#main'); const p = PAGES.find(x => x.k === TAB) || PAGES[0];
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
-  const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
+  const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms', 'activity', 'road'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
   const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && (p.k === 'assign' || p.k === 'daily');
-  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ activity: vActivity, road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (SUBP.includes(TAB) && cards.length >= 2) subSteps(m, cards);
   else if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
@@ -1126,6 +1126,7 @@ function render() {
   { const sc = $('#setChip'); if (sc) sc.hidden = ROLE === 'sup'; }
   if (TAB === 'forms') renderPreview();
   if (TAB === 'files') renderStuTable();
+  if (TAB === 'assign' && typeof taFilter === 'function' && (TAF.q || TAF.need)) taFilter();
   if (TAB === 'home') setTimeout(renderThumbs, 30);
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
@@ -1381,10 +1382,12 @@ function filteredStudents() {
   l.sort((a, b) => so === 'name' ? a.n.localeCompare(b.n, 'ar') : so === 'seat' ? (a.seat || 0) - (b.seat || 0) : (a.g - b.g || a.sec - b.sec || a.n.localeCompare(b.n, 'ar')));
   return l;
 }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-fco]'); if (!b) return; FC_OPEN[b.dataset.fco] = !FC_OPEN[b.dataset.fco]; render(); const c = document.getElementById('fc_' + b.dataset.fco); if (c) c.scrollIntoView({ block: 'nearest' }); });
+let FC_OPEN = {};
 function fileCard(slot, o) {
-  const u = S.uploads[slot];
-  return `<article id="fc_${slot}" class="fcard${u || o.has ? ' done' : ''}" style="--fc:${o.c}">
-    <div class="fhead"><span class="fnum">${o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div></div>
+  const u = S.uploads[slot], done = !!(u || o.has), fold = done && !FC_OPEN[slot];
+  return `<article id="fc_${slot}" class="fcard${done ? ' done' : ''}${fold ? ' fold' : ''}" style="--fc:${o.c}">
+    <div class="fhead"><span class="fnum">${done ? '✓' : o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div>${done ? `<button type="button" class="btn sm ghost fco" data-fco="${slot}" aria-expanded="${!fold}">${fold ? 'تحديث ⌄' : 'طيّ ⌃'}</button>` : ''}</div>
     <div class="ffacts">${o.facts}</div>
     ${o.noUp ? '' : dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
     ${o.out ? `<div class="fout"><span>تحميل:</span>${o.out}</div>` : ''}
@@ -1720,6 +1723,10 @@ function setChooser() {
       </article>`; }).join('')}</div>
   </section>`;
 }
+let TAF = { g: null, q: '', need: false };
+function taFilter() { const q = normName(TAF.q); let n = 0, all = 0; $$('tr.tar').forEach(tr => { all++; const ok = (!q || (tr.dataset.tq || '').includes(q)) && (!TAF.need || tr.classList.contains('need')); tr.hidden = !ok; if (ok) n++; });
+  $$('.tagrp').forEach(g => { const v = $$('tr.tar', g).some(t => !t.hidden); g.hidden = !v && (q || TAF.need); }); const c = $('#tafC'); if (c) c.textContent = q || TAF.need ? `يظهر ${n} من ${all} سطراً` : ''; }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-taf]'); if (!b) return; TAF.g = b.dataset.taf === 'all' ? 'all' : +b.dataset.taf; render(); });
 function vAssign() {
   const tcount = new Set(S.ta.map(x => x.t)).size;
   const taByG = g => S.ta.map((x, i) => [x, i]).filter(([x]) => +x.g === g);
@@ -1737,11 +1744,14 @@ function vAssign() {
   <section class="card">
     <h2>تعديل الإسناد</h2>
     <p class="hint">عدّل أي خانة مباشرة، أو احذف سطراً، أو أضف معلماً أو مادة. قائمة المواد مأخوذة من الخطة الدراسية للمرحلة الثانوية – نظام المسارات (الفصل ${esc(S.s.sem)} أولاً)، ويمكنك كتابة أي مادة أخرى. اضغط خانة الشعب لاختيارها من قائمة شعب الصف نفسه.</p>
-    ${G.map(g => { const rows = taByG(g); const have = new Set(rows.map(([x]) => normName(x.sub)));
+    ${(() => { if (TAF.g == null) TAF.g = innerWidth < 720 ? 1 : 'all'; const tot = S.ta.length, need = S.ta.filter(x => !x.t).length;
+      return `<div class="taf"><div class="amode seg">${['all', ...G].map(g => `<button type="button" class="${String(TAF.g) === String(g) ? 'on' : ''}" data-taf="${g}"${g !== 'all' ? ` style="--gc:var(--g${g})"` : ''}>${g === 'all' ? 'كل الصفوف' : GSHORT[g] + ' (' + taByG(g).length + ')'}</button>`).join('')}</div>
+      <div class="tafr"><input class="in" type="search" id="tafQ" placeholder="🔎 ابحث بالمعلم أو المادة أو الشعبة…" value="${esc(TAF.q)}" oninput="TAF.q=this.value;taFilter()"><label class="ck"><input type="checkbox" id="tafN"${TAF.need ? ' checked' : ''} onchange="TAF.need=this.checked;taFilter()"> بلا معلم فقط${need ? ` (${need})` : ''}</label></div><small class="mut" id="tafC"></small></div>`; })()}
+    ${G.filter(g => TAF.g === 'all' || +TAF.g === g).map(g => { const rows = taByG(g); const have = new Set(rows.map(([x]) => normName(x.sub)));
       const miss = CURR[g][semNo()].filter(n => !rows.some(([x]) => subjMatch(x.sub, n)));
       return `<div class="tagrp"><div class="tagh" style="--gc:${GCOL[g]}"><b>${GNAME[g]}</b><span>${rows.length} سطراً — ${new Set(rows.map(([x]) => x.t)).size} معلماً</span></div>
       <div class="tw"><table class="et stack tarows"><tr><th style="width:30%">المادة</th><th style="width:8%">الحصص</th><th style="width:22%">الشعب</th><th>المعلم</th><th></th></tr>
-      ${rows.map(([x, i]) => `<tr class="tar${x.t ? '' : ' need'}" style="--sx:${subjColor(x.sub)}"><td>${pickSel(`ta.${i}.sub`, x.sub, subOpts(g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${secChips(x.sec)}</button></td><td>${pickSel(`ta.${i}.t`, x.t, tchOpts(), { ph: '— اختر المعلم —' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
+      ${rows.map(([x, i]) => `<tr class="tar${x.t ? '' : ' need'}" style="--sx:${subjColor(x.sub)}" data-tq="${esc(normName(x.sub + ' ' + x.t + ' ' + x.sec))}"><td>${pickSel(`ta.${i}.sub`, x.sub, subOpts(g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td>${hSelect(i, x.h)}</td><td><button type="button" class="secpick" data-act="secPick" data-i="${i}" data-g="${g}" id="sp_ta_${i}">${secChips(x.sec)}</button></td><td>${pickSel(`ta.${i}.t`, x.t, tchOpts(), { ph: '— اختر المعلم —' })}</td><td><button class="x" data-act="delTa" data-i="${i}" type="button" title="حذف السطر">×</button></td></tr>`).join('') || `<tr><td colspan="5" class="hint">لا يوجد إسناد لهذا الصف بعد.</td></tr>`}
       </table></div>
       <div class="acts wrap"><button class="btn sm" data-act="addTa" data-g="${g}" type="button">+ إضافة معلم / مادة</button>
       ${miss.length ? `<span class="hint">مواد في الخطة بلا إسناد:</span>${miss.map(n => `<button type="button" class="chip" data-act="addTa" data-g="${g}" data-sub="${esc(n)}">+ ${esc(n)}</button>`).join('')}` : '<span class="okt">جميع مواد الخطة مُسندة</span>'}</div></div>`; }).join('')}
@@ -2649,7 +2659,7 @@ const API = '/api/sync';
 /* ===== ثلاثة حفظ مستقلة للإسناد + قسم الاختبارات ===== */
 const TA_SETS = ['ta', 'ta-agent', 'ta-shared'];
 const SET_DEF = { ta: { n: 'حفظ فهد', d: 'الإسناد الذي تُبنى عليه الاختبارات', c: '#2563eb', ic: 'ف' }, 'ta-agent': { n: 'حفظ الوكيل', d: 'إسناد يُحضّره وكيل شؤون المعلمين', c: '#ea580c', ic: 'و' }, 'ta-shared': { n: 'المشاركة معاً', d: 'إسناد مشترك يعدّله الجميع', c: '#059669', ic: 'م' } };
-const ALL_SECS = ['ex', ...TA_SETS, 'daily'];
+const ALL_SECS = ['ex', ...TA_SETS, 'daily', 'act'];
 const isSet = s => TA_SETS.includes(s);
 let ACTIVE = (() => { try { const v = localStorage.getItem(LS_KEY + '-taset'); return TA_SETS.includes(v) ? v : 'ta'; } catch (e) { return 'ta'; } })();
 function setStore(id) { try { return JSON.parse(localStorage.getItem(LS_KEY + '-set-' + id) || 'null'); } catch (e) { return null; } }
@@ -2679,7 +2689,7 @@ async function withSetSem(id, fn) {
 }
 const freezeHdr = groups => groups.map(g => Object.assign({}, g, { pages: g.pages.map(p => p.replace(/class="brand-hdr phdr"/g, 'class="phdr"').replace(/class="brand-ftr pftr"/g, 'class="pftr"')) }));
 
-const SYNC_SECS = new Proxy({ ex: 'الاختبارات', daily: 'الانتظار والمناوبة والجدول المدرسي' }, { get: (o, k) => isSet(k) ? 'إسناد ' + setMeta(k).n : o[k] });
+const SYNC_SECS = new Proxy({ ex: 'الاختبارات', daily: 'الانتظار والمناوبة والجدول المدرسي', act: 'النشاط الطلابي' }, { get: (o, k) => isSet(k) ? 'إسناد ' + setMeta(k).n : o[k] });
 let SYNC = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY + '-sync') || '{}'); } catch (e) { return {}; } })();
 let SYNC_CODE = (() => { try { return localStorage.getItem(LS_KEY + '-code') || ''; } catch (e) { return ''; } })();
 let SYNC_ST = { state: 'idle', err: '' }, syncT = null, syncBusy = false, syncOnline = true;
@@ -2698,21 +2708,23 @@ function secData(sec) {
     return { ta: S.ta, teachers: S.teachers, taPrint: S.s.taPrint, up: { ta: S.uploads.ta || null, tch: S.uploads.tch || null }, meta: S.taMeta || { n: SET_DEF[sec].n, d: SET_DEF[sec].d } };
   }
   if (sec === 'daily') return S.daily || {};
-  const o = Object.assign({}, S); delete o.ta; delete o.teachers; delete o.taMeta; delete o.daily;
+  if (sec === 'act') return S.act || {};
+  const o = Object.assign({}, S); delete o.ta; delete o.teachers; delete o.taMeta; delete o.daily; delete o.act;
   o.s = Object.assign({}, S.s); delete o.s.taPrint;
   o.uploads = Object.assign({}, S.uploads); delete o.uploads.ta; delete o.uploads.tch;
   return o;
 }
 function applySec(sec, d) {
   if (sec === 'daily') { S.daily = d || {}; DH = null; stampDaily(); return; }
+  if (sec === 'act') { S.act = d && Array.isArray(d.rows) ? d : null; if (typeof actBaseSet === 'function') actBaseSet(d); return; }
   if (isSet(sec)) {
     if (sec !== ACTIVE) { setStoreSave(sec, d); return; }
     S.ta = d.ta || []; S.teachers = d.teachers || []; if (d.taPrint) S.s.taPrint = d.taPrint;
     S.uploads.ta = d.up && d.up.ta || undefined; S.uploads.tch = d.up && d.up.tch || undefined;
     S.taMeta = d.meta || { n: SET_DEF[sec].n, d: SET_DEF[sec].d };
   } else {
-    const keep = secData(ACTIVE), keepDaily = S.daily;
-    S = deepMerge(clone(DEFAULT_STATE), d); S.daily = keepDaily;
+    const keep = secData(ACTIVE), keepDaily = S.daily, keepAct = S.act;
+    S = deepMerge(clone(DEFAULT_STATE), d); S.daily = keepDaily; S.act = keepAct; delete S.s.act;
     S.ta = keep.ta; S.teachers = keep.teachers; S.s.taPrint = keep.taPrint; S.uploads = S.uploads || {}; S.uploads.ta = keep.up.ta || undefined; S.uploads.tch = keep.up.tch || undefined; S.taMeta = keep.meta;
   }
   normState();
@@ -2750,8 +2762,8 @@ async function ungz(buf, enc) {
   return await new Response(ds).text();
 }
 /* هل بيانات القسم على هذا الجهاز ما زالت افتراضية (لم يُعمل عليها)؟ تُتجاهل تفضيلات العرض */
-function coreOf(sec) { const d = secData(sec); if (isSet(sec)) return JSON.stringify([d.ta, d.teachers]); const s = {}; Object.keys(DEFAULT_STATE.s).forEach(k => s[k] = d.s[k]); return JSON.stringify([s, d.days, d.com, d.students, d.guide, d.obs, d.st, d.special]); }
-function pristine(sec) { if (sec === 'daily') { const d = S.daily || {}; return !d.tt && !Object.keys(d.wait || {}).length && !Object.keys(d.duty || {}).length; } if (isSet(sec) && sec !== 'ta') { const d = secData(sec); return !(d.ta || []).length && !(d.teachers || []).length; } const cur = S; let h; try { S = clone(DEFAULT_STATE); normState(); h = coreOf(sec); } finally { S = cur; } return h === coreOf(sec); }
+function coreOf(sec) { const d = secData(sec); if (sec === 'act' || sec === 'daily') return JSON.stringify(d); if (isSet(sec)) return JSON.stringify([d.ta, d.teachers]); const s = {}; Object.keys(DEFAULT_STATE.s).forEach(k => s[k] = d.s[k]); return JSON.stringify([s, d.days, d.com, d.students, d.guide, d.obs, d.st, d.special]); }
+function pristine(sec) { if (sec === 'act') return !S.act || !S.act.at; if (sec === 'daily') { const d = S.daily || {}; return !d.tt && !Object.keys(d.wait || {}).length && !Object.keys(d.duty || {}).length; } if (isSet(sec) && sec !== 'ta') { const d = secData(sec); return !(d.ta || []).length && !(d.teachers || []).length; } const cur = S; let h; try { S = clone(DEFAULT_STATE); normState(); h = coreOf(sec); } finally { S = cur; } return h === coreOf(sec); }
 function syncDirty(sec) { const s = SYNC[sec] || {}; return hashStr(JSON.stringify(secData(sec))) !== s.h; }
 function syncSoon() { if (!SYNC_CODE) return; clearTimeout(syncT); syncT = setTimeout(syncNow, 1800); syncBadge(); }
 function devName() { try { const n = localStorage.getItem(LS_KEY + '-dev'); if (n) return n; } catch (e) { } return /Mobi|iPhone|Android/i.test(navigator.userAgent) ? 'جوال' : 'كمبيوتر'; }
@@ -2775,7 +2787,7 @@ async function pushSec(sec, force) {
   const r = await api('PUT', '?sec=' + sec, { body: p.body, headers: { 'x-base': (SYNC[sec] || {}).at || '', 'x-enc': p.enc, 'content-type': 'application/octet-stream', ...(force ? { 'x-force': '1' } : {}) } });
   if (r.status === 409) return 'conflict';
   if (!r.ok) throw new Error('push ' + r.status);
-  const m = await r.json(); SYNC[sec] = { at: m.at, h: hashStr(str), t: Date.now() }; syncSave(); if (note) toast('تمت المزامنة' + note);
+  const m = await r.json(); SYNC[sec] = { at: m.at, h: hashStr(str), t: Date.now() }; syncSave(); if (sec === 'act' && typeof actBaseSet === 'function') actBaseSet(d); if (note) toast('تمت المزامنة' + note);
   return 'ok';
 }
 function busyTyping() { const a = document.activeElement; return a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/checkbox|radio|file/.test(a.type))) && !a.closest('.modal,.pickm'); }
@@ -2785,6 +2797,8 @@ async function syncNow(opts = {}) {
     const meta = await (await api('GET', '?meta')).json(); let changed = false;
     for (const sec of ALL_SECS) {
       const rm = meta[sec], lm = SYNC[sec] || {}, dirty = syncDirty(sec);
+      /* النشاط الطلابي: الجهاز الذي لم يفتحه بعد يستقبل فقط ولا يرسل نسخة فارغة */
+      if (sec === 'act' && !(S.act && Array.isArray(S.act.rows))) { if (rm && rm.at !== lm.at) { const p = await pullSec('act'); if (p && p.data && Array.isArray(p.data.rows)) { applySec('act', p.data); SYNC.act = { at: p.at, h: hashStr(JSON.stringify(p.data)), t: Date.now() }; syncSave(); changed = true; } } continue; }
       /* جهاز يعمل على «حفظ الوكيل»: قسم الاختبارات للقراءة فقط، فلا يمس عمله بيانات الاختبارات */
       if (sec === 'ex' && exReadOnly()) { if (rm && (rm.at !== lm.at || dirty)) { const p = await pullSec('ex'); if (p) { applySec('ex', p.data); SYNC.ex = { at: p.at, h: hashStr(JSON.stringify(secData('ex'))), t: Date.now() }; syncSave(); changed = true; } } continue; }
       if (PENDING[sec] && rm && rm.at === lm.at) { delete PENDING[sec]; pendShow(); }
@@ -2796,6 +2810,11 @@ async function syncNow(opts = {}) {
         } else if (lm.at && syncMode(sec) === 'ask') {
           /* وضع «اسألني»: لا يُطبَّق التعديل حتى توافق */
           if (!PENDING[sec] || PENDING[sec].at !== rm.at) { const p = await pullSec(sec); if (p) { PENDING[sec] = { at: p.at, by: p.by, byRaw: p.byRaw, data: p.data, diff: secDiff(sec, secData(sec), p.data) }; pendShow(); } }
+          continue;
+        } else if (sec === 'act' && dirty && lm.at && typeof actMerge === 'function') {
+          const p = await pullSec('act'); if (!p) continue; const m = actMerge(actBase(), S.act, p.data);
+          applySec('act', m.data); actBaseSet(p.data); SYNC.act = { at: p.at, h: hashStr(JSON.stringify(p.data)), t: Date.now() }; syncSave(); changed = true;
+          if (m.n) { await pushSec('act'); toast('دُمجت تعديلاتك مع تعديلات الجهاز الآخر في «النشاط الطلابي» ✓'); }
           continue;
         } else if (sec === 'daily' && dirty && lm.at) {
           const p = await pullSec('daily'); if (!p) continue; const m = mergeDaily(S.daily, p.data);
@@ -2834,6 +2853,10 @@ function secDiff(sec, A, B) {
     const tAdd = (B.teachers || []).filter(n => !ta.has(normName(n))), tDel = (A.teachers || []).filter(n => !tb.has(normName(n)));
     tAdd.forEach(n => out.push(['add', `معلم جديد في القائمة: ${n}`])); tDel.forEach(n => out.push(['del', `حُذف من قائمة المعلمين: ${n}`]));
     const nn = (n, one, many) => n === 1 ? one : `${n} ${many}`; if (add) short.push('أضاف ' + nn(add, 'سطراً', 'أسطر')); if (chg) short.push('غيّر ' + nn(chg, 'سطراً', 'أسطر')); if (del) short.push('حذف ' + nn(del, 'سطراً', 'أسطر')); if (tAdd.length || tDel.length) short.push(`المعلمون: +${tAdd.length} −${tDel.length}`);
+  } else if (sec === 'act') {
+    const ra = (A.rows || []).length, rb = (B.rows || []).length; out.push(['chg', ra !== rb ? `أسطر إسناد النشاط: ${ra} ← ${rb}` : 'تعديل في إسناد برامج النشاط أو مواعيدها']);
+  } else if (sec === 'daily') {
+    out.push(['chg', 'تعديل في الانتظار والمناوبة']);
   } else {
     const J = v => JSON.stringify(v == null ? null : v);
     const sa = (A.students || []).length, sb = (B.students || []).length; if (sa !== sb) out.push(['chg', `عدد الطلاب: ${sa} ← ${sb}`]); else if (J(A.students) !== J(B.students)) out.push(['chg', 'تعديل في بيانات الطلاب أو توزيعهم على اللجان']);

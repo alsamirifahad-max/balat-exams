@@ -223,11 +223,12 @@ async function runBag(op, kind, arg) {
 var PEOPLE = {
   admin: { n: 'مسؤول الاختبارات', who: 'فهد', c: '#2563eb', d: 'كل مراحل العمل: الملفات والإسناد والجدول واللجان والتكليفات والمطبوعات', ic: 'ف', set: 'ta', home: 'files' },
   agent: { n: 'وكيل شؤون المعلمين', who: 'الوكيل', c: '#ea580c', d: 'المعلمون والإسناد بحفظه الخاص، وحصص الانتظار والمناوبة اليومية — دون المساس بالاختبارات', ic: 'و', set: 'ta-agent', home: 'daily' },
+  act: { n: 'رائد النشاط', who: 'رائد النشاط', c: '#16a34a', d: 'نافذة النشاط الطلابي: إسناد البرامج للمعلمين وحسبة 10% ومواعيد الحصص وجداولها المطبوعة', ic: 'ن', set: 'ta', home: 'activity' },
   sup: { n: 'مشرف دور / لجنة', who: 'المشرف', c: '#ca8a04', d: 'شاشة «يوم الاختبار» ومطبوعات اليوم بضغطة واحدة — للاطلاع والطباعة', ic: 'م', set: 'ta', home: 'today' }
 };
 var BOTH_C = '#059669';
 var ROLE = (() => { try { const r = localStorage.getItem(LS_KEY + '-role'); return PEOPLE[r] ? r : ''; } catch (e) { return ''; } })();
-var ROLE_TABS = { admin: null, agent: ['files', 'assign', 'daily', 'backup', 'settings'], sup: ['today', 'daily', 'forms', 'backup'] };
+var ROLE_TABS = { admin: null, agent: ['files', 'assign', 'daily', 'backup', 'settings', 'activity'], sup: ['today', 'daily', 'forms', 'backup', 'activity'], act: ['activity', 'backup'] };
 function roleAllows(k) { if (!ROLE_TABS) return true; const r = ROLE_TABS[ROLE || 'admin']; return !r || r.includes(k); }
 function exReadOnly() { return (!!ROLE && ROLE !== 'admin') || ACTIVE === 'ta-agent'; }
 function setRole(r) {

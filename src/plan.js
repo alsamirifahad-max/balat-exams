@@ -75,7 +75,7 @@ function vPlan() {
     <div class="acts wrap plfoot"><button type="button" class="btn sm" data-pact="cAdd">＋ لجنة جديدة</button>
       <button type="button" class="btn sm ${ok ? 'ghost' : 'pri'}" data-pact="approve">${ok ? '✓ الخطة معتمدة — إلغاء الاعتماد' : '✓ اعتماد الخطة لهذا العام'}</button>
       ${planTouched() ? '<button type="button" class="btn sm ghost" data-pact="reset">↺ استرجاع خطة 1447 الأصلية</button>' : ''}</div>`}
-  </section>`;
+  </section>${typeof vProcCard === 'function' ? vProcCard() + vEvalCard() : ''}`;
 }
 
 /* ----- المطبوعات ----- */
