@@ -1115,7 +1115,7 @@ function render() {
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms', 'activity', 'road'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
   const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && (p.k === 'assign' || p.k === 'daily');
-  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + stageHero(p)) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ activity: vActivity, road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + (p.k === 'activity' ? `<h1 class="acttl">⭐ النشاط الطلابي <small>الفصل الدراسي ${esc(S.s.sem)} — ${esc(S.s.yearTxt)}</small></h1>` : stageHero(p))) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ activity: vActivity, road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (SUBP.includes(TAB) && cards.length >= 2) subSteps(m, cards);
   else if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
@@ -1387,7 +1387,7 @@ let FC_OPEN = {};
 function fileCard(slot, o) {
   const u = S.uploads[slot], done = !!(u || o.has), fold = done && !FC_OPEN[slot];
   return `<article id="fc_${slot}" class="fcard${done ? ' done' : ''}${fold ? ' fold' : ''}" style="--fc:${o.c}">
-    <div class="fhead"><span class="fnum">${done ? '✓' : o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div>${done ? `<button type="button" class="btn sm ghost fco" data-fco="${slot}" aria-expanded="${!fold}">${fold ? 'تحديث ⌄' : 'طيّ ⌃'}</button>` : ''}</div>
+    <div class="fhead"><span class="fnum">${done ? '✓' : o.n}</span><div><h3>${o.t}</h3><p>${o.d}</p></div>${done ? `<span class="fcob">${({ tt: 'srcTT', tch: 'srcT', ta: 'srcTA' })[slot] ? `<button type="button" class="btn sm" data-act="qopen" data-form="${({ tt: 'srcTT', tch: 'srcT', ta: 'srcTA' })[slot]}">👁 معاينة وطباعة</button>` : ''}<button type="button" class="btn sm ghost fco" data-fco="${slot}" aria-expanded="${!fold}">${fold ? 'تحديث ⌄' : 'طيّ ⌃'}</button></span>` : ''}</div>
     <div class="ffacts">${o.facts}</div>
     ${o.noUp ? '' : dropZone(slot, u ? 'تحديث الملف' : 'رفع الملف', o.fmt, o.accept)}
     ${o.out ? `<div class="fout"><span>تحميل:</span>${o.out}</div>` : ''}
@@ -1737,7 +1737,7 @@ function vAssign() {
     <h2>ملف الإسناد</h2>
     <p class="hint">الإسناد هو الأساس الذي تُبنى عليه: تكليفات وضع الأسئلة، بيان استلام الأسئلة، محضر فتح المظاريف، محضر اتفاقية التصحيح، إقرار إنهاء المقرر، وتوزيع التصحيح. يقبل الموقع ملف PDF أو Word (‎.docx و‎.doc) أو Excel، وتُتجاوز تلقائياً إسنادات العوق البصري والتربية الفكرية وحصص النشاط.</p>
     <div class="drops one">${dropZone('ta', 'ملف إسناد المعلمين', `PDF أو Word أو Excel — الإسناد الحالي: ${S.ta.length} سطراً لـ ${tcount} معلماً`, '.xlsx,.xls,.csv,.docx,.doc,.pdf')}</div>
-    <div class="acts wrap"><button class="btn sm ghost" data-act="exportTa" type="button">تنزيل الإسناد كملف Excel</button><button class="btn sm" data-act="buildSt" type="button">ربط مواد الجدول بمعلميها من الإسناد</button></div>
+    <div class="acts wrap">${S.ta.length ? '<button class="btn sm" data-act="qopen" data-form="srcTA" type="button">👁 معاينة وطباعة الإسناد</button>' : ''}<button class="btn sm ghost" data-act="exportTa" type="button">تنزيل الإسناد كملف Excel</button><button class="btn sm" data-act="buildSt" type="button">ربط مواد الجدول بمعلميها من الإسناد</button></div>
     <div id="upMsg"></div>
     ${typeof taPrintPanel === 'function' ? taPrintPanel() : ''}
   </section>
