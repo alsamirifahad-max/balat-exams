@@ -1072,7 +1072,7 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 
 /* ===== النشاط الطلابي: المسار والمصادر والبناء والتنفيذ ===== */
 .acth{--ac:#16a34a}
-.aprog-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 14px}
+.aprog-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:0 0 14px}
 .aps{font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;position:relative;color:var(--ink);min-width:0}
 .aps i{font-style:normal;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;background:var(--soft);color:var(--muted)}
 .aps b{font-size:.8rem;white-space:nowrap}.aps small{font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -1112,7 +1112,7 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 :root[data-theme="dark"] .ahubb.pri{color:#fff}
 :root[data-theme="dark"] .apc2.on,:root[data-theme="dark"] .agt td[style*="background"]{color:#10202a}
 @media(max-width:720px){
- .aprog-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .aprog-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
  .ahub{grid-template-columns:1fr 1fr}.asrcs{grid-template-columns:1fr}
  .aex{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"t s" "b r"}.aext{grid-area:t}.aex .astep{grid-area:s}.aexbar{grid-area:b}.aex>.btn{grid-area:r}
  .alnk{grid-template-columns:1fr}
@@ -1125,6 +1125,34 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .fcob{margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-self:flex-start}.fcob .fco{margin:0}
 @media(max-width:720px){.fhead{flex-wrap:wrap}.fcob{flex:1 1 100%;justify-content:flex-start}}
 .fcard.fold .fout:not(:has(> .btn,> button,> a,> label)){display:none}
+
+/* ===== الخطة الأسبوعية ===== */
+.awtop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:6px 0 10px}.awtop .amode{margin:0}
+.awst{font-size:.8rem;font-weight:700;color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,var(--surface));border-radius:999px;padding:4px 12px}.awst.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+.awchips{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;margin:12px 0}
+.awc{font:inherit;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 2px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;color:var(--ink);position:relative}
+.awc b{font-size:1rem;line-height:1.1}.awc small{font-size:.62rem;color:var(--muted);white-space:nowrap}
+.awc.off{background:repeating-linear-gradient(45deg,var(--soft),var(--soft) 4px,var(--surface) 4px,var(--surface) 8px);opacity:.75}
+.awc.now::after{content:'';position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:var(--bad)}
+.awc.on{background:var(--ac,#16a34a);border-color:var(--ac,#16a34a);color:#fff}.awc.on small{color:rgba(255,255,255,.85)}
+.awk{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;margin-bottom:12px}
+.awk>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;background:color-mix(in srgb,#16a34a 7%,var(--surface));border-bottom:1px solid var(--line)}
+.awk>header>div{display:flex;flex-direction:column}.awk>header b{font-size:1.05rem}.awk>header b em{font-style:normal;font-size:.7rem;background:var(--bad);color:#fff;border-radius:999px;padding:1px 8px;vertical-align:2px}.awk>header small{color:var(--muted);font-size:.78rem}
+.awocc{margin:10px 14px 0;font-size:.86rem;font-weight:700;color:var(--info)}
+.awprogs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}.awprogs span{font-size:.78rem;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface2)}
+.awcont{display:flex;flex-direction:column;gap:6px;padding:10px 14px 14px}
+.awcont>div{display:flex;flex-direction:column;gap:2px;padding:7px 10px;border-inline-start:4px solid var(--dc);background:color-mix(in srgb,var(--dc) 6%,var(--surface));border-radius:8px}
+.awcont b{font-size:.78rem;color:var(--dc)}:root[data-theme="dark"] .awcont b{color:color-mix(in srgb,var(--dc) 60%,#fff)}.awcont span{font-size:.88rem;line-height:1.7}
+.awoff{padding:14px}.awed{padding:10px 14px 14px}.wdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--dc);margin-inline-end:6px}
+.awdays{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.awday{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface2)}
+.awdh{display:flex;justify-content:space-between;align-items:baseline;padding:2px 4px 6px}.awdh b{font-size:.92rem}.awdh small{color:var(--muted);font-size:.74rem}
+.awses{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:start;padding:8px;border-radius:9px;background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--pc);margin-top:6px;cursor:pointer}
+.awses input{width:18px;height:18px;margin-top:2px;accent-color:#16a34a}
+.awp{font-size:.74rem;font-weight:800;background:var(--soft);border-radius:6px;padding:2px 6px;margin-top:1px}
+.awt{display:flex;flex-direction:column;min-width:0}.awt b{font-size:.86rem}.awt small{font-size:.74rem;color:var(--muted)}.awt i.awdm{font-style:normal;font-size:.7rem;font-weight:700;color:var(--dc);margin-top:2px}:root[data-theme="dark"] .awt i.awdm{color:color-mix(in srgb,var(--dc) 60%,#fff)}
+.awses.done{opacity:.6}.awses.done .awt b{text-decoration:line-through}
+@media(max-width:720px){.awchips{grid-template-columns:repeat(6,minmax(0,1fr))}.awdays{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
