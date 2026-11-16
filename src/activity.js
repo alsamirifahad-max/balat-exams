@@ -290,8 +290,9 @@ function vActivity() {
       <div class="aext"><b>${esc(r.t || '—')}</b><small>${esc(r.prog)} · ${GSHORT[r.g]}</small></div>
       <div class="aexbar"><span style="width:${pc}%"></span></div>
       <div class="astep sm"><button type="button" class="btn sm" data-aact="ex" data-d="-1" data-id="${r.id}">−</button><b>${e}<small>/${n}</small></b><button type="button" class="btn sm" data-aact="ex" data-d="1" data-id="${r.id}">+</button>${e < n ? `<button type="button" class="btn sm ghost" data-aact="exAll" data-id="${r.id}" title="اكتمل البرنامج">✓</button>` : ''}</div>
-      <button type="button" class="btn sm ghost" data-act="qopen" data-form="actTRep" data-o='${esc(JSON.stringify({ rid: r.id }))}' title="نموذج تقرير المعلم">🖨</button></div>`; }).join('')}</div>
-    <div class="acts wrap"><button type="button" class="btn pri" data-act="qopen" data-form="actExec">🖨 تقرير تنفيذ برامج النشاط</button><button type="button" class="btn" data-act="qopen" data-form="actTRep">🖨 نماذج تقارير المعلمين</button></div>
+      <button type="button" class="btn sm ghost" data-act="qopen" data-form="actTRep" data-o='${esc(JSON.stringify({ rid: r.id }))}' title="نموذج تقرير المعلم">🖨</button>${actImgStrip(r)}</div>`; }).join('')}</div>
+    <div class="acts wrap"><button type="button" class="btn pri" data-act="qopen" data-form="actExec">🖨 تقرير تنفيذ برامج النشاط</button><button type="button" class="btn" data-act="qopen" data-form="actTRep">🖨 نماذج تقارير المعلمين</button><button type="button" class="btn" data-act="qopen" data-form="actEv">🖼 ملف الشواهد</button></div>
+    <p class="hint">📷 لكل برنامج: صور الفعالية من الجوال مباشرة — تُضغط تلقائياً وتظهر في تقرير المعلم وملف الشواهد. المساحة المستخدمة: ${(actImgBytes() / 1048576).toFixed(1)} من 4.5 ميجا.</p>
   </section>`;
   return `${tl}${ro ? '<div class="pend ro"><div class="pdt"><b>للاطلاع فقط</b><span>تعديل النشاط الطلابي لرائد النشاط ومسؤول الاختبارات.</span></div></div>' : ''}${hero}${srcStep}${calcStep}${catStep}${rowsStep}${gridStep}${actWeeksStep()}${peopleStep}${execStep}`;
 }
@@ -342,6 +343,7 @@ function actWeeksStep() {
     <div class="awtop"><div class="amode seg"><button type="button" class="${sem === 1 ? 'on' : ''}" data-aact="wsem" data-v="1">الفصل الأول</button><button type="button" class="${sem === 2 ? 'on' : ''}" data-aact="wsem" data-v="2">الفصل الثاني</button></div>
       <span class="awst${ws.rows && ws.sch === ws.rows ? ' ok' : ''}">${ws.sch} من ${ws.rows} برنامجاً مجدولاً</span></div>
     <div class="acts wrap"><button type="button" class="btn pri" data-aact="sched">⚡ جدولة الفصل كاملاً</button><button type="button" class="btn" data-act="qopen" data-form="actWkBul" data-o='${esc(JSON.stringify({ wk: wi, ws: sem }))}'>🖨 نشرة هذا الأسبوع</button><button type="button" class="btn" data-act="qopen" data-form="actWkPlan" data-o='${esc(JSON.stringify({ ws: sem }))}'>🖨 الخطة الفصلية</button><button type="button" class="btn" data-act="qopen" data-form="actTPlan" data-o='${esc(JSON.stringify({ ws: sem }))}'>🖨 الخطط الزمنية للمعلمين</button></div>
+    <div class="acts wrap awio"><label class="btn sm" for="actWkFile">⬆ رفع خطة أسبوعية (Excel · Word)</label><input type="file" id="actWkFile" accept=".xlsx,.xls,.csv,.docx,.doc,.pdf" hidden><button type="button" class="btn sm" data-aact="wkX">⬇ الخطة الحالية Excel</button><button type="button" class="btn sm ghost" data-aact="wkT">⬇ قالب فارغ</button>${A().wkSrc ? `<small class="mut">آخر رفع: ${esc(A().wkSrc.name)} — ${esc(A().wkSrc.at)}</small>` : ''}</div>
     <div class="awchips">${L.map(chip).join('')}</div>
     <article class="awk${actWkOff(w) ? ' off' : ''}">
       <header><div><b>الأسبوع ${wi + 1}${wi === cur ? ' <em>الحالي</em>' : ''}</b><small>${esc(actRange(w))}</small></div><button type="button" class="btn sm ghost" data-aact="wedit">${ACT_WEDIT ? 'تم ✓' : '✎ تعديل الأسبوع'}</button></header>
@@ -372,10 +374,16 @@ function actWkPlanPages(o) {
   return out;
 }
 function actWkBulPages(o) {
-  const sem = +(o && o.ws) || actWS(), WL = actWeeks(sem), wi = o && o.wk != null && o.wk !== '' ? +o.wk : actCurWeek(sem), w = WL[wi] || WL[0], days = actWkDays(w), list = actWeekSessions(sem, wi);
-  const cont = ACT_WDOMS.filter(k => (w.c || {})[k]).map(k => [{ v: `<b>${k}</b>`, bg: planTint ? planTint(actDomColor(k)) : LCOL, al: 'right' }, { v: esc(w.c[k]), al: 'right' }]);
-  const T2 = [[H('اليوم', { w: '10%' }), H('الحصة', { w: '6%' }), H('المعلم', { w: '17%' }), H('البرنامج', { w: '18%' }), H('الشعبة', { w: '6%' }), H('المحتوى المطلوب'), H('التنفيذ', { w: '8%' })], ...list.map(({ r, s }) => [`${DAYN[+s.k.split('-')[0]]}<br><span style="font-size:8pt">${actHd(s.d)}</span>`, s.k.split('-')[1], { v: `<b>${esc(r.t)}</b>`, al: 'right' }, { v: esc(r.prog), bg: actProgColor(r.prog) }, esc(actSecOf(r, s.k)), { v: esc(actWkContent(w, r.dom) || '—'), al: 'right', fs: '8.5pt' }, s.done ? '✓' : ''])];
-  return [title(`نشرة النشاط الطلابي — الأسبوع ${wi + 1}`, `${actSemName(sem)} — ${esc(actRange(w))}`) + (w.o ? `<p class="txt" style="text-align:center"><b>المناسبة:</b> ${esc(w.o)}</p>` : '') + (cont.length ? T([[H('المجال', { w: '18%' }), H('محتوى الأسبوع')], ...cont]) + sp(6) : '') + (list.length ? T(T2, { cls: 'dense' }) : '<p class="txt">لا توجد حصص نشاط مجدولة في هذا الأسبوع.</p>') + sp(10) + actSigs()];
+  const sem = +(o && o.ws) || actWS(), WL = actWeeks(sem), wi = o && o.wk != null && o.wk !== '' ? +o.wk : actCurWeek(sem), w = WL[wi] || WL[0], list = actWeekSessions(sem, wi);
+  const head = title(`نشرة النشاط الطلابي — الأسبوع ${wi + 1}`, `${actSemName(sem)} — ${esc(actRange(w))}`) + (w.o ? `<p class="txt" style="text-align:center;margin:2px 0"><b>المناسبة:</b> ${esc(w.o)}</p>` : '');
+  const cont = ACT_WDOMS.filter(k => (w.c || {})[k]); const ct = cont.length ? T([cont.map(k => ({ v: `<b>${k}</b>`, bg: planTint ? planTint(actDomColor(k)) : LCOL })), cont.map(k => ({ v: esc(w.c[k]), fs: '9pt' }))]) + sp(5) : '';
+  const hd = [H('اليوم', { w: '11%' }), H('الحصة', { w: '6%' }), H('المعلم', { w: '17%' }), H('البرنامج', { w: '18%' }), H('الشعبة', { w: '6%' }), H('المجال', { w: '13%' }), H('التوقيع بالتنفيذ', { w: '12%' }), H('ملاحظات')];
+  const row = ({ r, s }) => [`<b>${DAYN[+s.k.split('-')[0]]}</b><br><span style="font-size:8.5pt">${actHd(s.d)}</span>`, s.k.split('-')[1], { v: `<b>${esc(r.t)}</b>`, al: 'right' }, { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog) }, esc(actSecOf(r, s.k)), { v: esc(ACT_DOMALIAS[r.dom] || r.dom), fs: '9pt' }, s.done ? '✓' : '', ''];
+  if (!list.length) return [head + ct + '<p class="txt">لا توجد حصص نشاط مجدولة في هذا الأسبوع.</p>' + sp(8) + actSigs()];
+  const first = cont.length ? 8 : 12, per = 13, out = []; let i = 0, pg = 0;
+  while (i < list.length) { const n = pg ? per : first, part = list.slice(i, i + n); i += n; const last = i >= list.length;
+    out.push((pg ? title(`نشرة النشاط الطلابي — الأسبوع ${wi + 1} (تابع)`) : head + ct) + T([hd, ...part.map(row)]) + (last ? sp(8) + actSigs() : '')); pg++; }
+  return out;
 }
 function actTPlanPages(o) {
   const sem = +(o && o.ws) || actWS(), WL = actWeeks(sem), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? A().rows.filter(r => r.id === o.rid) : A().rows.filter(r => gs.includes(+r.g) && actSes(r, sem).length);
@@ -390,6 +398,72 @@ FORMS.push(
   { id: 'actWkBul', grp: 'النشاط الطلابي', t: 'نشرة الأسبوع: حصص النشاط ومحتواها', land: 1, opts: ['ws', 'wk'], build: o => actWkBulPages(o) },
   { id: 'actTPlan', grp: 'النشاط الطلابي', t: 'الخطة الزمنية لتنفيذ البرنامج (لكل معلم)', opts: ['ws', 'grade'], build: o => actTPlanPages(o) }
 );
+
+/* ===== قالب الخطة الأسبوعية: تصدير Excel قابل للتعبئة ورفعه (Excel · CSV · Word) ===== */
+const ACT_WCOLS = ['الفصل', 'الأسبوع', 'من (هجري)', 'إلى (هجري)', 'البرامج', 'المناسبة', ...ACT_WDOMS];
+function actWkXlsx(blank) {
+  const aoa = [ACT_WCOLS];
+  [1, 2].forEach(sem => (blank ? Array.from({ length: 18 }, () => ({})) : actWeeks(sem)).forEach((w, i) => aoa.push([sem === 2 ? 'الثاني' : 'الأول', i + 1, w.a || '', w.b || '', (w.p || []).join('\n'), w.o || '', ...ACT_WDOMS.map(d => (w.c || {})[d] || '')])));
+  const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [7, 7, 12, 12, 30, 24, ...ACT_WDOMS.map(() => 36)].map(w => ({ wch: w })); ws['!views'] = [{ RTL: true }];
+  const note = XLSX.utils.aoa_to_sheet([['طريقة التعبئة'], ['• صف لكل أسبوع، والفصل «الأول» أو «الثاني».'], ['• التاريخ هجري بصيغة 1448-3-17 (السنة-الشهر-اليوم) — يكفي «من»، و«إلى» اختياري.'], ['• البرامج: كل برنامج في سطر داخل الخلية (Alt+Enter) أو مفصولة بـ «،».'], ['• المناسبة اختيارية، مثل: اليوم الوطني (23 سبتمبر).'], ['• أعمدة المجالات: محتوى ذلك الأسبوع لكل مجال، ويُترك فارغاً إن لم يوجد.'], ['• أسبوع الإجازة: اترك البرامج والمجالات فارغة.']]); note['!cols'] = [{ wch: 90 }]; note['!views'] = [{ RTL: true }];
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; XLSX.utils.book_append_sheet(wb, ws, 'الخطة الأسبوعية'); XLSX.utils.book_append_sheet(wb, note, 'طريقة التعبئة');
+  download(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname(blank ? 'قالب الخطة الأسبوعية للأنشطة' : 'الخطة الأسبوعية للأنشطة ' + S.s.yearTxt) + '.xlsx');
+}
+function actWkParse(rows) {
+  rows = rows.map(r => (r || []).map(c => toWestern(String(c == null ? '' : c)).normalize('NFKC').trim()));
+  const hi = rows.findIndex(r => r.some(c => /البرامج|البرنامج/.test(c)) && r.some(c => /من|التاريخ/.test(c))); if (hi < 0) return null;
+  const h = rows[hi], col = re => h.findIndex(c => re.test(c)), cs = col(/^الفصل/), cw = col(/الأسبوع|^م$/), ca = col(/^من|التاريخ/), cb = col(/^إلى/), cp = col(/البرامج|البرنامج/), co = col(/المناسبة/), cc = col(/^المحتوى/);
+  const dc = ACT_WDOMS.map(d => [d, h.findIndex(c => normName(c) === normName(d))]).filter(x => x[1] >= 0);
+  const out = { 1: [], 2: [] }; let semDef = actWS();
+  rows.slice(hi + 1).forEach(r => { const v = i => i >= 0 ? r[i] || '' : ''; if (!r.some(Boolean)) return; let a = v(ca), b = v(cb);
+    const dm = (a.match(/\d{4}-\d{1,2}-\d{1,2}/g) || []); if (dm.length >= 2 && !b) { a = dm[0]; b = dm[1]; } else if (dm.length) a = dm[0];
+    if (!/^\d{4}-\d{1,2}-\d{1,2}$/.test(a)) return; const sem = /ثان|2/.test(v(cs)) ? 2 : /أول|1/.test(v(cs)) ? 1 : semDef;
+    const c = {}; dc.forEach(([d, i]) => { if (r[i]) c[d] = r[i]; });
+    if (cc >= 0 && !dc.length) v(cc).split(/\n+/).forEach(l => { const m = /^([^:：]{4,30})[:：]\s*(.+)$/.exec(l.trim()); if (m) { const d = ACT_WDOMS.find(x => normName(x) === normName(m[1])); if (d) c[d] = m[2]; } });
+    out[sem].push({ a, b: /^\d{4}-\d{1,2}-\d{1,2}$/.test(b) ? b : '', p: v(cp).split(/\n|،|,/).map(x => x.trim()).filter(Boolean), c, ...(v(co) ? { o: v(co) } : {}) }); });
+  return out;
+}
+async function actWkUpload(file) {
+  try {
+    const buf = new Uint8Array(await file.arrayBuffer()); let rows;
+    if (buf[0] === 0x25 && buf[1] === 0x50) throw new Error('ملفات PDF المصوّرة لا يمكن قراءتها آلياً — نزّل «قالب Excel» واملأه، أو ارفع ملف Word أو Excel.');
+    if (/\.docx$/i.test(file.name)) rows = docxRows(buf); else if (/\.doc$/i.test(file.name)) rows = docBinaryRows(buf);
+    else { const wb = XLSX.read(buf, { type: 'array' }); rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' }); }
+    const got = actWkParse(rows || []); if (!got || !(got[1].length + got[2].length)) throw new Error('لم يُعثر على أسابيع — تأكد من أعمدة «من» و«البرامج» (نزّل القالب للاطلاع).');
+    const sems = [1, 2].filter(s => got[s].length), smp = sems.map(s => `الفصل ${s === 2 ? 'الثاني' : 'الأول'}: ${got[s].length} أسبوعاً`).join('، ');
+    if (!(await choiceBox(`قُرئت الخطة الأسبوعية — ${smp}.\nاعتمادها بدل الخطة الحالية لهذا الفصل/الفصلين؟ (الجدولة السابقة تبقى حتى تضغط «جدولة الفصل»)`, 'اعتماد', 'إلغاء'))) return;
+    const a = A(); a.wk = a.wk || {}; sems.forEach(s => { a.wk[s] = got[s]; }); a.wkSrc = { name: file.name, at: stamp() }; ACT_WK = null; actSave(); toast(`اعتُمدت الخطة الأسبوعية (${smp}) ✓ — اضغط «⚡ جدولة الفصل كاملاً»`);
+  } catch (e) { console.error(e); toast(`${file.name}: ${e.message || e}`, true); }
+}
+/* ===== الشواهد: صور الفعاليات (تُضغط تلقائياً وتُزامن في قسم مستقل) ===== */
+function IMG() { if (!S.actImg || typeof S.actImg !== 'object') S.actImg = {}; return S.actImg; }
+function actImgs(rid) { return Object.entries(S.actImg || {}).filter(([, v]) => v && !v.del && v.r === rid).map(([k, v]) => Object.assign({ k }, v)).sort((a, b) => String(a.at).localeCompare(String(b.at))); }
+function actImgBytes() { return Object.values(S.actImg || {}).reduce((s, v) => s + (v && v.d ? v.d.length * 0.75 : 0), 0); }
+function actShrink(file, max = 1100, q = 0.62) {
+  return new Promise((res, rej) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', q)); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('تعذرت قراءة الصورة')); }; im.src = u; });
+}
+async function actImgAdd(rid, files) {
+  const r = actRow(rid); if (!r) return; let n = 0;
+  for (const f of files) { if (!/^image\//.test(f.type) && !/\.(jpe?g|png|heic|webp)$/i.test(f.name)) continue;
+    let d = await actShrink(f).catch(() => null); if (!d) continue; if (actImgBytes() > 3.2e6) d = await actShrink(f, 800, 0.5);
+    if (actImgBytes() + d.length * 0.75 > 4.6e6) { toast('مساحة الشواهد قاربت الامتلاء (4.5 ميجا) — احذف صوراً قديمة أو نزّل «ملف الشواهد» PDF ثم احذفها', true); break; }
+    IMG()['i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)] = { r: rid, d, at: new Date().toISOString(), by: (PEOPLE[ROLE || 'admin'] || {}).who || '' }; n++; }
+  if (n) { save(); render(); toast(`أُضيفت ${n} صورة شاهد لـ «${r.prog}» ✓`); }
+}
+function actImgStrip(r) { const L = actImgs(r.id); return `<div class="aimgs">${L.map(x => `<span class="aimg"><img src="${x.d}" alt="" data-aact="imgView" data-k="${x.k}"><button type="button" class="x" data-aact="imgDel" data-k="${x.k}" title="حذف">×</button></span>`).join('')}<label class="aimgadd" for="aimg_${r.id}" title="إضافة صور الشواهد">📷<small>${L.length ? L.length : 'شاهد'}</small></label><input type="file" id="aimg_${r.id}" data-aimg="${r.id}" accept="image/*" multiple hidden></div>`; }
+function actEvPages(o) {
+  const gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = (o && o.rid ? A().rows.filter(r => r.id === o.rid) : A().rows.filter(r => gs.includes(+r.g))).filter(r => actImgs(r.id).length), out = [];
+  if (!rows.length) return [title('ملف شواهد برامج النشاط', actSemTxt()) + '<p class="txt">لا توجد صور شواهد بعد — أضفها من خطوة «التنفيذ والتقارير» (📷).</p>'];
+  rows.forEach(r => { const IL = actImgs(r.id); for (let s = 0; s < IL.length; s += 4) {
+    const cells = IL.slice(s, s + 4).map(x => `<td style="width:50%;padding:4px;text-align:center;vertical-align:middle;height:95mm"><img src="${x.d}" style="max-width:100%;max-height:92mm;object-fit:contain"><br><span style="font-size:8pt;color:#555">${esc(hDate(String(x.at).slice(0, 10)))}</span></td>`);
+    while (cells.length < 4) cells.push('<td style="width:50%"></td>');
+    out.push(title('شواهد تنفيذ برنامج نشاط', actSemTxt()) + T([[L('المعلم', { w: '14%' }), `<b>${esc(r.t)}</b>`, L('البرنامج', { w: '13%' }), { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog) }], [L('المجال'), esc(r.dom), L('الصف'), `${GSHORT[r.g]} ثانوي — المنفّذ ${Math.min(+r.ex || 0, +r.n || 0)} من ${+r.n || 0}`]]) + sp(6) +
+      `<table dir="rtl" border="1" cellspacing="0" width="100%" style="border-collapse:collapse"><tr>${cells[0]}${cells[1]}</tr><tr>${cells[2]}${cells[3]}</tr></table>` + (s + 4 >= IL.length ? sp(8) + T([[L('توقيع المعلم', { w: '18%' }), '', L('توقيع رائد النشاط', { w: '18%' }), '']], { cls: 'tall' }) : ''));
+  } });
+  return out;
+}
+FORMS.push({ id: 'actEv', grp: 'النشاط الطلابي', t: 'ملف شواهد برامج النشاط (الصور)', opts: ['grade'], build: o => actEvPages(o) });
 /* ----- جدول المواعيد (شاشة وطباعة) ----- */
 function actGridTeachers(g) { const m = new Map(); actRowsG(g).forEach(r => { const tr = actTT(r); const k = tr ? tr.n : r.t; if (!m.has(k)) m.set(k, { n: tr ? tr.n : r.t, tr, rows: [] }); m.get(k).rows.push(r); }); return [...m.values()].sort((a, b) => a.n.localeCompare(b.n, 'ar')); }
 function actGridHtml(g, print) {
@@ -472,7 +546,7 @@ function actTRepPages(o) {
   const box = (lbl, h) => T([[{ v: `<b>${lbl}</b>`, al: 'right', bg: LCOL }], [{ v: '&nbsp;', h }]]);
   return list.map(r => title('تقرير تنفيذ برنامج نشاط طلابي', actSemTxt()) +
     T([[L('اسم المعلم', { w: '18%' }), `<b>${esc(r.t)}</b>`, L('مادة التدريس', { w: '16%' }), esc(r.sub)], [L('الصف'), `${GSHORT[r.g]} ثانوي`, L('المجال'), esc(r.dom)], [L('البرنامج'), { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog), cs: 3 }], [L('عدد الحصص المسندة'), `${+r.n || 0} حصة`, L('المنفّذ منها'), `${Math.min(+r.ex || 0, +r.n || 0) || '.......'} حصة`], [L('مواعيد التنفيذ'), { v: esc(actSlotsTxt(r)) || '..............................', cs: 3 }], [L('عدد الطلاب المستفيدين'), '', L('الشعب'), '']], { cls: 'tall' }) + sp(6) +
-    box('الأهداف التي تحققت', '70px') + sp(4) + box('الأنشطة والفعاليات المنفّذة', '90px') + sp(4) + box('الشواهد والمرفقات (صور، منتجات الطلاب، روابط)', '60px') + sp(4) + box('الصعوبات والتوصيات', '60px') + sp(8) +
+    box('الأهداف التي تحققت', '70px') + sp(4) + box('الأنشطة والفعاليات المنفّذة', '90px') + sp(4) + (actImgs(r.id).length ? T([[{ v: '<b>الشواهد والمرفقات</b>', al: 'right', bg: LCOL, cs: 3 }], [...actImgs(r.id).slice(0, 3).map(x => ({ v: `<img src="${x.d}" style="max-width:100%;max-height:42mm;object-fit:contain">`, w: '33%' })), ...Array(Math.max(0, 3 - actImgs(r.id).length)).fill('')]]) : box('الشواهد والمرفقات (صور، منتجات الطلاب، روابط)', '60px')) + sp(4) + box('الصعوبات والتوصيات', '60px') + sp(8) +
     T([[L('توقيع المعلم', { w: '18%' }), '', L('التاريخ', { w: '14%' }), '']], { cls: 'tall' }) + sp(10) + sigs([['رائد النشاط', a.cfg.lead], ['مدير المدرسة', a.cfg.head || S.s.principal]]));
 }
 function actSrcTTPages(o) {
@@ -651,11 +725,15 @@ document.addEventListener('click', async e => {
   if (a === 'goRow') { ACT_OPEN = b.dataset.id; ACT_G = 'all'; ACT_Q = ''; if (typeof SUB !== 'undefined') SUB.activity = 3; render(); const el = document.querySelector(`.arow[data-aid="${ACT_OPEN}"]`); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
   if (a === 'swapx') { ACT_SWAP = null; return render(); }
   if (a === 'xlsx') return actXlsx();
+  if (a === 'imgView') { const v = (S.actImg || {})[b.dataset.k]; if (!v) return; const m = document.createElement('div'); m.className = 'modal aimgv'; m.innerHTML = `<div class="box"><img src="${v.d}" alt=""><div class="acts"><a class="btn sm" href="${v.d}" download="شاهد.jpg">⬇ تحميل</a><button type="button" class="btn sm pri">إغلاق</button></div></div>`; m.onclick = ev => { if (ev.target === m || ev.target.closest('.btn.pri')) m.remove(); }; document.body.appendChild(m); return; }
   if (a === 'json') return download(new Blob([JSON.stringify(A(), null, 1)], { type: 'application/json' }), fname('النشاط الطلابي - نسخة') + '.json');
   if (actGuard()) return;
   const A0 = A();
   switch (a) {
     case 'n': r.n = Math.max(0, (+r.n || 0) + +b.dataset.d); return actSave();
+    case 'imgDel': { const v = (S.actImg || {})[b.dataset.k]; if (v && await confirmBox('حذف صورة الشاهد؟')) { S.actImg[b.dataset.k] = { del: 1, r: v.r, at: new Date().toISOString() }; save(); render(); } return; }
+    case 'wkX': return actWkXlsx(false);
+    case 'wkT': return actWkXlsx(true);
     case 'ex': { const ss = (r.ses || []).slice().sort((x, y) => x.d.localeCompare(y.d)); if (ss.length) { if (+b.dataset.d > 0) { const s = ss.find(x => !x.done); if (s) s.done = true; } else { const s = ss.filter(x => x.done).pop(); if (s) s.done = false; } r.ex = ss.filter(x => x.done).length; } else r.ex = Math.max(0, Math.min(+r.n || 0, (+r.ex || 0) + +b.dataset.d)); return actSave(); }
     case 'exAll': (r.ses || []).forEach(s => s.done = true); r.ex = +r.n || 0; return actSave();
     case 'wsem': ACT_WSEM = +b.dataset.v; ACT_WK = null; ACT_WEDIT = false; return render();
@@ -713,6 +791,8 @@ document.addEventListener('change', async e => {
   if (el.dataset.awf || el.dataset.awc) { if (actGuard()) return render(); const sem = actWS(), L = actWkEdit(sem), wi = ACT_WK == null ? actCurWeek(sem) : ACT_WK, w = L[wi]; w.c = w.c || {};
     if (el.dataset.awf === 'p') w.p = el.value.split('\n').map(x => x.trim()).filter(Boolean); else if (el.dataset.awf) w[el.dataset.awf] = el.value.trim(); else { const v = el.value.trim(); if (v) w.c[el.dataset.awc] = v; else delete w.c[el.dataset.awc]; }
     return actSave(false); }
+  if (el.dataset.aimg) { const fs = [...el.files]; el.value = ''; if (!fs.length || actGuard()) return; return actImgAdd(el.dataset.aimg, fs); }
+  if (el.id === 'actWkFile' && el.files[0]) { const f = el.files[0]; el.value = ''; if (actGuard()) return; return actWkUpload(f); }
   if (el.dataset.asrc) { const f = el.files[0], k = el.dataset.asrc; el.value = ''; if (!f || actGuard()) return; return actSrcUpload(k, f); }
   if (el.dataset.alink) { if (actGuard()) return render(); const A0 = A(); A0.links = A0.links || {}; if (el.value) A0.links[normName(el.dataset.alink)] = el.value; A0.rows.forEach(r => { if (normName(r.t) === normName(el.dataset.alink)) r.slots = (r.slots || []).filter(k => actCells(r).some(x => x.k === k)); }); return actSave(); }
   if (el.dataset.ab) { const B = ACT_BUILD; if (!B) return; B[el.dataset.ab] = el.dataset.ab === 'g' ? +el.value : el.value; if (el.dataset.ab === 'g') { B.sub = ''; } if (el.dataset.ab === 'dom') B.prog = ''; return render(); }

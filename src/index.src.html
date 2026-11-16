@@ -1153,6 +1153,33 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .awt{display:flex;flex-direction:column;min-width:0}.awt b{font-size:.86rem}.awt small{font-size:.74rem;color:var(--muted)}.awt i.awdm{font-style:normal;font-size:.7rem;font-weight:700;color:var(--dc);margin-top:2px}:root[data-theme="dark"] .awt i.awdm{color:color-mix(in srgb,var(--dc) 60%,#fff)}
 .awses.done{opacity:.6}.awses.done .awt b{text-decoration:line-through}
 @media(max-width:720px){.awchips{grid-template-columns:repeat(6,minmax(0,1fr))}.awdays{grid-template-columns:1fr}}
+
+/* ===== لوحة المدير + الشواهد ===== */
+.dalerts{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}
+.dal{font:inherit;display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:start;cursor:pointer}
+.dal i{font-style:normal;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none;color:#fff;background:var(--muted)}
+.dal span{flex:1;font-weight:600;font-size:.9rem}.dal b{color:var(--muted)}
+.dal.bad{border-color:color-mix(in srgb,var(--bad) 40%,var(--line));background:color-mix(in srgb,var(--bad) 6%,var(--surface))}.dal.bad i{background:var(--bad)}
+.dal.warn{border-color:color-mix(in srgb,var(--warn) 40%,var(--line));background:color-mix(in srgb,var(--warn) 6%,var(--surface))}.dal.warn i{background:var(--warn)}
+.dal.ok{cursor:default;background:color-mix(in srgb,var(--ok) 7%,var(--surface))}.dal.ok i{background:var(--ok)}
+.dtiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.dtile{border:1px solid var(--line);border-top:5px solid var(--dc);border-radius:16px;background:var(--surface);padding:12px 14px;box-shadow:var(--shadow)}
+.dtile header{display:flex;align-items:center;gap:8px;margin-bottom:10px}.dtile header i{font-style:normal;font-size:1.2rem}.dtile header b{flex:1;font-size:1rem}
+.dtile .rdring{--accent:var(--dc)}
+.dtb{display:flex;gap:14px;align-items:center}.dtb ul{list-style:none;margin:0;padding:0;flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.dtb li{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;border-bottom:1px dashed var(--line);padding-bottom:4px}.dtb li span{color:var(--muted)}.dtb li b{font-weight:700;text-align:end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%}
+.dtb li.ok b{color:var(--ok)}.dtb li.warn b{color:var(--warn)}.dtb li.bad b{color:var(--bad)}
+.dlate{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;align-items:center}.dlate small{color:var(--muted)}.dlate span{font-size:.76rem;border-radius:999px;padding:2px 9px;background:color-mix(in srgb,var(--bad) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--bad) 25%,var(--line))}.dlate i{font-style:normal;font-weight:800;color:var(--bad)}
+.aimgs{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;margin-top:2px}
+.aimg{position:relative;width:54px;height:54px;border-radius:9px;overflow:hidden;border:1px solid var(--line)}.aimg img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.aimg .x{position:absolute;top:1px;left:1px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:0;font-size:.8rem;line-height:20px;padding:0;cursor:pointer}
+.aimgadd{width:54px;height:54px;border-radius:9px;border:1.5px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;color:var(--muted);background:var(--surface2)}.aimgadd small{font-size:.62rem}
+.aimgv .box{width:min(92vw,900px);padding:10px}.aimgv img{width:100%;max-height:78vh;object-fit:contain;border-radius:8px}
+.awio{margin-top:6px}.awio small{align-self:center}
+@media(max-width:900px){.dtiles{grid-template-columns:1fr}}
+@media(max-width:720px){.aex{grid-template-areas:"t s s" "b b r" "i i i"}.aimgs{grid-area:i}}
+.rdring.sm small{font-size:.62rem;text-align:center;line-height:1.25;max-width:64px}.dtile .rdring.sm{width:92px;height:92px;flex:none}
+@media(max-width:720px){.aex .aimgs{margin-top:4px}.aimg,.aimgadd{width:46px;height:46px}}
 </style>
 </head>
 <body>

@@ -1115,7 +1115,7 @@ function render() {
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms', 'activity', 'road'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
   const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && (p.k === 'assign' || p.k === 'daily');
-  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + (p.k === 'activity' ? `<h1 class="acttl">⭐ النشاط الطلابي <small>الفصل الدراسي ${esc(S.s.sem)} — ${esc(S.s.yearTxt)}</small></h1>` : stageHero(p))) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ activity: vActivity, road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + (p.k === 'dash' ? '' : p.k === 'activity' ? `<h1 class="acttl">⭐ النشاط الطلابي <small>الفصل الدراسي ${esc(S.s.sem)} — ${esc(S.s.yearTxt)}</small></h1>` : stageHero(p))) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ dash: vDash, activity: vActivity, road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (SUBP.includes(TAB) && cards.length >= 2) subSteps(m, cards);
   else if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
@@ -2659,7 +2659,7 @@ const API = '/api/sync';
 /* ===== ثلاثة حفظ مستقلة للإسناد + قسم الاختبارات ===== */
 const TA_SETS = ['ta', 'ta-agent', 'ta-shared'];
 const SET_DEF = { ta: { n: 'حفظ فهد', d: 'الإسناد الذي تُبنى عليه الاختبارات', c: '#2563eb', ic: 'ف' }, 'ta-agent': { n: 'حفظ الوكيل', d: 'إسناد يُحضّره وكيل شؤون المعلمين', c: '#ea580c', ic: 'و' }, 'ta-shared': { n: 'المشاركة معاً', d: 'إسناد مشترك يعدّله الجميع', c: '#059669', ic: 'م' } };
-const ALL_SECS = ['ex', ...TA_SETS, 'daily', 'act'];
+const ALL_SECS = ['ex', ...TA_SETS, 'daily', 'act', 'actimg'];
 const isSet = s => TA_SETS.includes(s);
 let ACTIVE = (() => { try { const v = localStorage.getItem(LS_KEY + '-taset'); return TA_SETS.includes(v) ? v : 'ta'; } catch (e) { return 'ta'; } })();
 function setStore(id) { try { return JSON.parse(localStorage.getItem(LS_KEY + '-set-' + id) || 'null'); } catch (e) { return null; } }
@@ -2689,7 +2689,7 @@ async function withSetSem(id, fn) {
 }
 const freezeHdr = groups => groups.map(g => Object.assign({}, g, { pages: g.pages.map(p => p.replace(/class="brand-hdr phdr"/g, 'class="phdr"').replace(/class="brand-ftr pftr"/g, 'class="pftr"')) }));
 
-const SYNC_SECS = new Proxy({ ex: 'الاختبارات', daily: 'الانتظار والمناوبة والجدول المدرسي', act: 'النشاط الطلابي' }, { get: (o, k) => isSet(k) ? 'إسناد ' + setMeta(k).n : o[k] });
+const SYNC_SECS = new Proxy({ ex: 'الاختبارات', daily: 'الانتظار والمناوبة والجدول المدرسي', act: 'النشاط الطلابي', actimg: 'شواهد النشاط (الصور)' }, { get: (o, k) => isSet(k) ? 'إسناد ' + setMeta(k).n : o[k] });
 let SYNC = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY + '-sync') || '{}'); } catch (e) { return {}; } })();
 let SYNC_CODE = (() => { try { return localStorage.getItem(LS_KEY + '-code') || ''; } catch (e) { return ''; } })();
 let SYNC_ST = { state: 'idle', err: '' }, syncT = null, syncBusy = false, syncOnline = true;
@@ -2709,13 +2709,15 @@ function secData(sec) {
   }
   if (sec === 'daily') return S.daily || {};
   if (sec === 'act') return S.act || {};
-  const o = Object.assign({}, S); delete o.ta; delete o.teachers; delete o.taMeta; delete o.daily; delete o.act;
+  if (sec === 'actimg') return S.actImg || {};
+  const o = Object.assign({}, S); delete o.ta; delete o.teachers; delete o.taMeta; delete o.daily; delete o.act; delete o.actImg;
   o.s = Object.assign({}, S.s); delete o.s.taPrint;
   o.uploads = Object.assign({}, S.uploads); delete o.uploads.ta; delete o.uploads.tch;
   return o;
 }
 function applySec(sec, d) {
   if (sec === 'daily') { S.daily = d || {}; DH = null; stampDaily(); return; }
+  if (sec === 'actimg') { S.actImg = d && typeof d === 'object' ? d : {}; return; }
   if (sec === 'act') { S.act = d && Array.isArray(d.rows) ? d : null; if (typeof actBaseSet === 'function') actBaseSet(d); return; }
   if (isSet(sec)) {
     if (sec !== ACTIVE) { setStoreSave(sec, d); return; }
@@ -2723,8 +2725,8 @@ function applySec(sec, d) {
     S.uploads.ta = d.up && d.up.ta || undefined; S.uploads.tch = d.up && d.up.tch || undefined;
     S.taMeta = d.meta || { n: SET_DEF[sec].n, d: SET_DEF[sec].d };
   } else {
-    const keep = secData(ACTIVE), keepDaily = S.daily, keepAct = S.act;
-    S = deepMerge(clone(DEFAULT_STATE), d); S.daily = keepDaily; S.act = keepAct; delete S.s.act;
+    const keep = secData(ACTIVE), keepDaily = S.daily, keepAct = S.act, keepImg = S.actImg;
+    S = deepMerge(clone(DEFAULT_STATE), d); S.daily = keepDaily; S.act = keepAct; S.actImg = keepImg; delete S.s.act;
     S.ta = keep.ta; S.teachers = keep.teachers; S.s.taPrint = keep.taPrint; S.uploads = S.uploads || {}; S.uploads.ta = keep.up.ta || undefined; S.uploads.tch = keep.up.tch || undefined; S.taMeta = keep.meta;
   }
   normState();
@@ -2762,8 +2764,8 @@ async function ungz(buf, enc) {
   return await new Response(ds).text();
 }
 /* هل بيانات القسم على هذا الجهاز ما زالت افتراضية (لم يُعمل عليها)؟ تُتجاهل تفضيلات العرض */
-function coreOf(sec) { const d = secData(sec); if (sec === 'act' || sec === 'daily') return JSON.stringify(d); if (isSet(sec)) return JSON.stringify([d.ta, d.teachers]); const s = {}; Object.keys(DEFAULT_STATE.s).forEach(k => s[k] = d.s[k]); return JSON.stringify([s, d.days, d.com, d.students, d.guide, d.obs, d.st, d.special]); }
-function pristine(sec) { if (sec === 'act') return !S.act || !S.act.at; if (sec === 'daily') { const d = S.daily || {}; return !d.tt && !Object.keys(d.wait || {}).length && !Object.keys(d.duty || {}).length; } if (isSet(sec) && sec !== 'ta') { const d = secData(sec); return !(d.ta || []).length && !(d.teachers || []).length; } const cur = S; let h; try { S = clone(DEFAULT_STATE); normState(); h = coreOf(sec); } finally { S = cur; } return h === coreOf(sec); }
+function coreOf(sec) { const d = secData(sec); if (sec === 'act' || sec === 'daily' || sec === 'actimg') return JSON.stringify(d); if (isSet(sec)) return JSON.stringify([d.ta, d.teachers]); const s = {}; Object.keys(DEFAULT_STATE.s).forEach(k => s[k] = d.s[k]); return JSON.stringify([s, d.days, d.com, d.students, d.guide, d.obs, d.st, d.special]); }
+function pristine(sec) { if (sec === 'actimg') return !S.actImg || !Object.keys(S.actImg).length; if (sec === 'act') return !S.act || !S.act.at; if (sec === 'daily') { const d = S.daily || {}; return !d.tt && !Object.keys(d.wait || {}).length && !Object.keys(d.duty || {}).length; } if (isSet(sec) && sec !== 'ta') { const d = secData(sec); return !(d.ta || []).length && !(d.teachers || []).length; } const cur = S; let h; try { S = clone(DEFAULT_STATE); normState(); h = coreOf(sec); } finally { S = cur; } return h === coreOf(sec); }
 function syncDirty(sec) { const s = SYNC[sec] || {}; return hashStr(JSON.stringify(secData(sec))) !== s.h; }
 function syncSoon() { if (!SYNC_CODE) return; clearTimeout(syncT); syncT = setTimeout(syncNow, 1800); syncBadge(); }
 function devName() { try { const n = localStorage.getItem(LS_KEY + '-dev'); if (n) return n; } catch (e) { } return /Mobi|iPhone|Android/i.test(navigator.userAgent) ? 'جوال' : 'كمبيوتر'; }
@@ -2798,6 +2800,7 @@ async function syncNow(opts = {}) {
     for (const sec of ALL_SECS) {
       const rm = meta[sec], lm = SYNC[sec] || {}, dirty = syncDirty(sec);
       /* النشاط الطلابي: الجهاز الذي لم يفتحه بعد يستقبل فقط ولا يرسل نسخة فارغة */
+      if (sec === 'actimg' && pristine('actimg')) { if (rm && rm.at !== lm.at) { const p = await pullSec('actimg'); if (p && p.data) { applySec('actimg', p.data); SYNC.actimg = { at: p.at, h: hashStr(JSON.stringify(p.data)), t: Date.now() }; syncSave(); changed = true; } } continue; }
       if (sec === 'act' && !(S.act && Array.isArray(S.act.rows))) { if (rm && rm.at !== lm.at) { const p = await pullSec('act'); if (p && p.data && Array.isArray(p.data.rows)) { applySec('act', p.data); SYNC.act = { at: p.at, h: hashStr(JSON.stringify(p.data)), t: Date.now() }; syncSave(); changed = true; } } continue; }
       /* جهاز يعمل على «حفظ الوكيل»: قسم الاختبارات للقراءة فقط، فلا يمس عمله بيانات الاختبارات */
       if (sec === 'ex' && exReadOnly()) { if (rm && (rm.at !== lm.at || dirty)) { const p = await pullSec('ex'); if (p) { applySec('ex', p.data); SYNC.ex = { at: p.at, h: hashStr(JSON.stringify(secData('ex'))), t: Date.now() }; syncSave(); changed = true; } } continue; }
@@ -2811,6 +2814,10 @@ async function syncNow(opts = {}) {
           /* وضع «اسألني»: لا يُطبَّق التعديل حتى توافق */
           if (!PENDING[sec] || PENDING[sec].at !== rm.at) { const p = await pullSec(sec); if (p) { PENDING[sec] = { at: p.at, by: p.by, byRaw: p.byRaw, data: p.data, diff: secDiff(sec, secData(sec), p.data) }; pendShow(); } }
           continue;
+        } else if (sec === 'actimg' && dirty && lm.at) {
+          const p = await pullSec('actimg'); if (!p) continue; const m = Object.assign({}, p.data || {}); let n = 0;
+          Object.entries(S.actImg || {}).forEach(([k, v]) => { const o = m[k]; if (!o || String(v.at || '') > String(o.at || '')) { m[k] = v; n++; } });
+          applySec('actimg', m); SYNC.actimg = { at: p.at, h: hashStr(JSON.stringify(p.data)), t: Date.now() }; syncSave(); changed = true; if (n) await pushSec('actimg'); continue;
         } else if (sec === 'act' && dirty && lm.at && typeof actMerge === 'function') {
           const p = await pullSec('act'); if (!p) continue; const m = actMerge(actBase(), S.act, p.data);
           applySec('act', m.data); actBaseSet(p.data); SYNC.act = { at: p.at, h: hashStr(JSON.stringify(p.data)), t: Date.now() }; syncSave(); changed = true;
@@ -2857,6 +2864,8 @@ function secDiff(sec, A, B) {
     const ra = (A.rows || []).length, rb = (B.rows || []).length; out.push(['chg', ra !== rb ? `أسطر إسناد النشاط: ${ra} ← ${rb}` : 'تعديل في إسناد برامج النشاط أو مواعيدها']);
   } else if (sec === 'daily') {
     out.push(['chg', 'تعديل في الانتظار والمناوبة']);
+  } else if (sec === 'actimg') {
+    out.push(['chg', 'إضافة أو حذف صور شواهد']);
   } else {
     const J = v => JSON.stringify(v == null ? null : v);
     const sa = (A.students || []).length, sb = (B.students || []).length; if (sa !== sb) out.push(['chg', `عدد الطلاب: ${sa} ← ${sb}`]); else if (J(A.students) !== J(B.students)) out.push(['chg', 'تعديل في بيانات الطلاب أو توزيعهم على اللجان']);
