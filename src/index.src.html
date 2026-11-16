@@ -1180,6 +1180,28 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 @media(max-width:720px){.aex{grid-template-areas:"t s s" "b b r" "i i i"}.aimgs{grid-area:i}}
 .rdring.sm small{font-size:.62rem;text-align:center;line-height:1.25;max-width:64px}.dtile .rdring.sm{width:92px;height:92px;flex:none}
 @media(max-width:720px){.aex .aimgs{margin-top:4px}.aimg,.aimgadd{width:46px;height:46px}}
+
+/* ===== مركز مطبوعات النشاط ===== */
+.ahub{grid-template-columns:2fr 1fr 1fr 1fr}.ahubb small{display:block;font-size:.66rem;font-weight:500;opacity:.85}.pcgo{flex-direction:row}.pcgo b{display:flex;flex-direction:column}
+.pcbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end;position:sticky;top:52px;z-index:5;background:var(--surface);padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px}.pcbar .plf{margin:0}.pcbar .w2{grid-column:span 2}
+.pcg{margin-top:16px}.pcg h3{font-size:.95rem;margin:0 0 8px;padding-inline-start:10px;border-inline-start:4px solid var(--pc)}
+.pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.pcc{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;transition:box-shadow .15s,border-color .15s}
+.pcc:hover{box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--pc) 45%,var(--line))}.pcc.sel{border-color:var(--pc);box-shadow:0 0 0 2px var(--pc)}
+.pcc.empty .pcth{opacity:.45}
+.pcck{position:absolute;top:8px;inset-inline-start:8px;z-index:2;background:var(--surface);border-radius:8px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.2);display:flex}.pcck input{width:19px;height:19px;accent-color:var(--pc)}
+.pcth{font:inherit;position:relative;display:block;width:100%;border:0;padding:12px 18px 0;background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 10%,var(--surface2)),var(--surface2));cursor:zoom-in;height:200px;overflow:hidden;border-bottom:1px solid var(--line)}
+.pthumb{width:100%;aspect-ratio:210/297;overflow:hidden;position:relative;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);border-radius:3px 3px 0 0}
+.pcth.land .pthumb{aspect-ratio:297/210;margin-top:24px}
+.pthumb>.page{position:absolute;top:0;right:0;transform-origin:top right;box-shadow:none;margin:0;pointer-events:none}
+.pcz{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(11,58,70,.88);color:#fff;font-size:.78rem;font-weight:700;border-radius:999px;padding:5px 13px;opacity:0;transition:opacity .15s}.pcth:hover .pcz,.pcth:focus-visible .pcz{opacity:1}
+.pcb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}.pcb>b{font-size:.92rem;line-height:1.5}.pcb p{margin:0;font-size:.78rem;color:var(--muted);line-height:1.7;flex:1}
+.pcm{display:flex;flex-wrap:wrap;gap:5px}.pcm span{font-size:.7rem;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--soft);color:var(--muted)}.pcm .pcf{background:color-mix(in srgb,var(--pc) 12%,var(--surface));color:var(--ink)}.pcm .pce{background:color-mix(in srgb,var(--warn) 14%,var(--surface));color:var(--warn)}
+.pca{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:5px}.pca .btn{justify-content:center;padding:6px 4px;min-height:36px;font-size:.78rem}
+.pcbatch{position:static;z-index:6;margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:14px;border:1px dashed var(--line);background:var(--surface2);color:var(--muted)}
+.pcbatch.on{position:sticky;bottom:10px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);box-shadow:0 6px 24px rgba(0,0,0,.18)}.pcbatch span{display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:720px){.ahub{grid-template-columns:1fr 1fr 1fr}.pcgo{grid-column:1/-1}.pcbar{grid-template-columns:1fr 1fr;top:44px}.pcbar .w2{grid-column:1/-1}.pcgrid{grid-template-columns:1fr 1fr;gap:8px}.pcth{height:150px;padding:8px 10px 0}.pca{grid-template-columns:1fr 1fr}.pca .btn.pri{grid-column:1/-1}.pcb p{display:none}.pcbatch b{flex:1 1 100%}}
+@media(max-width:720px){.ahubb:not(.pcgo){flex-direction:column;justify-content:center;text-align:center;gap:3px;padding:8px 4px}.ahubb:not(.pcgo) b{font-size:.76rem;line-height:1.35}.pcbatch:not(.on){padding:8px 12px;font-size:.78rem}}
 </style>
 </head>
 <body>

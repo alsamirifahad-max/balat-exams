@@ -169,8 +169,8 @@ function actProgress() { const a = A(), rows = a.rows, st = actStats(), tt = act
     { k: 7, t: 'التنفيذ', ok: exT > 0 && ex >= exT, s: exT ? Math.round(ex / exT * 100) + '%' : '—' }
   ]; }
 function actFormsHub() {
-  const F = [['actPlan', 'جدول الإسناد', 1], ['actGrid', 'جدول المواعيد'], ['actWkPlan', 'الخطة الأسبوعية'], ['actWkBul', 'نشرة الأسبوع'], ['actTPlan', 'الخطط الزمنية للمعلمين'], ['actLetter', 'خطابات التكليف'], ['actSum', 'ملخص البرامج'], ['actExec', 'تقرير التنفيذ'], ['actTRep', 'تقارير المعلمين']];
-  return `<div class="ahub">${F.map(([id, n, pri]) => `<button type="button" class="ahubb${pri ? ' pri' : ''}" data-act="qopen" data-form="${id}"><span>🖨</span><b>${n}</b></button>`).join('')}</div>`;
+  const q = [['actPlan', 'جدول الإسناد'], ['actWkBul', 'نشرة هذا الأسبوع'], ['actExec', 'تقرير التنفيذ']];
+  return `<div class="ahub"><button type="button" class="ahubb pri pcgo" data-sub="8"><span>🖨</span><b>مركز المطبوعات</b><small>${PC_GROUPS.reduce((s, g) => s + g.f.length, 0)} نموذجاً · معاينة · PDF · Word · Excel</small></button>${q.map(([id, n]) => `<button type="button" class="ahubb" data-pcact="pv" data-id="${id}"><span>👁</span><b>${n}</b></button>`).join('')}</div>`;
 }
 function actSrcCard(k) {
   const a = A(), s = a.src || {}, loc = !!(s[k] && (k === 'tt' ? s.tt.teachers : s[k]).length);
@@ -218,7 +218,7 @@ function actBuilder() {
 }
 function actExecRows() { const q = normName(ACT_EXQ); return A().rows.filter(r => !q || normName(r.t + ' ' + r.prog).includes(q)); }
 function vActivity() {
-  const a = A(), st = actStats(), conf = actConflicts(), ro = actRO(), pr = actProgress(), cur = Math.min(SUB.activity || 0, 7);
+  const a = A(), st = actStats(), conf = actConflicts(), ro = actRO(), pr = actProgress(), cur = Math.min(SUB.activity || 0, 8);
   const gchips = ['all', ...G].map(g => `<button type="button" class="${String(ACT_G) === String(g) ? 'on' : ''}" data-aact="g" data-v="${g}"${g !== 'all' ? ` style="--gc:var(--g${g})"` : ''}>${g === 'all' ? 'كل الصفوف' : GSHORT[g] + ' ثانوي'}</button>`).join('');
   const tl = `<datalist id="tlist">${actTeachers().map(n => `<option value="${esc(n)}"></option>`).join('')}</datalist>`;
   const hero = `<section class="card acth keep">
@@ -294,7 +294,7 @@ function vActivity() {
     <div class="acts wrap"><button type="button" class="btn pri" data-act="qopen" data-form="actExec">🖨 تقرير تنفيذ برامج النشاط</button><button type="button" class="btn" data-act="qopen" data-form="actTRep">🖨 نماذج تقارير المعلمين</button><button type="button" class="btn" data-act="qopen" data-form="actEv">🖼 ملف الشواهد</button></div>
     <p class="hint">📷 لكل برنامج: صور الفعالية من الجوال مباشرة — تُضغط تلقائياً وتظهر في تقرير المعلم وملف الشواهد. المساحة المستخدمة: ${(actImgBytes() / 1048576).toFixed(1)} من 4.5 ميجا.</p>
   </section>`;
-  return `${tl}${ro ? '<div class="pend ro"><div class="pdt"><b>للاطلاع فقط</b><span>تعديل النشاط الطلابي لرائد النشاط ومسؤول الاختبارات.</span></div></div>' : ''}${hero}${srcStep}${calcStep}${catStep}${rowsStep}${gridStep}${actWeeksStep()}${peopleStep}${execStep}`;
+  return `${tl}${ro ? '<div class="pend ro"><div class="pdt"><b>للاطلاع فقط</b><span>تعديل النشاط الطلابي لرائد النشاط ومسؤول الاختبارات.</span></div></div>' : ''}${hero}${srcStep}${calcStep}${catStep}${rowsStep}${gridStep}${actWeeksStep()}${peopleStep}${execStep}${SUB.activity === 8 ? actPrintStep() : '<section class="card"><h2>المطبوعات</h2></section>'}`;
 }
 /* ===== الخطة الأسبوعية: ربط الإسناد بمحتوى المجال أسبوعياً وتوزيع الحصص على تواريخ فعلية ===== */
 const ACT_DOMALIAS = { 'اللياقة والصحة': 'الرياضة والصحة' };
@@ -386,7 +386,7 @@ function actWkBulPages(o) {
   return out;
 }
 function actTPlanPages(o) {
-  const sem = +(o && o.ws) || actWS(), WL = actWeeks(sem), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? A().rows.filter(r => r.id === o.rid) : A().rows.filter(r => gs.includes(+r.g) && actSes(r, sem).length);
+  const sem = +(o && o.ws) || actWS(), WL = actWeeks(sem), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? A().rows.filter(r => r.id === o.rid) : A().rows.filter(r => actTF(r, o) && gs.includes(+r.g) && actSes(r, sem).length);
   if (!list.length) return [title('الخطة الزمنية لتنفيذ برامج النشاط') + '<p class="txt">لم تُجدول حصص بعد — اضغط «⚡ جدولة الفصل كاملاً» في الخطة الأسبوعية.</p>'];
   return list.map(r => { const ses = actSes(r, sem);
     return title('الخطة الزمنية لتنفيذ برنامج نشاط', actSemName(sem)) + T([[L('المعلم', { w: '14%' }), `<b>${esc(r.t)}</b>`, L('البرنامج', { w: '13%' }), { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog) }], [L('المجال'), esc(r.dom), L('الصف / المادة'), `${GSHORT[r.g]} ثانوي — ${esc(r.sub)}`]]) + sp(6) +
@@ -453,7 +453,7 @@ async function actImgAdd(rid, files) {
 }
 function actImgStrip(r) { const L = actImgs(r.id); return `<div class="aimgs">${L.map(x => `<span class="aimg"><img src="${x.d}" alt="" data-aact="imgView" data-k="${x.k}"><button type="button" class="x" data-aact="imgDel" data-k="${x.k}" title="حذف">×</button></span>`).join('')}<label class="aimgadd" for="aimg_${r.id}" title="إضافة صور الشواهد">📷<small>${L.length ? L.length : 'شاهد'}</small></label><input type="file" id="aimg_${r.id}" data-aimg="${r.id}" accept="image/*" multiple hidden></div>`; }
 function actEvPages(o) {
-  const gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = (o && o.rid ? A().rows.filter(r => r.id === o.rid) : A().rows.filter(r => gs.includes(+r.g))).filter(r => actImgs(r.id).length), out = [];
+  const gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = (o && o.rid ? A().rows.filter(r => r.id === o.rid) : A().rows.filter(r => actTF(r, o) && gs.includes(+r.g))).filter(r => actImgs(r.id).length), out = [];
   if (!rows.length) return [title('ملف شواهد برامج النشاط', actSemTxt()) + '<p class="txt">لا توجد صور شواهد بعد — أضفها من خطوة «التنفيذ والتقارير» (📷).</p>'];
   rows.forEach(r => { const IL = actImgs(r.id); for (let s = 0; s < IL.length; s += 4) {
     const cells = IL.slice(s, s + 4).map(x => `<td style="width:50%;padding:4px;text-align:center;vertical-align:middle;height:95mm"><img src="${x.d}" style="max-width:100%;max-height:92mm;object-fit:contain"><br><span style="font-size:8pt;color:#555">${esc(hDate(String(x.at).slice(0, 10)))}</span></td>`);
@@ -464,6 +464,63 @@ function actEvPages(o) {
   return out;
 }
 FORMS.push({ id: 'actEv', grp: 'النشاط الطلابي', t: 'ملف شواهد برامج النشاط (الصور)', opts: ['grade'], build: o => actEvPages(o) });
+/* ===================== مركز مطبوعات النشاط: معاينة حيّة + طباعة سريعة + PDF · Word · Excel + حزم ===================== */
+const PC_GROUPS = [
+  { t: 'الخطة والإسناد', c: '#16a34a', f: [['actPlan', 'جدول الإسناد الرسمي بحسبة 10% والمواعيد وتوقيع المعلمين — يُعتمد من المدير ويُرفع للإدارة.'], ['actSum', 'ملخص البرامج حسب المجال وعدد حصصها — للتقارير ولوحة الإعلانات.'], ['actLetter', 'خطاب تكليف لكل معلم ببرنامجه ومواعيده — يُسلَّم ويوقَّع بالاستلام.']] },
+  { t: 'المواعيد والأسابيع', c: '#2563eb', f: [['actGrid', 'الجدول العام للمعلمين وحصص النشاط ملوّنة — يُعلَّق في غرفة المعلمين.'], ['actWkPlan', 'خطة الفصل أسبوعاً أسبوعاً: البرامج والمحتوى لكل مجال.'], ['actWkBul', 'نشرة أسبوع واحد: حصص كل يوم بالمعلم والشعبة والتوقيع بالتنفيذ.'], ['actTPlan', 'الخطة الزمنية لكل معلم: حصصه بتواريخها ومحتواها.']] },
+  { t: 'التنفيذ والتقارير', c: '#c2410c', f: [['actExec', 'نسبة تنفيذ كل برنامج وحالته — للمتابعة الشهرية ونهاية الفصل.'], ['actTRep', 'نموذج تقرير المعلم: الأهداف والفعاليات والشواهد والتوقيع.'], ['actEv', 'ملف صور الشواهد لكل برنامج — 4 صور في الصفحة.']] },
+  { t: 'المصادر', c: '#64748b', f: [['actSrcTT', 'الجدول الدراسي العام المعتمد في خطة النشاط.'], ['actSrcT', 'قائمة المعلمين.'], ['actSrcTA', 'إسناد المواد لكل صف.']] }
+];
+const PC_PER = ['actLetter', 'actTRep', 'actTPlan', 'actEv', 'actPlan', 'actExec', 'actSum'], PC_SEM = ['actWkPlan', 'actWkBul', 'actTPlan'], PC_WK = ['actWkBul'], PC_G = ['actPlan', 'actGrid', 'actLetter', 'actSum', 'actExec', 'actTRep', 'actTPlan', 'actEv'];
+let PC = { g: 'all', ws: null, wk: null, t: '', sel: {} };
+function pcOpts(id) { const o = {}; if (PC_G.includes(id) && PC.g !== 'all') o.g = String(PC.g); if (PC_SEM.includes(id)) o.ws = PC.ws || actWS(); if (PC_WK.includes(id)) o.wk = PC.wk == null ? actCurWeek(o.ws) : PC.wk; if (PC_PER.includes(id) && PC.t) o.t = PC.t; return o; }
+function pcFilterTxt(id) { const x = []; if (PC_G.includes(id) && PC.g !== 'all') x.push(GSHORT[PC.g] + ' ثانوي'); if (PC_SEM.includes(id)) x.push('الفصل ' + ((PC.ws || actWS()) === 2 ? 'الثاني' : 'الأول')); if (PC_WK.includes(id)) x.push('الأسبوع ' + ((PC.wk == null ? actCurWeek(PC.ws || actWS()) : PC.wk) + 1)); if (PC_PER.includes(id) && PC.t) { const r = A().rows.find(r => personKey(r.t) === PC.t); if (r) x.push(r.t); } return x.join(' · '); }
+function pcName(id) { const f = FORMS.find(x => x.id === id); return fname(f.t.replace(/\s*\(.*?\)\s*/g, ' ').trim() + (pcFilterTxt(id) ? ' - ' + pcFilterTxt(id) : '')); }
+function pcCard(id, d, c) {
+  const f = FORMS.find(x => x.id === id); if (!f) return ''; let pages = []; try { pages = buildForm(f, pcOpts(id)); } catch (e) { }
+  const n = pages.length, empty = !n || pages.every(x => /لا توجد|لم تُجدول|لم يُرفع|لا يوجد إسناد/.test(x) && x.length < 2600), ft = pcFilterTxt(id);
+  return `<article class="pcc${PC.sel[id] ? ' sel' : ''}${empty ? ' empty' : ''}" style="--pc:${c}">
+    <label class="pcck" title="تحديد للطباعة المجمّعة"><input type="checkbox" data-pcsel="${id}"${PC.sel[id] ? ' checked' : ''}${empty ? ' disabled' : ''}></label>
+    <button type="button" class="pcth${f.land ? ' land' : ''}" data-pcact="pv" data-id="${id}" aria-label="معاينة ${esc(f.t)}">${n ? `<div class="pthumb">${pageWrap(pages[0], !!f.land)}</div>` : ''}<span class="pcz">👁 معاينة</span></button>
+    <div class="pcb"><b>${esc(f.t)}</b><p>${esc(d)}</p>
+      <div class="pcm"><span>${n} ${n === 1 ? 'صفحة' : n === 2 ? 'صفحتان' : n <= 10 ? 'صفحات' : 'صفحة'}</span><span>${f.land ? 'أفقي' : 'عمودي'}</span>${ft ? `<span class="pcf">${esc(ft)}</span>` : ''}${empty ? '<span class="pce">لا بيانات بعد</span>' : ''}</div>
+      <div class="pca"><button type="button" class="btn sm pri" data-pcact="print" data-id="${id}"${empty ? ' disabled' : ''}>🖨 طباعة</button><button type="button" class="btn sm" data-pcact="pdf" data-id="${id}"${empty ? ' disabled' : ''}>PDF</button><button type="button" class="btn sm" data-pcact="word" data-id="${id}"${empty ? ' disabled' : ''}>Word</button><button type="button" class="btn sm" data-pcact="xls" data-id="${id}"${empty ? ' disabled' : ''}>Excel</button></div></div>
+  </article>`;
+}
+function actPrintStep() {
+  const ws = PC.ws || actWS(), WL = actWeeks(ws), wk = PC.wk == null ? actCurWeek(ws) : PC.wk, tchs = []; A().rows.forEach(r => { if (r.t && !tchs.some(x => x.k === personKey(r.t))) tchs.push({ k: personKey(r.t), n: r.t }); });
+  tchs.sort((a, b) => a.n.localeCompare(b.n, 'ar')); const nsel = Object.values(PC.sel).filter(Boolean).length;
+  return `<section class="card pcs"><h2>المطبوعات</h2>
+    <p class="hint">كل نماذج النشاط في مكان واحد: الصورة المصغّرة هي الصفحة الأولى فعلاً — المسها للمعاينة الكاملة. اختر التصفية مرة واحدة فتنطبق على كل النماذج، أو حدّد عدة نماذج واطبعها دفعة واحدة.</p>
+    <div class="pcbar">
+      <label class="plf">الصف<select class="in" data-pcf="g"><option value="all">كل الصفوف</option>${G.map(g => `<option value="${g}"${String(PC.g) === String(g) ? ' selected' : ''}>${GSHORT[g]} ثانوي</option>`).join('')}</select></label>
+      <label class="plf">الفصل<select class="in" data-pcf="ws"><option value="1"${ws === 1 ? ' selected' : ''}>الأول</option><option value="2"${ws === 2 ? ' selected' : ''}>الثاني</option></select></label>
+      <label class="plf">الأسبوع (للنشرة)<select class="in" data-pcf="wk">${WL.map((w, i) => `<option value="${i}"${i === wk ? ' selected' : ''}>${i + 1}${i === actCurWeek(ws) ? ' (الحالي)' : ''} — ${esc(actRange(w).split(' · ')[0])}</option>`).join('')}</select></label>
+      <label class="plf w2">المعلم (للنماذج الفردية)<select class="in" data-pcf="t"><option value="">كل المعلمين</option>${tchs.map(x => `<option value="${esc(x.k)}"${PC.t === x.k ? ' selected' : ''}>${esc(x.n)}</option>`).join('')}</select></label>
+      ${PC.g !== 'all' || PC.t || PC.wk != null || PC.ws ? '<button type="button" class="btn sm ghost pcrst" data-pcact="reset">↺ إلغاء التصفية</button>' : ''}
+    </div>
+    ${PC_GROUPS.map(g => `<div class="pcg"><h3 style="--pc:${g.c}">${g.t}</h3><div class="pcgrid">${g.f.map(([id, d]) => pcCard(id, d, g.c)).join('')}</div></div>`).join('')}
+    <div class="pcbatch${nsel ? ' on' : ''}"><b>${nsel ? `${nsel} ${nsel === 1 ? 'نموذج محدد' : nsel === 2 ? 'نموذجان محددان' : 'نماذج محددة'} — تُطبع معاً بترتيبها` : 'للطباعة المجمّعة: حدّد النماذج بالمربع ☐ أعلى كل بطاقة'}</b><span${nsel ? '' : ' hidden'}><button type="button" class="btn sm" data-pcact="bpv"${nsel ? '' : ' disabled'}>👁 معاينة</button><button type="button" class="btn sm pri" data-pcact="bprint"${nsel ? '' : ' disabled'}>🖨 طباعة</button><button type="button" class="btn sm" data-pcact="bpdf"${nsel ? '' : ' disabled'}>PDF واحد</button><button type="button" class="btn sm" data-pcact="bword"${nsel ? '' : ' disabled'}>Word</button>${nsel ? '<button type="button" class="btn sm ghost" data-pcact="bclr">مسح التحديد</button>' : ''}</span></div>
+  </section>`;
+}
+function pcGroups(ids) { return ids.map(id => { const f = FORMS.find(x => x.id === id); return { land: f.land, pages: buildForm(f, pcOpts(id)), t: f.t }; }).filter(g => g.pages.length); }
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-pcact]'); if (!b) return; const a = b.dataset.pcact, id = b.dataset.id;
+  if (a === 'reset') { PC = { g: 'all', ws: null, wk: null, t: '', sel: PC.sel }; return render(); }
+  if (a === 'bclr') { PC.sel = {}; return render(); }
+  const ids = id ? [id] : Object.keys(PC.sel).filter(k => PC.sel[k]); if (!ids.length) return;
+  const gs = pcGroups(ids); if (!gs.length) return toast('لا توجد صفحات', true);
+  const name = id ? pcName(id) : fname('مطبوعات النشاط الطلابي');
+  if (a === 'pv' || a === 'bpv') return openPreview(gs, name);
+  if (a === 'print' || a === 'bprint') return printPages(gs);
+  if (a === 'pdf' || a === 'bpdf') return downloadPdf(gs, name);
+  if (a === 'word' || a === 'bword') return wordDoc(gs, name);
+  if (a === 'xls') return excelFromGroups(gs, name);
+});
+document.addEventListener('change', e => { const el = e.target; if (!el.dataset) return;
+  if (el.dataset.pcsel) { PC.sel[el.dataset.pcsel] = el.checked; return render(); }
+  if (el.dataset.pcf) { const k = el.dataset.pcf; PC[k] = k === 'g' ? (el.value === 'all' ? 'all' : +el.value) : k === 'ws' ? +el.value : k === 'wk' ? +el.value : el.value; if (k === 'ws') PC.wk = null; return render(); }
+});
 /* ----- جدول المواعيد (شاشة وطباعة) ----- */
 function actGridTeachers(g) { const m = new Map(); actRowsG(g).forEach(r => { const tr = actTT(r); const k = tr ? tr.n : r.t; if (!m.has(k)) m.set(k, { n: tr ? tr.n : r.t, tr, rows: [] }); m.get(k).rows.push(r); }); return [...m.values()].sort((a, b) => a.n.localeCompare(b.n, 'ar')); }
 function actGridHtml(g, print) {
@@ -479,7 +536,7 @@ function actLegend(rows) { const ps = []; rows.forEach(r => { if (r.prog && !ps.
 function actSigs() { const a = A().cfg; return sigs([['رائد النشاط', a.lead], ['وكيل المدرسة', a.vice], ['مدير المدرسة', a.head || S.s.principal]]); }
 function actSemTxt() { return `الفصل الدراسي ${esc(S.s.sem)} ${esc(S.s.yearTxt)}`; }
 function actPlanPages(o) {
-  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => gs.includes(+r.g)), sign = a.cfg.sign !== false;
+  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => actTF(r, o) && gs.includes(+r.g)), sign = a.cfg.sign !== false;
   const hd = [H('م', { w: '3%' }), H('اسم المعلم', { w: '13%' }), H('مادة التدريس', { w: '11%' }), H('الصف', { w: '7%' }), H('المجال', { w: '10%' }), H('اسم البرنامج المسند', { w: '17%' }), H('عدد الحصص', { w: '5%' }), H('النسبة من حصص المادة', { w: '7%' }), H(`الحد الأعلى (${a.cfg.pct}%)`, { w: '6%' }), H('موعد الحصص (حسب الجدول العام)')]; if (sign) hd.push(H('التوقيع', { w: '8%' }));
   const notice = `<table class="t" dir="rtl" border="1" cellspacing="0" cellpadding="4" width="100%" style="border:2px solid #c00000"><tr><td style="background:#fff8e1;text-align:center"><b style="color:#c00000">تنبيه مهم — التزام صارم</b><br><span style="font-size:9.5pt">يمكن للمدرسة استثمار ما لا يتجاوز ${a.cfg.pct}% من الحد الأعلى لعدد الحصص لكل مادة في برامج النشاط الطلابي، ويُحدَّد نوع النشاط وفق مجالات الأنشطة المعتمدة.<br><b>معادلة الحساب:</b> حصص النشاط = إجمالي حصص المادة (الحد الأعلى) × ${a.cfg.pct}%</span></td></tr></table>`;
   const intro = `<p class="txt" style="font-size:10pt">${esc(String(a.cfg.intro || ACT_INTRO).replace('{sem}', S.s.sem))}</p>`;
@@ -507,7 +564,7 @@ function actGridPages(o) {
   return out;
 }
 function actLetterPages(o) {
-  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? a.rows.filter(r => r.id === o.rid) : a.rows.filter(r => gs.includes(+r.g));
+  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? a.rows.filter(r => r.id === o.rid) : a.rows.filter(r => actTF(r, o) && gs.includes(+r.g));
   return list.map(r => { const c = actCalc(r);
     return title('تكليف بتنفيذ برنامج نشاط طلابي', actSemTxt()) + sp(6) +
       `<p class="txt">المكرم الأستاذ / <b>${esc(r.t)}</b> &nbsp;&nbsp; وفقه الله</p><p class="txt">السلام عليكم ورحمة الله وبركاته، وبعد:</p>` +
@@ -516,7 +573,7 @@ function actLetterPages(o) {
       `<p class="txt">شاكرين لكم تعاونكم، سائلين الله لكم التوفيق والسداد.</p>` + sp(6) + T([[L('اسم المعلم'), esc(r.t), L('التوقيع', { w: '14%' }), ''], [L('تاريخ الاستلام'), '', L('ملاحظات'), '']], { cls: 'tall' }) + sp(14) + actSigs(); });
 }
 function actSumPages(o) {
-  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => gs.includes(+r.g)), T1 = [[H('المجال', { w: '16%' }), H('البرنامج', { w: '24%' }), H('الصفوف', { w: '12%' }), H('المعلمون'), H('عدد الحصص', { w: '9%' })]];
+  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => actTF(r, o) && gs.includes(+r.g)), T1 = [[H('المجال', { w: '16%' }), H('البرنامج', { w: '24%' }), H('الصفوف', { w: '12%' }), H('المعلمون'), H('عدد الحصص', { w: '9%' })]];
   let tot = 0; a.doms.forEach(d => { const dr = rows.filter(r => normName(r.dom) === normName(d.n)); if (!dr.length) return; const ps = []; dr.forEach(r => { let p = ps.find(x => normName(x.n) === normName(r.prog)); if (!p) ps.push(p = { n: r.prog, rows: [] }); p.rows.push(r); });
     ps.forEach((p, i) => { const n = p.rows.reduce((s, r) => s + (+r.n || 0), 0); tot += n; const row = []; if (!i) row.push({ v: `<b>${esc(d.n)}</b>`, rs: ps.length, bg: planTint ? planTint(d.c) : LCOL }); row.push({ v: `<b>${esc(p.n)}</b>`, bg: actProgColor(p.n) }, [...new Set(p.rows.map(r => GSHORT[r.g]))].join('، '), { v: esc(p.rows.map(r => r.t).join('، ')), al: 'right', fs: '9pt' }, `<b>${n}</b>`); T1.push(row); }); });
   T1.push([{ v: '<b>المجموع</b>', cs: 4, bg: LCOL }, { v: `<b>${tot}</b>`, bg: LCOL }]);
@@ -529,8 +586,9 @@ FORMS.push(
   { id: 'actSum', grp: 'النشاط الطلابي', t: 'ملخص برامج النشاط حسب المجال', opts: ['grade'], build: o => actSumPages(o) }
 );
 FD_IDS.push('actPlan', 'actLetter', 'actSum');
+function actTF(r, o) { return !(o && o.t) || personKey(r.t) === o.t; }
 function actExecPages(o) {
-  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => gs.includes(+r.g)), per = fitPer(rows.length, 22), out = [];
+  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => actTF(r, o) && gs.includes(+r.g)), per = fitPer(rows.length, 22), out = [];
   const tot = rows.reduce((s, r) => s + (+r.n || 0), 0), done = rows.reduce((s, r) => s + Math.min(+r.ex || 0, +r.n || 0), 0);
   for (let s = 0; s < Math.max(1, rows.length); s += per) {
     const T1 = [[H('م', { w: '4%' }), H('اسم المعلم', { w: '17%' }), H('الصف', { w: '8%' }), H('المجال', { w: '13%' }), H('البرنامج'), H('المسند', { w: '7%' }), H('المنفّذ', { w: '7%' }), H('النسبة', { w: '7%' }), H('الحالة', { w: '10%' }), H('ملاحظات', { w: '12%' })]];
@@ -542,7 +600,7 @@ function actExecPages(o) {
   return out;
 }
 function actTRepPages(o) {
-  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? a.rows.filter(r => r.id === o.rid) : a.rows.filter(r => gs.includes(+r.g));
+  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? a.rows.filter(r => r.id === o.rid) : a.rows.filter(r => actTF(r, o) && gs.includes(+r.g));
   const box = (lbl, h) => T([[{ v: `<b>${lbl}</b>`, al: 'right', bg: LCOL }], [{ v: '&nbsp;', h }]]);
   return list.map(r => title('تقرير تنفيذ برنامج نشاط طلابي', actSemTxt()) +
     T([[L('اسم المعلم', { w: '18%' }), `<b>${esc(r.t)}</b>`, L('مادة التدريس', { w: '16%' }), esc(r.sub)], [L('الصف'), `${GSHORT[r.g]} ثانوي`, L('المجال'), esc(r.dom)], [L('البرنامج'), { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog), cs: 3 }], [L('عدد الحصص المسندة'), `${+r.n || 0} حصة`, L('المنفّذ منها'), `${Math.min(+r.ex || 0, +r.n || 0) || '.......'} حصة`], [L('مواعيد التنفيذ'), { v: esc(actSlotsTxt(r)) || '..............................', cs: 3 }], [L('عدد الطلاب المستفيدين'), '', L('الشعب'), '']], { cls: 'tall' }) + sp(6) +
