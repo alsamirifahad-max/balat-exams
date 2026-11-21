@@ -3451,7 +3451,7 @@ function specialPages(o) {
 }
 function receiptTable() {
   const tot = gradeTotals();
-  const rows = [[H('اسم المعلم'), H('المادة'), H('الصف'), H('عدد الأوراق'), H('الإجابة النموذجية بالداخل'), H('التوقيع', { w: '16%' })]];
+  const rows = [[H('اسم المعلم', { w: '31%' }), H('المادة', { w: '17%' }), H('الصف', { w: '10%' }), H('عدد الأوراق', { w: '9%' }), H('الإجابة النموذجية بالداخل', { w: '15%' }), H('التوقيع', { w: '18%' })]];
   G.forEach(g => { const l = S.st.filter(x => +x.g === g && x.t && !fxRm('receipt', x.t)); l.forEach((x, i) => { const r = [{ v: `<b>${esc(x.t)}</b>`, al: 'right' }, Gc(g, `<b>${esc(x.sub)}</b>`)]; if (i === 0) r.push(Gc(g, `<b>${GNAME[g].replace('الصف ', '')}</b>`, { rs: l.length }), Gc(g, `<b>${tot[g]}</b>`, { rs: l.length })); r.push('☐', ''); rows.push(r); }); });
   fxAdds('receipt').forEach(x => rows.push([{ v: `<b>${esc(x.n)}</b>`, al: 'right' }, esc(x.w || ''), '', '', '☐', '']));
   return T(rows, { cls: 'tall' });
@@ -3503,7 +3503,7 @@ function assignPages(o) {
     const letter =
     T([[{ v: `<b style="font-size:14pt">تكليف وضع أسئلة الاختبارات النهائية</b><br>للعام الدراسي ${esc(S.s.yearTxt)} ( الفصل الدراسي ${esc(S.s.sem)} )`, bg: HCOL, cs: 3 }], [L('الأخ المعلم', { w: '22%' }), { v: `<b style="font-size:13.5pt">${esc(tn) || '................................................'}</b>` }, L('وفقه الله', { w: '18%' })]]) + sp(6) +
     `<p class="txt">السلام عليكم ورحمة الله وبركاته</p><p class="txt">نظراً لقرب موعد الاختبارات النهائية للفصل الدراسي ${esc(S.s.sem)}، وبناءً على الصلاحيات الممنوحة لمدير المدرسة، وما تقتضيه مصلحة العمل، واستناداً إلى ما ورد في الدليل التنظيمي للاختبارات النهائية،</p>
-    <p class="txt">فقد تم تكليفكم بوضع أسئلة الاختبار الموضحة أدناه بالجدول ( ${esc(mode)} )${others.length ? ` بالمشاركة مع الأستاذ/ ${others.map(esc).join(' والأستاذ/ ')}` : ''} مع مراعاة شروط إعداد أسئلة الاختبارات ووضع نماذج الإجابة، وتسليمها لإدارة المدرسة في موعد أقصاه ${due ? `<b>${esc(due)}</b>` : 'يوم ................ الموافق &nbsp; / &nbsp; / &nbsp;&nbsp;&nbsp; هـ'}، والمطلوب: ( ${esc(parts)} ).</p><p class="txt">وتقبلوا تحياتنا ...</p>` +
+    <p class="txt">فقد تم تكليفكم بوضع أسئلة الاختبار الموضحة أدناه بالجدول ( ${esc(mode)} )${others.length ? ` بالمشاركة مع الأستاذ/ ${others.map(esc).join(' والأستاذ/ ')}` : ''} مع مراعاة شروط إعداد أسئلة الاختبارات ووضع نماذج الإجابة، وتسليمها لإدارة المدرسة في موعد أقصاه ${due ? `<b style="white-space:nowrap">${esc(due)}</b>` : '<span style="white-space:nowrap">يوم ..................</span> <span style="white-space:nowrap">الموافق&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;هـ</span>'}، والمطلوب: ( ${esc(parts)} ).</p><p class="txt">وتقبلوا تحياتنا ...</p>` +
     T([[H('المقرر'), H('الصف'), H('العدد المطلوب'), H('درجة الاختبار')], [Gc(x.g, `<b>${esc(x.sub)}</b>`), GNAME[x.g] ? GNAME[x.g].replace('الصف ', '') : '', `<b>${esc(stCount(x))}</b>`, `<b>${esc(mark)}</b>`]]) + sp(6) +
     T([[H('يتم تقسيم درجات الأسئلة وفق التالي :', { cs: 2 })], [v('mc'), 'اختيار من متعدد'], [v('mt'), 'مزاوجة'], [v('tf'), 'صواب وخطأ'], [v('ot'), 'أخرى: ' + (otn ? `<b>${esc(otn)}</b>` : '....................')]]) + sp(12) +
     sigs([['المعلم', tn], ['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]);
@@ -3603,7 +3603,7 @@ function obsInstrPages() {
   return pages;
 }
 function yearRow() { return T([[L('العام الدراسي'), { v: `<b>${esc(S.s.yearTxt)}</b>` }, L('الفصل الدراسي'), { v: `<b>${esc(S.s.sem)}</b>` }, L('الدور'), { v: `<b>${esc(S.s.round)}</b>` }]]); }
-const BLANKDATE = '&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; هـ';
+const BLANKDATE = '<span style="white-space:nowrap">&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;هـ</span>';
 function auth(roles) { return `<p class="lbl">المصادقة:</p>` + T(roles.map(r => [{ v: 'الاسم:', al: 'right', w: '38%', h: '30px' }, { v: 'الصفة: ' + r, al: 'right' }, { v: 'التوقيع:', al: 'right', w: '24%' }])); }
 function absencePage() {
   return title('محضر غياب طالب عن الاختبار') + yearRow() + sp(8) +
@@ -3899,7 +3899,62 @@ function applyFill(el, plan) {
   if (plan.gap) $$('.pbody > .sp, .pbody > p.lbl, .pbody > table.t, .pbody > ul.ins, .pbody > ol.ins, .pbody > .insbox', el).slice(1).forEach(e => { e.style.marginTop = ((parseFloat(getComputedStyle(e).marginTop) || 0) + plan.gap) + 'px'; });
   if (plan.sg) { const sg = $$('table.sg', el).pop(); if (sg) sg.style.marginTop = ((parseFloat(sg.style.marginTop) || 0) + Math.round(plan.sg)) + 'px'; }
 }
-function layoutPages(els) { els.forEach(el => { try { applyFill(el, planFill(el)); } catch (e) { } }); }
+/* تقسيم المحتوى على الصفحات بالقياس الفعلي (لا بالتقدير): كل صفحة تمتلئ قدر الإمكان دون أن تتجاوز الورقة */
+const IMGC = {};
+function imgRatio(src) { const i = IMGC[src] || (IMGC[src] = Object.assign(new Image(), { src })); return i.naturalWidth ? i.naturalHeight / i.naturalWidth : 0.13; }
+function bodyAvail(land) { const P = land ? PAPER.l : PAPER.p; return P.h - P.w * (imgRatio(HDR) + imgRatio(FTR)) - 26; }
+let FITM = null;
+function bodyH(html, land) {
+  const P = land ? PAPER.l : PAPER.p;
+  if (!FITM || !FITM.isConnected) { FITM = document.createElement('div'); FITM.className = 'measure'; document.body.appendChild(FITM); }
+  FITM.innerHTML = `<div class="page${land ? ' land' : ''}" style="width:${P.w}px;min-height:0;padding:0;zoom:1"><div class="pbody">${html}</div></div>`;
+  const h = FITM.firstElementChild.scrollHeight; FITM.innerHTML = ''; return h;
+}
+function bodyFits(html, land, k = 0.985) { return bodyH(html, land) <= bodyAvail(land) * k; }
+/* يقسم n عنصراً على صفحات: build(a, b, last) يبني صفحة للعناصر من a إلى b */
+function chunkFit(n, build, land) {
+  const out = []; if (!n) return [build(0, 0, true)];
+  let a = 0;
+  while (a < n) {
+    let lo = a + 1, hi = n, best = a + 1;
+    if (bodyFits(build(a, n, true), land)) best = n;
+    else { while (lo <= hi) { const m = (lo + hi) >> 1; if (bodyFits(build(a, m, m >= n), land)) { best = m; lo = m + 1; } else hi = m - 1; } }
+    /* لا تترك صفحة أخيرة بعنصر أو عنصرين: وازن آخر صفحتين */
+    if (best < n && n - best <= 2 && best - a > 4) best = Math.max(a + 1, best - (3 - (n - best)));
+    out.push(build(a, best, best >= n)); a = best;
+  }
+  return out;
+}
+/* يجمع أقساماً كاملة في صفحات بالقياس: قسم لا يُقسم بين صفحتين ما دام يتسع لصفحة */
+function packFit(parts, land, gap = '') {
+  const out = []; let cur = '';
+  parts.forEach(pg => { const nx = cur ? cur + gap + pg : pg; if (cur && !bodyFits(nx, land)) { out.push(cur); cur = pg; } else cur = nx; });
+  if (cur) out.push(cur); return out;
+}
+/* حجم خط متناسب مع الورقة: الصفحة القليلة المحتوى يُكبَّر خطها تدريجياً حتى تملأ الورقة بشكل مريح (بحدود معقولة)، ثم تُوزَّع المسافة الباقية */
+const TYPE_T = { fill: 0.9, maxK: 1.32, maxPt: 13.5 };
+function autoType(el) {
+  if (el.querySelector('.env') || el.dataset.nofill || el.dataset.typed) return;
+  const land = el.classList.contains('land'), P = land ? PAPER.l : PAPER.p;
+  const st = document.createElement('div'); st.className = 'measure'; document.body.appendChild(st);
+  const c = el.cloneNode(true); c.style.zoom = ''; c.style.width = P.w + 'px'; c.style.minHeight = '0'; c.style.padding = '0'; st.appendChild(c);
+  try {
+    const h0 = c.scrollHeight; if (h0 >= P.h * 0.86) return;
+    const body = c.querySelector('.pbody'); if (!body) return;
+    const els = [body, ...body.querySelectorAll('*')], base = els.map(e => parseFloat(getComputedStyle(e).fontSize) || 14);
+    const cnt = {}; const tw = document.createTreeWalker(body, NodeFilter.SHOW_TEXT); let n, tot = 0; while ((n = tw.nextNode())) { const t = n.nodeValue.trim().length; if (!t) continue; const f = Math.round(parseFloat(getComputedStyle(n.parentNode).fontSize) * 0.75 * 2) / 2; cnt[f] = (cnt[f] || 0) + t; tot += t; }
+    let acc = 0, med = 11; Object.keys(cnt).map(Number).sort((x, y) => x - y).some(k => { acc += cnt[k]; if (acc >= tot / 2) { med = k; return true; } });
+    const cap = Math.min(TYPE_T.maxK, TYPE_T.maxPt / med); if (cap <= 1.02) return;
+    const set = k => els.forEach((e, i) => { e.style.fontSize = (base[i] * k).toFixed(2) + 'px'; });
+    let lo = 1, hi = cap;
+    set(hi); if (c.scrollHeight <= P.h * TYPE_T.fill) lo = hi; else for (let it = 0; it < 7; it++) { const m = (lo + hi) / 2; set(m); if (c.scrollHeight <= P.h * TYPE_T.fill) lo = m; else hi = m; }
+    if (lo < 1.03) return;
+    const real = [el.querySelector('.pbody'), ...el.querySelector('.pbody').querySelectorAll('*')];
+    if (real.length !== els.length) return;
+    real.forEach((e, i) => { e.style.fontSize = (base[i] * lo).toFixed(2) + 'px'; }); el.dataset.typed = lo.toFixed(2);
+  } finally { st.remove(); }
+}
+function layoutPages(els) { els.forEach(el => { try { autoType(el); } catch (e) { } try { applyFill(el, planFill(el)); } catch (e) { } }); }
 function waitImgs(root) { return Promise.all($$('img', root).map(i => i.complete ? 1 : new Promise(r => { i.onload = r; i.onerror = r; }))); }
 /* سفاري (آيفون وآيباد وماك) يضيف رأساً وتذييلاً وهوامش للطباعة فيتجاهل ضبط الصفحة، فيُطبع النموذج فيها من PDF مقاسه A4 بالضبط: صفحة لكل صفحة */
 function printViaPdf() { const u = navigator.userAgent; return /iPad|iPhone|iPod/.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (/Safari/.test(u) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(u)); }
@@ -6508,7 +6563,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795284487';
+var BUILD_ID = '1795285433';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
@@ -6880,17 +6935,16 @@ function planProcPages(o) {
     if (p.rows) body = T([[H('م', { w: '5%' }), H('الحالة', { w: '33%' }), H('الإجراءات')], ...p.rows.map(([c, st], i) => [i + 1, { v: `<b>${esc(c)}</b>`, al: 'right' }, { v: `<ol class="ins small" style="margin:0">${st.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`, al: 'right' }])]);
     else body = `<ol class="ins">${procOf(p).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
     out.push(title(esc(p.t), yearLine()) + body); });
-  if (list.length > 1) { const merged = []; let cur = ''; out.forEach(pg => { if ((cur + pg).length > 5200 && cur) { merged.push(cur); cur = ''; } cur += (cur ? sp(14) : '') + pg; }); if (cur) merged.push(cur); return merged; }
+  if (list.length > 1) return packFit(out, false, sp(14));
   return out;
 }
 function planEvalPages(o) {
   const ev = (S.s.planX && S.s.planX.ev) || {}, blank = o && o.blank, pages = [];
-  PLAN_EVAL.forEach(s => { const per = fitPer(s.i.length, 26);
-    for (let a = 0; a < s.i.length; a += per) {
-      const rows = [[H('م', { w: '5%' }), H('العناصر'), H('نعم', { w: '7%' }), H('لا', { w: '7%' }), H('السبب', { w: '22%' })]];
-      s.i.slice(a, a + per).forEach((x, j) => { const v = blank ? {} : (ev[s.k + (a + j)] || {}); rows.push([a + j + 1, { v: esc(x), al: 'right', fs: '9.5pt' }, { v: v.v === 'y' ? '✓' : '', b: true, color: '#16794e' }, { v: v.v === 'n' ? '✓' : '', b: true, color: '#c00000' }, { v: esc(v.r || ''), fs: '9pt' }]); });
-      pages.push(title('التقويم الذاتي لعمل مدير المدرسة في الاختبارات', esc(s.t) + (a ? ' (تابع)' : '') + ' — ' + yearLine()) + T(rows, { cls: 'dense' }) + (s.k === 'post' && a + per >= s.i.length ? sp(12) + sigs([['مدير المدرسة', S.s.principal]]) : ''));
-    } });
+  PLAN_EVAL.forEach(s => {
+    const build = (a, b, last) => { const rows = [[H('م', { w: '5%' }), H('العناصر'), H('نعم', { w: '7%' }), H('لا', { w: '7%' }), H('السبب', { w: '22%' })]];
+      s.i.slice(a, b).forEach((x, j) => { const v = blank ? {} : (ev[s.k + (a + j)] || {}); rows.push([a + j + 1, { v: esc(x), al: 'right', fs: '9.5pt' }, { v: v.v === 'y' ? '✓' : '', b: true, color: '#16794e' }, { v: v.v === 'n' ? '✓' : '', b: true, color: '#c00000' }, { v: esc(v.r || ''), fs: '9pt' }]); });
+      return title('التقويم الذاتي لعمل مدير المدرسة في الاختبارات', esc(s.t) + (a ? ' (تابع)' : '') + ' — ' + yearLine()) + T(rows, { cls: 'dense' }) + (s.k === 'post' && last ? sp(12) + sigs([['مدير المدرسة', S.s.principal]]) : ''); };
+    pages.push(...chunkFit(s.i.length, build, false)); });
   return pages;
 }
 FORMS.splice(FORMS.findIndex(f => f.id === 'planOrg') + 1, 0,
@@ -7459,15 +7513,14 @@ function actPlanPages(o) {
   const hd = [H('م', { w: '3%' }), H('اسم المعلم', { w: '13%' }), H('مادة التدريس', { w: '11%' }), H('الصف', { w: '7%' }), H('المجال', { w: '10%' }), H('اسم البرنامج المسند', { w: '17%' }), H('عدد الحصص', { w: '5%' }), H('النسبة من حصص المادة', { w: '7%' }), H(`الحد الأعلى (${a.cfg.pct}%)`, { w: '6%' }), H('موعد الحصص (حسب الجدول العام)')]; if (sign) hd.push(H('التوقيع', { w: '8%' }));
   const notice = `<table class="t" dir="rtl" border="1" cellspacing="0" cellpadding="4" width="100%" style="border:2px solid #c00000"><tr><td style="background:#fff8e1;text-align:center"><b style="color:#c00000">تنبيه مهم — التزام صارم</b><br><span style="font-size:9.5pt">يمكن للمدرسة استثمار ما لا يتجاوز ${a.cfg.pct}% من الحد الأعلى لعدد الحصص لكل مادة في برامج النشاط الطلابي، ويُحدَّد نوع النشاط وفق مجالات الأنشطة المعتمدة.<br><b>معادلة الحساب:</b> حصص النشاط = إجمالي حصص المادة (الحد الأعلى) × ${a.cfg.pct}%</span></td></tr></table>`;
   const intro = `<p class="txt" style="font-size:10pt">${esc(String(a.cfg.intro || ACT_INTRO).replace('{sem}', S.s.sem))}</p>`;
-  const per = fitPer(rows.length, 15), out = [];
-  for (let s = 0; s < Math.max(1, rows.length); s += per) {
+  const build = (s, e, last) => { const per = e - s;
     const T1 = [hd]; let lastG = 0;
     rows.slice(s, s + per).forEach((r, i) => { const c = actCalc(r);
       const row = [s + i + 1, { v: `<b>${esc(r.t)}</b>`, al: 'right' }, esc(r.sub), `${GSHORT[r.g]} ثانوي`, { v: esc(r.dom), fs: '9pt' }, { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog) }, { v: `<b>${+r.n || 0}</b>` }, { v: c.pct == null ? '—' : `${c.pct}% ${c.over ? '⚠' : '✓'}`, color: c.over ? '#c00000' : '', b: c.over }, c.max ? `${c.max} حصة` : '—', { v: esc(actSlotsTxt(r)) || '—', fs: '8.5pt' }];
       if (sign) row.push(''); lastG = r.g; T1.push(row); });
-    out.push(title(`جدول إسناد برامج النشاط للمعلمين بعد احتساب الـ ${a.cfg.pct}% من الحصص الدراسية`, actSemTxt() + (gs.length === 1 ? ' — ' + GNAME[gs[0]] : '')) + (s === 0 ? notice + sp(4) + intro : '') + T(T1, { cls: 'dense' }) + (s + per >= rows.length ? sp(10) + actSigs() : ''));
-  }
-  return out;
+    return (title(`جدول إسناد برامج النشاط للمعلمين بعد احتساب الـ ${a.cfg.pct}% من الحصص الدراسية`, actSemTxt() + (gs.length === 1 ? ' — ' + GNAME[gs[0]] : '')) + (s === 0 ? notice + sp(4) + intro : '') + T(T1, { cls: 'dense' }) + (last ? sp(10) + actSigs() : ''));
+  };
+  return chunkFit(rows.length, build, true);
 }
 function actGridPages(o) {
   const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, all = actGridTeachers('all').filter(t => t.rows.some(r => gs.includes(+r.g)));
@@ -7507,16 +7560,16 @@ FORMS.push(
 FD_IDS.push('actPlan', 'actLetter', 'actSum');
 function actTF(r, o) { return !(o && o.t) || personKey(r.t) === o.t; }
 function actExecPages(o) {
-  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => actTF(r, o) && gs.includes(+r.g)), per = fitPer(rows.length, 22), out = [];
+  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => actTF(r, o) && gs.includes(+r.g));
   const tot = rows.reduce((s, r) => s + (+r.n || 0), 0), done = rows.reduce((s, r) => s + Math.min(+r.ex || 0, +r.n || 0), 0);
-  for (let s = 0; s < Math.max(1, rows.length); s += per) {
+  const build = (s, e, last) => { const per = e - s;
     const T1 = [[H('م', { w: '4%' }), H('اسم المعلم', { w: '17%' }), H('الصف', { w: '8%' }), H('المجال', { w: '13%' }), H('البرنامج'), H('المسند', { w: '7%' }), H('المنفّذ', { w: '7%' }), H('النسبة', { w: '7%' }), H('الحالة', { w: '10%' }), H('ملاحظات', { w: '12%' })]];
     rows.slice(s, s + per).forEach((r, i) => { const n = +r.n || 0, e = Math.min(+r.ex || 0, n), pc = n ? Math.round(e / n * 100) : 0, stt = e >= n && n ? 'مكتمل' : e ? 'جارٍ' : 'لم يبدأ';
       T1.push([s + i + 1, { v: `<b>${esc(r.t)}</b>`, al: 'right' }, GSHORT[r.g], { v: esc(r.dom), fs: '9pt' }, { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog) }, n, `<b>${e}</b>`, `${pc}%`, { v: stt, b: true, color: stt === 'مكتمل' ? '#16794e' : stt === 'جارٍ' ? '#b45309' : '#c00000' }, '']); });
-    if (s + per >= rows.length) T1.push([{ v: '<b>الإجمالي</b>', cs: 5, bg: LCOL }, { v: `<b>${tot}</b>`, bg: LCOL }, { v: `<b>${done}</b>`, bg: LCOL }, { v: `<b>${tot ? Math.round(done / tot * 100) : 0}%</b>`, bg: LCOL }, { v: '', cs: 2, bg: LCOL }]);
-    out.push(title('تقرير تنفيذ برامج النشاط الطلابي', actSemTxt()) + T(T1, { cls: 'dense' }) + (s + per >= rows.length ? sp(10) + actSigs() : ''));
-  }
-  return out;
+    if (last) T1.push([{ v: '<b>الإجمالي</b>', cs: 5, bg: LCOL }, { v: `<b>${tot}</b>`, bg: LCOL }, { v: `<b>${done}</b>`, bg: LCOL }, { v: `<b>${tot ? Math.round(done / tot * 100) : 0}%</b>`, bg: LCOL }, { v: '', cs: 2, bg: LCOL }]);
+    return (title('تقرير تنفيذ برامج النشاط الطلابي', actSemTxt()) + T(T1, { cls: 'dense' }) + (s + per >= rows.length ? sp(10) + actSigs() : ''));
+  };
+  return chunkFit(rows.length, build, true);
 }
 function actTRepPages(o) {
   const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? a.rows.filter(r => r.id === o.rid) : a.rows.filter(r => actTF(r, o) && gs.includes(+r.g));

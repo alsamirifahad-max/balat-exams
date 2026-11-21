@@ -2074,7 +2074,7 @@ function specialPages(o) {
 }
 function receiptTable() {
   const tot = gradeTotals();
-  const rows = [[H('اسم المعلم'), H('المادة'), H('الصف'), H('عدد الأوراق'), H('الإجابة النموذجية بالداخل'), H('التوقيع', { w: '16%' })]];
+  const rows = [[H('اسم المعلم', { w: '31%' }), H('المادة', { w: '17%' }), H('الصف', { w: '10%' }), H('عدد الأوراق', { w: '9%' }), H('الإجابة النموذجية بالداخل', { w: '15%' }), H('التوقيع', { w: '18%' })]];
   G.forEach(g => { const l = S.st.filter(x => +x.g === g && x.t && !fxRm('receipt', x.t)); l.forEach((x, i) => { const r = [{ v: `<b>${esc(x.t)}</b>`, al: 'right' }, Gc(g, `<b>${esc(x.sub)}</b>`)]; if (i === 0) r.push(Gc(g, `<b>${GNAME[g].replace('الصف ', '')}</b>`, { rs: l.length }), Gc(g, `<b>${tot[g]}</b>`, { rs: l.length })); r.push('☐', ''); rows.push(r); }); });
   fxAdds('receipt').forEach(x => rows.push([{ v: `<b>${esc(x.n)}</b>`, al: 'right' }, esc(x.w || ''), '', '', '☐', '']));
   return T(rows, { cls: 'tall' });
@@ -2126,7 +2126,7 @@ function assignPages(o) {
     const letter =
     T([[{ v: `<b style="font-size:14pt">تكليف وضع أسئلة الاختبارات النهائية</b><br>للعام الدراسي ${esc(S.s.yearTxt)} ( الفصل الدراسي ${esc(S.s.sem)} )`, bg: HCOL, cs: 3 }], [L('الأخ المعلم', { w: '22%' }), { v: `<b style="font-size:13.5pt">${esc(tn) || '................................................'}</b>` }, L('وفقه الله', { w: '18%' })]]) + sp(6) +
     `<p class="txt">السلام عليكم ورحمة الله وبركاته</p><p class="txt">نظراً لقرب موعد الاختبارات النهائية للفصل الدراسي ${esc(S.s.sem)}، وبناءً على الصلاحيات الممنوحة لمدير المدرسة، وما تقتضيه مصلحة العمل، واستناداً إلى ما ورد في الدليل التنظيمي للاختبارات النهائية،</p>
-    <p class="txt">فقد تم تكليفكم بوضع أسئلة الاختبار الموضحة أدناه بالجدول ( ${esc(mode)} )${others.length ? ` بالمشاركة مع الأستاذ/ ${others.map(esc).join(' والأستاذ/ ')}` : ''} مع مراعاة شروط إعداد أسئلة الاختبارات ووضع نماذج الإجابة، وتسليمها لإدارة المدرسة في موعد أقصاه ${due ? `<b>${esc(due)}</b>` : 'يوم ................ الموافق &nbsp; / &nbsp; / &nbsp;&nbsp;&nbsp; هـ'}، والمطلوب: ( ${esc(parts)} ).</p><p class="txt">وتقبلوا تحياتنا ...</p>` +
+    <p class="txt">فقد تم تكليفكم بوضع أسئلة الاختبار الموضحة أدناه بالجدول ( ${esc(mode)} )${others.length ? ` بالمشاركة مع الأستاذ/ ${others.map(esc).join(' والأستاذ/ ')}` : ''} مع مراعاة شروط إعداد أسئلة الاختبارات ووضع نماذج الإجابة، وتسليمها لإدارة المدرسة في موعد أقصاه ${due ? `<b style="white-space:nowrap">${esc(due)}</b>` : '<span style="white-space:nowrap">يوم ..................</span> <span style="white-space:nowrap">الموافق&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;هـ</span>'}، والمطلوب: ( ${esc(parts)} ).</p><p class="txt">وتقبلوا تحياتنا ...</p>` +
     T([[H('المقرر'), H('الصف'), H('العدد المطلوب'), H('درجة الاختبار')], [Gc(x.g, `<b>${esc(x.sub)}</b>`), GNAME[x.g] ? GNAME[x.g].replace('الصف ', '') : '', `<b>${esc(stCount(x))}</b>`, `<b>${esc(mark)}</b>`]]) + sp(6) +
     T([[H('يتم تقسيم درجات الأسئلة وفق التالي :', { cs: 2 })], [v('mc'), 'اختيار من متعدد'], [v('mt'), 'مزاوجة'], [v('tf'), 'صواب وخطأ'], [v('ot'), 'أخرى: ' + (otn ? `<b>${esc(otn)}</b>` : '....................')]]) + sp(12) +
     sigs([['المعلم', tn], ['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]);
@@ -2226,7 +2226,7 @@ function obsInstrPages() {
   return pages;
 }
 function yearRow() { return T([[L('العام الدراسي'), { v: `<b>${esc(S.s.yearTxt)}</b>` }, L('الفصل الدراسي'), { v: `<b>${esc(S.s.sem)}</b>` }, L('الدور'), { v: `<b>${esc(S.s.round)}</b>` }]]); }
-const BLANKDATE = '&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; هـ';
+const BLANKDATE = '<span style="white-space:nowrap">&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;هـ</span>';
 function auth(roles) { return `<p class="lbl">المصادقة:</p>` + T(roles.map(r => [{ v: 'الاسم:', al: 'right', w: '38%', h: '30px' }, { v: 'الصفة: ' + r, al: 'right' }, { v: 'التوقيع:', al: 'right', w: '24%' }])); }
 function absencePage() {
   return title('محضر غياب طالب عن الاختبار') + yearRow() + sp(8) +
@@ -2522,7 +2522,62 @@ function applyFill(el, plan) {
   if (plan.gap) $$('.pbody > .sp, .pbody > p.lbl, .pbody > table.t, .pbody > ul.ins, .pbody > ol.ins, .pbody > .insbox', el).slice(1).forEach(e => { e.style.marginTop = ((parseFloat(getComputedStyle(e).marginTop) || 0) + plan.gap) + 'px'; });
   if (plan.sg) { const sg = $$('table.sg', el).pop(); if (sg) sg.style.marginTop = ((parseFloat(sg.style.marginTop) || 0) + Math.round(plan.sg)) + 'px'; }
 }
-function layoutPages(els) { els.forEach(el => { try { applyFill(el, planFill(el)); } catch (e) { } }); }
+/* تقسيم المحتوى على الصفحات بالقياس الفعلي (لا بالتقدير): كل صفحة تمتلئ قدر الإمكان دون أن تتجاوز الورقة */
+const IMGC = {};
+function imgRatio(src) { const i = IMGC[src] || (IMGC[src] = Object.assign(new Image(), { src })); return i.naturalWidth ? i.naturalHeight / i.naturalWidth : 0.13; }
+function bodyAvail(land) { const P = land ? PAPER.l : PAPER.p; return P.h - P.w * (imgRatio(HDR) + imgRatio(FTR)) - 26; }
+let FITM = null;
+function bodyH(html, land) {
+  const P = land ? PAPER.l : PAPER.p;
+  if (!FITM || !FITM.isConnected) { FITM = document.createElement('div'); FITM.className = 'measure'; document.body.appendChild(FITM); }
+  FITM.innerHTML = `<div class="page${land ? ' land' : ''}" style="width:${P.w}px;min-height:0;padding:0;zoom:1"><div class="pbody">${html}</div></div>`;
+  const h = FITM.firstElementChild.scrollHeight; FITM.innerHTML = ''; return h;
+}
+function bodyFits(html, land, k = 0.985) { return bodyH(html, land) <= bodyAvail(land) * k; }
+/* يقسم n عنصراً على صفحات: build(a, b, last) يبني صفحة للعناصر من a إلى b */
+function chunkFit(n, build, land) {
+  const out = []; if (!n) return [build(0, 0, true)];
+  let a = 0;
+  while (a < n) {
+    let lo = a + 1, hi = n, best = a + 1;
+    if (bodyFits(build(a, n, true), land)) best = n;
+    else { while (lo <= hi) { const m = (lo + hi) >> 1; if (bodyFits(build(a, m, m >= n), land)) { best = m; lo = m + 1; } else hi = m - 1; } }
+    /* لا تترك صفحة أخيرة بعنصر أو عنصرين: وازن آخر صفحتين */
+    if (best < n && n - best <= 2 && best - a > 4) best = Math.max(a + 1, best - (3 - (n - best)));
+    out.push(build(a, best, best >= n)); a = best;
+  }
+  return out;
+}
+/* يجمع أقساماً كاملة في صفحات بالقياس: قسم لا يُقسم بين صفحتين ما دام يتسع لصفحة */
+function packFit(parts, land, gap = '') {
+  const out = []; let cur = '';
+  parts.forEach(pg => { const nx = cur ? cur + gap + pg : pg; if (cur && !bodyFits(nx, land)) { out.push(cur); cur = pg; } else cur = nx; });
+  if (cur) out.push(cur); return out;
+}
+/* حجم خط متناسب مع الورقة: الصفحة القليلة المحتوى يُكبَّر خطها تدريجياً حتى تملأ الورقة بشكل مريح (بحدود معقولة)، ثم تُوزَّع المسافة الباقية */
+const TYPE_T = { fill: 0.9, maxK: 1.32, maxPt: 13.5 };
+function autoType(el) {
+  if (el.querySelector('.env') || el.dataset.nofill || el.dataset.typed) return;
+  const land = el.classList.contains('land'), P = land ? PAPER.l : PAPER.p;
+  const st = document.createElement('div'); st.className = 'measure'; document.body.appendChild(st);
+  const c = el.cloneNode(true); c.style.zoom = ''; c.style.width = P.w + 'px'; c.style.minHeight = '0'; c.style.padding = '0'; st.appendChild(c);
+  try {
+    const h0 = c.scrollHeight; if (h0 >= P.h * 0.86) return;
+    const body = c.querySelector('.pbody'); if (!body) return;
+    const els = [body, ...body.querySelectorAll('*')], base = els.map(e => parseFloat(getComputedStyle(e).fontSize) || 14);
+    const cnt = {}; const tw = document.createTreeWalker(body, NodeFilter.SHOW_TEXT); let n, tot = 0; while ((n = tw.nextNode())) { const t = n.nodeValue.trim().length; if (!t) continue; const f = Math.round(parseFloat(getComputedStyle(n.parentNode).fontSize) * 0.75 * 2) / 2; cnt[f] = (cnt[f] || 0) + t; tot += t; }
+    let acc = 0, med = 11; Object.keys(cnt).map(Number).sort((x, y) => x - y).some(k => { acc += cnt[k]; if (acc >= tot / 2) { med = k; return true; } });
+    const cap = Math.min(TYPE_T.maxK, TYPE_T.maxPt / med); if (cap <= 1.02) return;
+    const set = k => els.forEach((e, i) => { e.style.fontSize = (base[i] * k).toFixed(2) + 'px'; });
+    let lo = 1, hi = cap;
+    set(hi); if (c.scrollHeight <= P.h * TYPE_T.fill) lo = hi; else for (let it = 0; it < 7; it++) { const m = (lo + hi) / 2; set(m); if (c.scrollHeight <= P.h * TYPE_T.fill) lo = m; else hi = m; }
+    if (lo < 1.03) return;
+    const real = [el.querySelector('.pbody'), ...el.querySelector('.pbody').querySelectorAll('*')];
+    if (real.length !== els.length) return;
+    real.forEach((e, i) => { e.style.fontSize = (base[i] * lo).toFixed(2) + 'px'; }); el.dataset.typed = lo.toFixed(2);
+  } finally { st.remove(); }
+}
+function layoutPages(els) { els.forEach(el => { try { autoType(el); } catch (e) { } try { applyFill(el, planFill(el)); } catch (e) { } }); }
 function waitImgs(root) { return Promise.all($$('img', root).map(i => i.complete ? 1 : new Promise(r => { i.onload = r; i.onerror = r; }))); }
 /* سفاري (آيفون وآيباد وماك) يضيف رأساً وتذييلاً وهوامش للطباعة فيتجاهل ضبط الصفحة، فيُطبع النموذج فيها من PDF مقاسه A4 بالضبط: صفحة لكل صفحة */
 function printViaPdf() { const u = navigator.userAgent; return /iPad|iPhone|iPod/.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (/Safari/.test(u) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(u)); }

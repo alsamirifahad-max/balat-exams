@@ -540,15 +540,14 @@ function actPlanPages(o) {
   const hd = [H('م', { w: '3%' }), H('اسم المعلم', { w: '13%' }), H('مادة التدريس', { w: '11%' }), H('الصف', { w: '7%' }), H('المجال', { w: '10%' }), H('اسم البرنامج المسند', { w: '17%' }), H('عدد الحصص', { w: '5%' }), H('النسبة من حصص المادة', { w: '7%' }), H(`الحد الأعلى (${a.cfg.pct}%)`, { w: '6%' }), H('موعد الحصص (حسب الجدول العام)')]; if (sign) hd.push(H('التوقيع', { w: '8%' }));
   const notice = `<table class="t" dir="rtl" border="1" cellspacing="0" cellpadding="4" width="100%" style="border:2px solid #c00000"><tr><td style="background:#fff8e1;text-align:center"><b style="color:#c00000">تنبيه مهم — التزام صارم</b><br><span style="font-size:9.5pt">يمكن للمدرسة استثمار ما لا يتجاوز ${a.cfg.pct}% من الحد الأعلى لعدد الحصص لكل مادة في برامج النشاط الطلابي، ويُحدَّد نوع النشاط وفق مجالات الأنشطة المعتمدة.<br><b>معادلة الحساب:</b> حصص النشاط = إجمالي حصص المادة (الحد الأعلى) × ${a.cfg.pct}%</span></td></tr></table>`;
   const intro = `<p class="txt" style="font-size:10pt">${esc(String(a.cfg.intro || ACT_INTRO).replace('{sem}', S.s.sem))}</p>`;
-  const per = fitPer(rows.length, 15), out = [];
-  for (let s = 0; s < Math.max(1, rows.length); s += per) {
+  const build = (s, e, last) => { const per = e - s;
     const T1 = [hd]; let lastG = 0;
     rows.slice(s, s + per).forEach((r, i) => { const c = actCalc(r);
       const row = [s + i + 1, { v: `<b>${esc(r.t)}</b>`, al: 'right' }, esc(r.sub), `${GSHORT[r.g]} ثانوي`, { v: esc(r.dom), fs: '9pt' }, { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog) }, { v: `<b>${+r.n || 0}</b>` }, { v: c.pct == null ? '—' : `${c.pct}% ${c.over ? '⚠' : '✓'}`, color: c.over ? '#c00000' : '', b: c.over }, c.max ? `${c.max} حصة` : '—', { v: esc(actSlotsTxt(r)) || '—', fs: '8.5pt' }];
       if (sign) row.push(''); lastG = r.g; T1.push(row); });
-    out.push(title(`جدول إسناد برامج النشاط للمعلمين بعد احتساب الـ ${a.cfg.pct}% من الحصص الدراسية`, actSemTxt() + (gs.length === 1 ? ' — ' + GNAME[gs[0]] : '')) + (s === 0 ? notice + sp(4) + intro : '') + T(T1, { cls: 'dense' }) + (s + per >= rows.length ? sp(10) + actSigs() : ''));
-  }
-  return out;
+    return (title(`جدول إسناد برامج النشاط للمعلمين بعد احتساب الـ ${a.cfg.pct}% من الحصص الدراسية`, actSemTxt() + (gs.length === 1 ? ' — ' + GNAME[gs[0]] : '')) + (s === 0 ? notice + sp(4) + intro : '') + T(T1, { cls: 'dense' }) + (last ? sp(10) + actSigs() : ''));
+  };
+  return chunkFit(rows.length, build, true);
 }
 function actGridPages(o) {
   const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, all = actGridTeachers('all').filter(t => t.rows.some(r => gs.includes(+r.g)));
@@ -588,16 +587,16 @@ FORMS.push(
 FD_IDS.push('actPlan', 'actLetter', 'actSum');
 function actTF(r, o) { return !(o && o.t) || personKey(r.t) === o.t; }
 function actExecPages(o) {
-  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => actTF(r, o) && gs.includes(+r.g)), per = fitPer(rows.length, 22), out = [];
+  const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, rows = a.rows.filter(r => actTF(r, o) && gs.includes(+r.g));
   const tot = rows.reduce((s, r) => s + (+r.n || 0), 0), done = rows.reduce((s, r) => s + Math.min(+r.ex || 0, +r.n || 0), 0);
-  for (let s = 0; s < Math.max(1, rows.length); s += per) {
+  const build = (s, e, last) => { const per = e - s;
     const T1 = [[H('م', { w: '4%' }), H('اسم المعلم', { w: '17%' }), H('الصف', { w: '8%' }), H('المجال', { w: '13%' }), H('البرنامج'), H('المسند', { w: '7%' }), H('المنفّذ', { w: '7%' }), H('النسبة', { w: '7%' }), H('الحالة', { w: '10%' }), H('ملاحظات', { w: '12%' })]];
     rows.slice(s, s + per).forEach((r, i) => { const n = +r.n || 0, e = Math.min(+r.ex || 0, n), pc = n ? Math.round(e / n * 100) : 0, stt = e >= n && n ? 'مكتمل' : e ? 'جارٍ' : 'لم يبدأ';
       T1.push([s + i + 1, { v: `<b>${esc(r.t)}</b>`, al: 'right' }, GSHORT[r.g], { v: esc(r.dom), fs: '9pt' }, { v: `<b>${esc(r.prog)}</b>`, bg: actProgColor(r.prog) }, n, `<b>${e}</b>`, `${pc}%`, { v: stt, b: true, color: stt === 'مكتمل' ? '#16794e' : stt === 'جارٍ' ? '#b45309' : '#c00000' }, '']); });
-    if (s + per >= rows.length) T1.push([{ v: '<b>الإجمالي</b>', cs: 5, bg: LCOL }, { v: `<b>${tot}</b>`, bg: LCOL }, { v: `<b>${done}</b>`, bg: LCOL }, { v: `<b>${tot ? Math.round(done / tot * 100) : 0}%</b>`, bg: LCOL }, { v: '', cs: 2, bg: LCOL }]);
-    out.push(title('تقرير تنفيذ برامج النشاط الطلابي', actSemTxt()) + T(T1, { cls: 'dense' }) + (s + per >= rows.length ? sp(10) + actSigs() : ''));
-  }
-  return out;
+    if (last) T1.push([{ v: '<b>الإجمالي</b>', cs: 5, bg: LCOL }, { v: `<b>${tot}</b>`, bg: LCOL }, { v: `<b>${done}</b>`, bg: LCOL }, { v: `<b>${tot ? Math.round(done / tot * 100) : 0}%</b>`, bg: LCOL }, { v: '', cs: 2, bg: LCOL }]);
+    return (title('تقرير تنفيذ برامج النشاط الطلابي', actSemTxt()) + T(T1, { cls: 'dense' }) + (s + per >= rows.length ? sp(10) + actSigs() : ''));
+  };
+  return chunkFit(rows.length, build, true);
 }
 function actTRepPages(o) {
   const a = A(), gs = o && o.g && o.g !== 'all' ? gSel(o) : G, list = o && o.rid ? a.rows.filter(r => r.id === o.rid) : a.rows.filter(r => actTF(r, o) && gs.includes(+r.g));

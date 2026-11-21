@@ -111,17 +111,16 @@ function planProcPages(o) {
     if (p.rows) body = T([[H('م', { w: '5%' }), H('الحالة', { w: '33%' }), H('الإجراءات')], ...p.rows.map(([c, st], i) => [i + 1, { v: `<b>${esc(c)}</b>`, al: 'right' }, { v: `<ol class="ins small" style="margin:0">${st.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`, al: 'right' }])]);
     else body = `<ol class="ins">${procOf(p).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
     out.push(title(esc(p.t), yearLine()) + body); });
-  if (list.length > 1) { const merged = []; let cur = ''; out.forEach(pg => { if ((cur + pg).length > 5200 && cur) { merged.push(cur); cur = ''; } cur += (cur ? sp(14) : '') + pg; }); if (cur) merged.push(cur); return merged; }
+  if (list.length > 1) return packFit(out, false, sp(14));
   return out;
 }
 function planEvalPages(o) {
   const ev = (S.s.planX && S.s.planX.ev) || {}, blank = o && o.blank, pages = [];
-  PLAN_EVAL.forEach(s => { const per = fitPer(s.i.length, 26);
-    for (let a = 0; a < s.i.length; a += per) {
-      const rows = [[H('م', { w: '5%' }), H('العناصر'), H('نعم', { w: '7%' }), H('لا', { w: '7%' }), H('السبب', { w: '22%' })]];
-      s.i.slice(a, a + per).forEach((x, j) => { const v = blank ? {} : (ev[s.k + (a + j)] || {}); rows.push([a + j + 1, { v: esc(x), al: 'right', fs: '9.5pt' }, { v: v.v === 'y' ? '✓' : '', b: true, color: '#16794e' }, { v: v.v === 'n' ? '✓' : '', b: true, color: '#c00000' }, { v: esc(v.r || ''), fs: '9pt' }]); });
-      pages.push(title('التقويم الذاتي لعمل مدير المدرسة في الاختبارات', esc(s.t) + (a ? ' (تابع)' : '') + ' — ' + yearLine()) + T(rows, { cls: 'dense' }) + (s.k === 'post' && a + per >= s.i.length ? sp(12) + sigs([['مدير المدرسة', S.s.principal]]) : ''));
-    } });
+  PLAN_EVAL.forEach(s => {
+    const build = (a, b, last) => { const rows = [[H('م', { w: '5%' }), H('العناصر'), H('نعم', { w: '7%' }), H('لا', { w: '7%' }), H('السبب', { w: '22%' })]];
+      s.i.slice(a, b).forEach((x, j) => { const v = blank ? {} : (ev[s.k + (a + j)] || {}); rows.push([a + j + 1, { v: esc(x), al: 'right', fs: '9.5pt' }, { v: v.v === 'y' ? '✓' : '', b: true, color: '#16794e' }, { v: v.v === 'n' ? '✓' : '', b: true, color: '#c00000' }, { v: esc(v.r || ''), fs: '9pt' }]); });
+      return title('التقويم الذاتي لعمل مدير المدرسة في الاختبارات', esc(s.t) + (a ? ' (تابع)' : '') + ' — ' + yearLine()) + T(rows, { cls: 'dense' }) + (s.k === 'post' && last ? sp(12) + sigs([['مدير المدرسة', S.s.principal]]) : ''); };
+    pages.push(...chunkFit(s.i.length, build, false)); });
   return pages;
 }
 FORMS.splice(FORMS.findIndex(f => f.id === 'planOrg') + 1, 0,
