@@ -1115,7 +1115,7 @@ function render() {
   m.style.setProperty('--sc', p.c); m.dataset.page = p.k;
   const roNote = exReadOnly() && !['assign', 'backup', 'settings', 'today', 'forms', 'activity', 'road'].includes(p.k) && !(p.k === 'files' && ROLE === 'agent') ? `<div class="pend ro"><div class="pdt"><b>هذا الجهاز يعمل على «${esc(setMeta('ta-agent').n)}»</b><span>بيانات الاختبارات هنا للاطلاع فقط ولا تُحفظ على السحابة، حتى لا يتداخل عملك مع عمل الاختبارات.</span></div><div class="pda"><button class="btn sm" data-tab="assign" type="button">العودة للإسناد</button></div></div>` : '';
   const focusA = typeof ROLE !== 'undefined' && ROLE === 'agent' && (p.k === 'assign' || p.k === 'daily');
-  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + (p.k === 'dash' ? '' : p.k === 'activity' ? `<h1 class="acttl">⭐ النشاط الطلابي <small>الفصل الدراسي ${esc(S.s.sem)} — ${esc(S.s.yearTxt)}</small></h1>` : stageHero(p))) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ dash: vDash, activity: vActivity, road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
+  m.innerHTML = '<div id="pendBox"></div>' + (focusA ? '' : roNote + (typeof termBanner === 'function' ? termBanner(p.k) : '') + (p.k === 'dash' || p.k === 'home' ? '' : p.k === 'activity' ? `<h1 class="acttl">⭐ النشاط الطلابي <small>الفصل الدراسي ${esc(S.s.sem)} — ${esc(S.s.yearTxt)}</small></h1>` : stageHero(p))) + (typeof morningCard === 'function' && ['home', 'daily', 'today'].includes(p.k) && !(p.k === 'daily' && DAILY_DATE && DAILY_DATE !== todayIso()) ? (() => { try { return morningCard(); } catch (e) { return ''; } })() : '') + `<div class="sbody">${focusA ? '' : tasksHtml(p.k)}${({ dash: vDash, activity: vActivity, road: vRoad, plan: vPlan, daily: vDaily, today: vToday, home: vHome, settings: vSettings, schedule: vSchedule, committees: vCommittees, files: vFiles, staff: vStaff, assign: vAssign, forms: vForms, backup: vBackup })[TAB]()}</div>` + stageNext(p);
   const cards = $$('.sbody > section.card > h2', m).filter(h => !/^(حذف|إعادة الضبط)/.test(h.textContent.trim()));
   if (SUBP.includes(TAB) && cards.length >= 2) subSteps(m, cards);
   else if (cards.length >= 3 && TAB !== 'home') { const j = document.createElement('nav'); j.className = 'jump'; j.setAttribute('aria-label', 'أقسام الصفحة');
@@ -1321,10 +1321,10 @@ function vSchedule() {
         <button class="btn sm ghost" data-act="moveDay" data-i="${di}" data-d="1" type="button" title="تحريك لأسفل">↓</button>
         <button class="btn sm danger" data-act="delDay" data-i="${di}" type="button">حذف اليوم</button>
       </div>
-      <div class="tw"><table class="et"><tr><th>الفترة</th><th>الوقت</th>${G.map(g => `<th style="background:${GCOL[g]}">${GNAME[g]}</th>`).join('')}<th></th></tr>
+      <div class="tw"><table class="et pertab"><tr><th>الفترة</th><th>الوقت</th>${G.map(g => `<th style="background:${GCOL[g]}">${GNAME[g]}</th>`).join('')}<th></th></tr>
       ${d.p.map((p, pi) => `<tr><td>${inp(`days.${di}.p.${pi}.n`, p.n, { style: 'width:6rem' })}</td><td>${inp(`days.${di}.p.${pi}.t`, p.t, { style: 'width:7rem' })}</td>
-        ${G.map(g => `<td>${pickSel(`days.${di}.p.${pi}.s.${g}`, p.s[g] || '', subOpts(g), { kind: 's', ph: '— بدون اختبار —', other: 'كتابة مادة أخرى…' })}</td>`).join('')}
-        <td><button class="x" data-act="delPer" data-i="${di}" data-j="${pi}" type="button" title="حذف الفترة">×</button></td></tr>`).join('')}
+        ${G.map(g => `<td class="pg" data-l="${GSHORT[g]}" style="--gc:${GCOL[g]}">${pickSel(`days.${di}.p.${pi}.s.${g}`, p.s[g] || '', subOpts(g), { kind: 's', ph: '— بدون اختبار —', other: 'كتابة مادة أخرى…' })}</td>`).join('')}
+        <td class="pdel"><button class="x" data-act="delPer" data-i="${di}" data-j="${pi}" type="button" title="حذف الفترة">×</button></td></tr>`).join('')}
       </table></div>
       <button class="btn sm" data-act="addPer" data-i="${di}" type="button">إضافة فترة</button>
     </section>`;

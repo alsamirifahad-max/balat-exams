@@ -326,7 +326,7 @@ function stageAlerts(k) { return alerts().filter(a => (TAB_ALIAS_AL[a.tab] || a.
 function tasksHtml(k) {
   const ts = stageTasks(k), al = stageAlerts(k); if (!ts.length && !al.length) return '';
   const done = ts.filter(x => x.ok).length;
-  return `<section class="tasks" aria-label="مهام المرحلة">${ts.length ? `<div class="tkh"><b>مهام هذه المرحلة</b><span class="tkp"><i style="width:${Math.round(done / ts.length * 100)}%"></i></span><small>${done} من ${ts.length}${done === ts.length ? ' — مكتملة ✓' : ''}</small></div>
+  return `<section class="tasks${ts.length && done === ts.length && !al.length ? ' alldone' : ''}" aria-label="مهام المرحلة">${ts.length ? `<div class="tkh"><b>مهام هذه المرحلة</b><span class="tkp"><i style="width:${Math.round(done / ts.length * 100)}%"></i></span><small>${done} من ${ts.length}${done === ts.length ? ' — مكتملة ✓' : ''}</small></div>
     <div class="tkl">${ts.map(x => `<button type="button" class="tk${x.ok ? ' ok' : ''}" data-tgo="${esc(x.go)}"><i>${x.ok ? '✓' : ''}</i>${esc(x.t)}</button>`).join('')}</div>` : ''}
     ${al.length ? `<div class="tal">${al.map(a => `<div class="al ${a.lvl}">${a.lvl === 'bad' ? '⛔' : '⚠️'} ${esc(a.t)}</div>`).join('')}</div>` : ''}</section>`;
 }
