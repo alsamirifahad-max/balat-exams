@@ -97,6 +97,13 @@ select.in{text-overflow:ellipsis}
 .strows .stdet summary{font-size:.82rem;color:var(--muted);cursor:pointer;padding:4px 2px}
 .stdef{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 0 14px}
 .stdh{font-weight:800;font-size:.92rem;margin-bottom:6px}.stdh small{font-weight:400;color:var(--muted);font-size:.75rem;margin-inline-start:6px}
+.stf .w4{grid-column:1/-1}
+.stnum{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.stnh{font-weight:800;font-size:.85rem}
+.stnum label{display:grid;grid-template-columns:6.5rem 1rem minmax(0,8rem);align-items:center;gap:6px}
+.stnum label span{background:var(--gc);color:#1d2a2f;font-weight:700;font-size:.82rem;border-radius:8px;padding:6px 8px;text-align:center}
+.stnum label i{font-style:normal;color:var(--muted);text-align:center}.stnum .in{padding:6px 8px;text-align:center;font-weight:700}
+.stnum small{font-size:.72rem}
 .stdue{font-size:.8rem;color:var(--accent);font-weight:700;margin-top:6px}
 .stf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
 .stf label{display:flex;flex-direction:column;gap:3px;min-width:0}.stf label>span{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3517,23 +3524,28 @@ function specialPages(o) {
 function receiptTable() {
   const tot = gradeTotals();
   const rows = [[H('اسم المعلم', { w: '31%' }), H('المادة', { w: '17%' }), H('الصف', { w: '10%' }), H('عدد الأوراق', { w: '9%' }), H('الإجابة النموذجية بالداخل', { w: '15%' }), H('التوقيع', { w: '18%' })]];
-  G.forEach(g => { const l = S.st.filter(x => +x.g === g && x.t && !fxRm('receipt', x.t)); l.forEach((x, i) => { const r = [{ v: `<b>${esc(x.t)}</b>`, al: 'right' }, Gc(g, `<b>${esc(x.sub)}</b>`)]; if (i === 0) r.push(Gc(g, `<b>${GNAME[g].replace('الصف ', '')}</b>`, { rs: l.length }), Gc(g, `<b>${tot[g]}</b>`, { rs: l.length })); r.push('☐', ''); rows.push(r); }); });
+  G.forEach(g => { const l = S.st.filter(x => +x.g === g && x.t && !fxRm('receipt', x.t)); l.forEach((x, i) => { const r = [{ v: `<b>${esc(x.t)}</b>`, al: 'right' }, Gc(g, `<b>${esc(x.sub)}</b>`)]; if (i === 0) r.push(Gc(g, `<b>${GNAME[g].replace('الصف ', '')}</b>`, { rs: l.length }), Gc(g, `<b>${stPapers(g)}</b>`, { rs: l.length })); r.push('☐', ''); rows.push(r); }); });
   fxAdds('receipt').forEach(x => rows.push([{ v: `<b>${esc(x.n)}</b>`, al: 'right' }, esc(x.w || ''), '', '', '☐', '']));
   return T(rows, { cls: 'tall' });
 }
 const ST_MODES = ['ورقياً', 'إلكترونياً', 'ورقياً وإلكترونياً'];
 const ST_PARTS = 'الدور الأول + الدور الثاني + نموذج الإجابة';
 function stDue(x) { const iso = x.due || S.s.deadlineIso || ''; return iso ? hDate(iso) : (S.s.deadline || ''); }
-function stCount(x) { const t = gradeTotals(); return x.n || t[x.g] || ''; }
+/* عدد الأوراق المطلوب لكل صف: يُحدَّد مرة واحدة في الإعدادات العامة (الافتراضي عدد طلاب الصف) */
+function stPapers(g) { const v = (S.s.stN || {})[g]; return +v > 0 ? +v : (gradeTotals()[g] || ''); }
+function stCount(x) { return stPapers(x.g); }
 function stDefaultsBar() {
   const d = S.s.stDef || {};
-  return `<div class="stdef"><div class="stdh">الإعدادات العامة <small>تنطبق على كل المواد ما لم تغيّرها في المادة نفسها</small></div><div class="stf">
+  return `<div class="stdef"><div class="stdh">الإعدادات العامة <small>تنطبق على كل المواد ما لم تغيّرها في المادة نفسها</small></div>
+  <div class="stf"><label class="w4"><span>آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}"></label></div>
+  ${S.s.deadline ? `<div class="stdue">⏳ ${esc(S.s.deadline)}</div>` : ''}
+  <div class="stnum"><div class="stnh">عدد الأوراق المطلوب</div>${G.map(g => `<label style="--gc:${GCOL[g]}"><span>${GNAME[g].replace('الصف ', '')}</span><i>/</i>${inp('s.stN.' + g, (S.s.stN || {})[g] || '', { num: 1, type: 'number', ph: String(gradeTotals()[g] || '') })}</label>`).join('')}<small class="mut">تُكتب في خطابات التكليف وبيان الاستلام — الخانة الفارغة تعني عدد طلاب الصف</small></div>
+  <div class="stf">
     <label><span>الدرجة</span>${inp('s.mark', S.s.mark, { num: 1, type: 'number' })}</label>
-    <label class="w2"><span>آخر موعد للتسليم</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}"></label>
     <label><span>الطريقة</span><select class="in" data-k="s.stDef.mode">${ST_MODES.map(m => `<option${(d.mode || 'ورقياً') === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
-    <label><span>اسم السؤال الآخر</span>${inp('s.stDef.otn', d.otn || '', { ph: 'مثل: مقالي' })}</label>
-    <label class="w2"><span>المطلوب تسليمه</span>${inp('s.stDef.parts', d.parts || '', { ph: ST_PARTS })}</label>
-  </div>${S.s.deadline ? `<div class="stdue">⏳ ${esc(S.s.deadline)}</div>` : ''}</div>`;
+    <label class="w2"><span>اسم السؤال الآخر</span>${inp('s.stDef.otn', d.otn || '', { ph: 'مثل: مقالي' })}</label>
+    <label class="w4"><span>المطلوب تسليمه</span>${inp('s.stDef.parts', d.parts || '', { ph: ST_PARTS })}</label>
+  </div></div>`;
 }
 function stRow(x, i) {
   const tos = teachersOfSubject(x.sub, x.g), co = x.co || [], d = S.s.stDef || {};
@@ -3546,7 +3558,6 @@ function stRow(x, i) {
   <div class="stc-t"><span class="stc-l">المكلف</span>${pickSel(`st.${i}.t`, x.t, tchOpts(tos, 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}</div>
   <div class="stc-co">${co.map((n, j) => `<span class="pill">${esc(n)}<button type="button" data-act="stCoDel" data-i="${i}" data-j="${j}" title="إزالة">×</button></span>`).join('')}${addSel}</div>
   <div class="stf">
-    <label><span>العدد</span>${inp(`st.${i}.n`, x.n || '', { num: 1, type: 'number', ph: String(gradeTotals()[x.g] || '') })}</label>
     <label><span>الدرجة</span>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark) })}</label>
     <label class="w2"><span>موعد التسليم</span><input class="in${due ? '' : ' ph'}" type="date" data-k="st.${i}.due" value="${esc(due)}"></label>
   </div>
@@ -3800,8 +3811,8 @@ function fxPanel(id) {
 function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
-  const dl = id === 'assign' ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
-  const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
+  const dl = false ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
+  const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
   return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}${fxPanel(id)}</div>`;
 }
 let PV = null; var QOPEN = {}, PVCOLS = false;
@@ -6683,7 +6694,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795290054';
+var BUILD_ID = '1795291481';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
