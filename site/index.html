@@ -232,6 +232,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--accent);margin:4px 0}
 .pvmodal{position:fixed;inset:0;z-index:65;background:#2b3a3f;display:flex;flex-direction:column}
 .pvbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--navy);color:#fff;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(10px + env(safe-area-inset-top,0px))}
 .pvt{display:flex;flex-direction:column;flex:1;min-width:12rem}.pvt span{font-size:.8rem;color:#b9d6d8}
+.pvcols{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;background:#0b3a46;border-top:1px solid rgba(255,255,255,.15)}.pvcols .pvcl{color:#d7e6ea;font-size:.8rem;width:100%}.pvcols .chip{font-size:.78rem;padding:3px 10px}.pvcols .chip.off{opacity:.6;text-decoration:line-through}
 .pvz,.pva{display:flex;gap:6px;flex-wrap:wrap}
 .pvz .chip{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}.pvz .chip.on{background:#fff;color:var(--navy)}
 .pvbar .btn.ghost{color:#fff;border-color:rgba(255,255,255,.35)}
@@ -331,6 +332,10 @@ body.noscroll{overflow:hidden}
 .page .note{font-size:9.5pt;margin:4px 0}
 .page ul.ins,.page ol.ins{font-size:10.5pt;margin:2px 0;padding-inline-start:22px;font-weight:600;line-height:1.6}
 .page ul.ins li::marker,.page ol.ins li::marker{color:#0f5a6b;font-weight:800}
+.page table.t td[style*="d9e2f3"]{padding-top:5px;padding-bottom:5px}
+.page ol.nd,.page ul.nd{list-style:none;padding-inline-start:0}
+.page ol.nd>li,.page ul.nd>li{position:relative;padding-right:2.1em}
+.page .lnum{position:absolute;right:0;top:0;width:1.7em;text-align:center;font-weight:800;color:#0f5a6b}
 .page ol.ins.small,.page ul.ins.small{font-weight:500;font-size:10pt;line-height:1.6}
 .page .insbox{border:1px solid #a9bfcc;border-radius:8px;overflow:hidden;margin:4px 0;background:#fbfdfe}
 .page .insbox .ih{margin:0;background:#0f4c5c;color:#fff;font-weight:800;font-size:11pt;padding:4px 12px}
@@ -1266,8 +1271,9 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 <div class="pvmodal" id="pvModal" hidden role="dialog" aria-label="معاينة قبل الطباعة">
   <div class="pvbar">
     <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div><button class="pvx" data-act="pvClose" type="button" aria-label="إغلاق">✕</button>
-    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
+    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvCols" type="button">☰ الخانات</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
   </div>
+  <div class="pvcols" id="pvCols" hidden></div>
   <div class="pvbody" id="pvBody"></div>
 </div>
 <div class="palmodal" id="palModal" hidden><div class="palbox" role="dialog" aria-label="بحث سريع"><input class="in palin" id="palIn" type="search" placeholder="اكتب: كروكي، تكليف، غياب، اسم معلم أو طالب…" autocomplete="off"><ul class="pallist" id="palList"></ul><div class="palf">↑ ↓ للتنقل · Enter للفتح · Esc للإغلاق</div></div></div>
@@ -3559,14 +3565,13 @@ function taSheetPages(o) {
 function packWeighted(list, cap, wf) { const pages = []; let cur = [], u = 0; list.forEach(x => { const w = wf(x); if (cur.length && u + w > cap) { pages.push(cur); cur = []; u = 0; } cur.push(x); u += w; }); if (cur.length) pages.push(cur); return pages.length ? pages : [[]]; }
 function stListPages(o = {}) {
   const D = densOf(), op = S.s.taPrint || {}, out = [];
-  const list = S.st.filter(x => gOk(o, x.g)).sort((a, b) => a.g - b.g); let k = 0;
-  packWeighted(list, D.per, x => Math.max(1, Math.ceil(teachersOfSubject(x.sub, x.g).join('، ').length / 44))).forEach(part => {
-    const rows = [[H('م', { w: '4%' }), H('المادة', { w: '17%' }), H('الصف', { w: '7%' }), H('المعلم المكلف بوضع الأسئلة', { w: '22%' }), H('معلمو المادة في الإسناد'), H('الدرجة', { w: '6%' }), ...(op.sign !== false ? [H('التوقيع', { w: '12%' })] : [])]];
-    part.forEach((x, i) => rows.push([k + i + 1, Gc(x.g, `<b>${esc(x.sub)}</b>`), Gc(x.g, GSHORT[x.g]), { v: `<b>${esc(x.t)}</b>`, al: 'right' }, { v: esc(teachersOfSubject(x.sub, x.g).join('، ')), al: 'right', fs: '8.5pt' }, esc(x.mark || S.s.mark), ...(op.sign !== false ? [''] : [])]));
-    k += part.length;
-    out.push(title('معلمو المواد المختبرة (واضعو الأسئلة)', yearLine()) + T(rows, { cls: D.cls }) + sp(8) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]));
-  });
-  return out;
+  const list = S.st.filter(x => gOk(o, x.g) && (x.sub || x.t)).sort((a, b) => a.g - b.g);
+  const build = (a, b, last) => {
+    const rows = [[H('م', { w: '5%' }), H('المادة', { w: '22%' }), H('الصف', { w: '9%' }), H('المعلم المكلف بوضع الأسئلة'), H('الدرجة', { w: '9%' }), ...(op.sign !== false ? [H('التوقيع', { w: '17%' })] : [])]];
+    list.slice(a, b).forEach((x, i) => rows.push([a + i + 1, Gc(x.g, `<b>${esc(x.sub)}</b>`), Gc(x.g, GSHORT[x.g]), { v: `<b>${esc([x.t, ...(x.co || [])].filter(Boolean).join('، '))}</b>`, al: 'right' }, esc(x.mark || S.s.mark), ...(op.sign !== false ? [''] : [])]));
+    return title('معلمو المواد المختبرة (واضعو الأسئلة)', yearLine()) + T(rows, { cls: D.cls }) + (last ? sp(8) + sigs([['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]) : '');
+  };
+  return chunkFit(list.length, build, false);
 }
 function tListPages() {
   const t = arSort(fxList('tList', S.teachers.filter(Boolean))), D = densOf(), pg = Math.max(1, Math.ceil(t.length / (D.per * 2))), half = Math.max(1, Math.ceil(t.length / (pg * 2))), out = [];
@@ -3741,11 +3746,37 @@ function qbar(id, label, extra = '', opts) {
   const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
   return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}${fxPanel(id)}</div>`;
 }
-let PV = null; var QOPEN = {};
-function openPreview(groups, name) {
+let PV = null; var QOPEN = {}, PVCOLS = false;
+/* اختيار الخانات (الأعمدة) قبل الطباعة: تُخفى الأعمدة المختارة من كل جداول النموذج، ويُحفظ الاختيار لكل نموذج */
+function colKey(name) { return String(name || '').replace(/ - [^-]*$/, '').trim(); }
+function colsHidden(name) { return ((S.s.colsHide || {})[colKey(name)] || []); }
+function isHeadCell(c) { return c.tagName === 'TH' || /background:\s*#d9e2f3/i.test(c.getAttribute('style') || ''); }
+function tGrid(t) { const g = []; Array.from(t.rows).forEach((tr, r) => { g[r] = g[r] || []; let c = 0; Array.from(tr.cells).forEach(td => { while (g[r][c]) c++; const cs = td.colSpan || 1, rs = td.rowSpan || 1; for (let i = 0; i < rs; i++) for (let j = 0; j < cs; j++) { g[r + i] = g[r + i] || []; g[r + i][c + j] = td; } c += cs; }); }); return g; }
+function headRows(t) { const out = []; for (const tr of Array.from(t.rows)) { if (tr.cells.length && Array.from(tr.cells).every(isHeadCell)) out.push(tr); else break; } return out; }
+function colsOf(groups) { const out = [], tmp = document.createElement('div');
+  groups.slice(0, 4).forEach(g => g.pages.slice(0, 2).forEach(pg => { tmp.innerHTML = pg; $$('table.t', tmp).forEach(t => headRows(t).forEach(tr => Array.from(tr.cells).forEach(c => { const x = c.textContent.replace(/\s+/g, ' ').trim(); if ((c.colSpan || 1) === 1 && x && x.length <= 40 && !out.includes(x)) out.push(x); }))); }));
+  return out; }
+function dropCols(html, hide) {
+  if (!hide.length) return html; const tmp = document.createElement('div'); tmp.innerHTML = html;
+  $$('table.t', tmp).forEach(t => { const hr = headRows(t); if (!hr.length) return; const g = tGrid(t), rows = Array.from(t.rows), cols = new Set();
+    hr.forEach(tr => { const r = rows.indexOf(tr); (g[r] || []).forEach((c, ci) => { if (c && (c.colSpan || 1) === 1 && hide.includes(c.textContent.replace(/\s+/g, ' ').trim())) cols.add(ci); }); });
+    const ncol = Math.max(...g.map(r => r.length)); if (!cols.size || cols.size >= ncol) return;
+    [...cols].sort((x, y) => y - x).forEach(ci => { const seen = new Set(); g.forEach(r => { const c = r[ci]; if (!c || seen.has(c)) return; seen.add(c); if ((c.colSpan || 1) > 1) c.colSpan -= 1; else c.remove(); }); });
+  });
+  return tmp.innerHTML;
+}
+function applyCols(groups, name) { const h = colsHidden(name); return h.length ? groups.map(g => Object.assign({}, g, { pages: g.pages.map(p => dropCols(p, h)) })) : groups; }
+function pvColsBar() {
+  const box = $('#pvCols'); if (!box) return; if (!PV || !PVCOLS) { box.hidden = true; return; }
+  const all = colsOf(PV.orig), h = colsHidden(PV.name);
+  box.hidden = false;
+  box.innerHTML = all.length ? `<span class="pvcl">الخانات المطبوعة — اضغط لإظهار أو إخفاء:</span>${all.map(c => `<button type="button" class="chip${h.includes(c) ? ' off' : ' on'}" data-act="pvCol" data-v="${esc(c)}">${h.includes(c) ? '✕ ' : '✓ '}${esc(c)}</button>`).join('')}${h.length ? '<button type="button" class="chip" data-act="pvColAll">إظهار الكل</button>' : ''}` : '<span class="pvcl">لا توجد جداول بخانات قابلة للإخفاء في هذا النموذج</span>';
+}
+function openPreview(groups, name, orig) {
+  orig = orig || groups; groups = applyCols(orig, name);
   const pages = groups.flatMap(g => g.pages.map(pg => ({ pg, land: !!g.land })));
   if (!pages.length) return toast('لا توجد صفحات للمعاينة', true);
-  PV = { groups, name, pages, z: 0 };
+  const z = PV && PV.name === name ? PV.z : 0; PV = { groups, orig, name, pages, z }; pvColsBar();
   $('#pvTitle').textContent = name.replace(/ - [^-]*$/, '');
   $('#pvCount').textContent = `${pages.length} صفحة`;
   const LIM = 40;
@@ -3965,7 +3996,12 @@ function autoType(el) {
     real.forEach((e, i) => { e.style.fontSize = (base[i] * lo).toFixed(2) + 'px'; }); el.dataset.typed = lo.toFixed(2);
   } finally { st.remove(); }
 }
-function layoutPages(els) { els.forEach(el => { try { autoType(el); } catch (e) { } try { applyFill(el, planFill(el)); } catch (e) { } }); }
+/* ترقيم القوائم بأرقام مكتوبة داخل السطر (بدل علامات المتصفح) حتى تظهر صحيحة ومحاذية في PDF والطباعة على كل الأجهزة */
+function numLists(root) {
+  $$('ol:not([data-nd]), ul.ins:not([data-nd])', root).forEach(l => { l.dataset.nd = 1; l.classList.add('nd'); const ol = l.tagName === 'OL', st = +l.getAttribute('start') || 1; let k = 0;
+    Array.from(l.children).forEach(li => { if (li.tagName !== 'LI') return; const sp = document.createElement('span'); sp.className = 'lnum'; sp.textContent = ol ? String(st + k++) : '•'; li.insertBefore(sp, li.firstChild); }); });
+}
+function layoutPages(els) { els.forEach(el => { try { numLists(el); } catch (e) { } try { autoType(el); } catch (e) { } try { applyFill(el, planFill(el)); } catch (e) { } }); }
 function waitImgs(root) { return Promise.all($$('img', root).map(i => i.complete ? 1 : new Promise(r => { i.onload = r; i.onerror = r; }))); }
 /* سفاري (آيفون وآيباد وماك) يضيف رأساً وتذييلاً وهوامش للطباعة فيتجاهل ضبط الصفحة، فيُطبع النموذج فيها من PDF مقاسه A4 بالضبط: صفحة لكل صفحة */
 function printViaPdf() { const u = navigator.userAgent; return /iPad|iPhone|iPod/.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (/Safari/.test(u) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(u)); }
@@ -4044,6 +4080,7 @@ async function wordDoc(groups, name) {
           const small = n.classList.contains('small');
           Array.from(n.children).forEach((li, i) => {
             const s2 = Object.assign({}, st, { size: small ? 10 : 10.5, bold: false });
+            const ln = li.querySelector(':scope > .lnum'); if (ln) ln.remove();
             const r = runs(li, s2, []); r.unshift(new D.TextRun({ text: (n.tagName === 'OL' ? (i + 1) + '. ' : '• '), bold: s2.bold, size: Math.round(s2.size * 2 * WK), sizeComplexScript: Math.round(s2.size * 2 * WK), rightToLeft: true }));
             out.push(new D.Paragraph({ bidirectional: true, indent: { start: 280 }, spacing: { after: 30 }, children: r }));
           });
@@ -4626,7 +4663,7 @@ document.addEventListener('click', async e => {
     case 'fdAll': { const id = b.dataset.form; S.s.fdate._all = Object.assign({}, S.s.fdate[id]); Object.keys(S.s.fdate).forEach(k => { if (k !== '_all') delete S.s.fdate[k]; }); save(); render(); toast('اعتُمد هذا التاريخ لكل النماذج ✓'); break; }
     case 'qprint': case 'qword': case 'qpdf': case 'qopen': {
       const f = b.dataset.form, o = qopts(b), nm = fname(FORMS.find(x => x.id === f).t + (TA_FORMS.includes(f) ? ' - ' + setMeta(ACTIVE).n + ' - الفصل ' + setMeta(ACTIVE).sem : ''));
-      const run = () => { const g = groupsOf(f, o); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : openPreview(g, nm); };
+      const run = () => { const g0 = groupsOf(f, o), g = a === 'qopen' ? g0 : applyCols(g0, nm); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : openPreview(g0, nm); };
       return TA_FORMS.includes(f) ? withSetSemAsync(ACTIVE, run) : run();
     }
     case 'qedit': FORM = b.dataset.form; FO = {}; return go('forms');
@@ -4646,6 +4683,10 @@ document.addEventListener('click', async e => {
     case 'pvPdf': if (PV) downloadPdf(PV.groups, PV.name); return;
     case 'pvWord': if (PV) wordDoc(PV.groups, PV.name); return;
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
+    case 'pvCols': PVCOLS = !PVCOLS; return pvColsBar();
+    case 'pvCol': case 'pvColAll': { if (!PV) return; const k = colKey(PV.name); S.s.colsHide = S.s.colsHide || {}; let h = S.s.colsHide[k] || [];
+      h = a === 'pvColAll' ? [] : h.includes(b.dataset.v) ? h.filter(x => x !== b.dataset.v) : h.concat(b.dataset.v);
+      if (h.length) S.s.colsHide[k] = h; else delete S.s.colsHide[k]; save(); const y = $('#pvBody').scrollTop; openPreview(PV.orig, PV.name); $('#pvBody').scrollTop = y; return; }
     case 'pvZoom': if (PV) { PV.z = PV.z ? 0 : 1; b.textContent = PV.z ? '↔ ملء العرض' : '🔍 تكبير'; pvFit(); } return;
     case 'pvClose': return closePreview();
     case 'pdf': { const g = currentGroups(); if (!g[0].pages.length) return toast('لا توجد صفحات', true); return downloadPdf(g, fname(formDef().t)); }
@@ -6580,7 +6621,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795286301';
+var BUILD_ID = '1795287305';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
