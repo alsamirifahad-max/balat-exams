@@ -106,13 +106,24 @@ function vEvalCard() {
   </section>`;
 }
 function planProcPages(o) {
-  const list = PLAN_PROC.filter(p => !o || !o.pp || o.pp === p.id), out = [];
-  list.forEach(p => { let body;
-    if (p.rows) body = T([[H('م', { w: '5%' }), H('الحالة', { w: '33%' }), H('الإجراءات')], ...p.rows.map(([c, st], i) => [i + 1, { v: `<b>${esc(c)}</b>`, al: 'right' }, { v: `<ol class="ins small" style="margin:0">${st.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`, al: 'right' }])]);
-    else body = `<ol class="ins">${procOf(p).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
-    out.push(title(esc(p.t), yearLine()) + body); });
-  if (list.length > 1) return packFit(out, false, sp(14));
-  return out;
+  const list = PLAN_PROC.filter(p => !o || !o.pp || o.pp === p.id);
+  const itemsOf = p => p.rows || procOf(p);
+  const mk = (p, a, b) => title(esc(p.t) + (a ? ' (تابع)' : ''), yearLine()) + (p.rows
+    ? T([[H('م', { w: '5%' }), H('الحالة', { w: '33%' }), H('الإجراءات')], ...p.rows.slice(a, b).map(([c, st], i) => [a + i + 1, { v: `<b>${esc(c)}</b>`, al: 'right' }, { v: `<ol class="ins small" style="margin:0">${st.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`, al: 'right' }])])
+    : `<ol class="ins" start="${a + 1}">${procOf(p).slice(a, b).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`);
+  /* تعبئة الصفحات بالقياس: يكتمل القسم في صفحته إن اتسع، وإلا يكمل في التالية (تابع) دون ترك فراغات كبيرة */
+  const pages = []; let cur = '';
+  const join = h => cur ? cur + sp(14) + h : h, fits = h => bodyFits(join(h), false), flush = () => { if (cur) pages.push(cur); cur = ''; };
+  list.forEach(p => { const n = itemsOf(p).length; let a = 0;
+    while (a < n) {
+      if (fits(mk(p, a, n))) { cur = join(mk(p, a, n)); a = n; break; }
+      let b = n - 1; while (b > a && !fits(mk(p, a, b))) b--;
+      if (b - a >= (cur ? 2 : 1)) { cur = join(mk(p, a, b)); a = b; flush(); }
+      else if (cur) flush();
+      else { cur = mk(p, a, a + 1); a++; flush(); }
+    } });
+  flush();
+  return pages;
 }
 function planEvalPages(o) {
   const ev = (S.s.planX && S.s.planX.ev) || {}, blank = o && o.blank, pages = [];

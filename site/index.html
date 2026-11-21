@@ -118,6 +118,7 @@ select.in{text-overflow:ellipsis}
 .lnk{border:0;background:none;color:var(--accent);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;padding:4px 2px}
 .fxp{flex-basis:100%;border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
 .fxh{font-weight:700;font-size:.88rem;margin-bottom:6px}
+.fxh .fxses{display:inline-block;width:auto;max-width:14rem;padding:3px 8px;font-size:.8rem;margin:2px 6px}
 .fxc{gap:5px}.fxc .chip{font-size:.76rem;padding:2px 9px;max-width:100%}
 .fxc .chip.off{opacity:.55;text-decoration:line-through}
 .fxc .chip.add{padding-left:4px}.fxc .chip .x{width:20px;height:20px}
@@ -2645,8 +2646,8 @@ function vSettings() {
     </table></div>
     <div class="acts"><button class="btn sm" data-act="addOpen" type="button">إضافة عضو</button>
     <label class="ck"><input type="checkbox" data-k="s.openWithTeachers" data-bool="1" ${s.openWithTeachers ? 'checked' : ''}> إضافة معلمي مواد الفترة تلقائياً إلى المحضر</label></div>
-    ${qbar('openEnv', 'محضر فتح المظروف (كل الفترات):')}
-    ${qbar('agree', 'محضر اتفاقية التصحيح (كل الفترات):')}
+    ${qbar('openEnv', 'محضر فتح المظروف:')}
+    ${qbar('agree', 'محضر اتفاقية التصحيح:')}
   </section>
   <section class="card">
     <h2>الصفوف والشعب</h2>
@@ -3360,7 +3361,7 @@ function dailyTable(se) {
   const t = { 1: 0, 2: 0, 3: 0 };
   S.com.forEach(c => {
     const n = G.map(g => subs[g - 1] ? (+c.c[g] || 0) : 0); G.forEach((g, i) => t[g] += n[i]);
-    rows.push([{ v: `<b>${c.no}</b>` }, { v: esc(comPlace(c)), fs: '8.5pt' }, ...G.map((g, i) => Gc(g, subs[g - 1] ? n[i] : '–')), { v: `<b>${n.reduce((a, b) => a + b, 0)}</b>` }, '']);
+    rows.push([{ v: `<b>${c.no}</b>` }, { v: esc(comPlace(c)), fs: '9.5pt' }, ...G.map((g, i) => Gc(g, subs[g - 1] ? n[i] : '–')), { v: `<b>${n.reduce((a, b) => a + b, 0)}</b>` }, '']);
   });
   rows.push([L('المجموع', { cs: 2 }), ...G.map(g => L(t[g])), L(t[1] + t[2] + t[3]), L('')]);
   return T(rows, { cls: 'dense' });
@@ -3374,16 +3375,16 @@ function obsTablePages(o) {
     for (let k = 0; k < rows.length; k += per) {
       const part = rows.slice(k, k + per);
       const tr = [[H('رقم اللجنة', { w: '10%' }), H('المقر', { w: '19%' }), H('عدد الطلاب', { w: '10%' }), H('اسم الملاحظ'), H('التوقيع', { w: '22%' })]];
-      part.forEach((r, i) => { const row = []; if (r.first || i === 0) { const span = r.first ? r.n : r.n - rows.slice(0, k).filter(x => x.c === r.c).length; row.push({ v: `<b>${r.c.no}</b>`, rs: Math.min(span, part.length - i) }, { v: esc(comPlace(r.c)), fs: '8.5pt', rs: Math.min(span, part.length - i) }, { v: comSum(r.c), rs: Math.min(span, part.length - i) }); } row.push({ v: `<b>${esc(r.name)}</b>`, al: 'right' }, ''); tr.push(row); });
+      part.forEach((r, i) => { const row = []; if (r.first || i === 0) { const span = r.first ? r.n : r.n - rows.slice(0, k).filter(x => x.c === r.c).length; row.push({ v: `<b>${r.c.no}</b>`, rs: Math.min(span, part.length - i) }, { v: esc(comPlace(r.c)), fs: '9.5pt', rs: Math.min(span, part.length - i) }, { v: comSum(r.c), rs: Math.min(span, part.length - i) }); } row.push({ v: `<b>${esc(r.name)}</b>`, al: 'right' }, ''); tr.push(row); });
       out.push(title('جدول توزيع الملاحظين على اللجان') + sesInfo(se) + sp(6) + T(tr, { cls: 'dense obsT' }) + sp(8) + sigs([['وكيل شؤون الطلاب', S.s.stuDep], ['مدير المدرسة', S.s.principal]]));
     }
   });
   return out;
 }
 function openEnvPage(se) {
-  const mem = S.s.openMembers.filter(m => m.n && !fxRm('openEnv', m.n)).map(m => ({ ...m }));
+  const mem = S.s.openMembers.filter(m => m.n && !fxRm('openEnv', m.n, se.key)).map(m => ({ ...m }));
   if (S.s.openWithTeachers) sessionSubjects(se).forEach(x => { const t = teacherOf(x.sub, x.g); if (t && !mem.some(m => normName(m.n) === normName(t))) mem.push({ n: t, w: 'معلم ' + x.sub, r: 'عضواً' }); });
-  const mem2 = mem.filter(m => !fxRm('openEnv', m.n)); mem.length = 0; mem.push(...mem2); fxAdds('openEnv').forEach(x => { if (!mem.some(m => normName(m.n) === normName(x.n))) mem.push({ n: x.n, w: x.w || '', r: 'عضواً' }); });
+  const mem2 = mem.filter(m => !fxRm('openEnv', m.n, se.key)); mem.length = 0; mem.push(...mem2); fxAdds('openEnv', se.key).forEach(x => { if (!mem.some(m => normName(m.n) === normName(x.n))) mem.push({ n: x.n, w: x.w || '', r: 'عضواً' }); });
   const rows = [[H('م', { w: '6%' }), H('الاسم'), H('عمله'), H('الصفة', { w: '12%' }), H('التوقيع', { w: '20%' })]];
   mem.forEach((m, i) => rows.push([i + 1, { v: `<b>${esc(m.n)}</b>`, al: 'right' }, esc(m.w), esc(m.r), '']));
   return title('محضر فتح مظروف أسئلة', yearLine()) + sesInfo(se) + sp(10) +
@@ -3392,8 +3393,8 @@ function openEnvPage(se) {
 }
 function agreePage(se) {
   const rows = [[H('المعلم'), H('مادة التدريس'), H('التوقيع', { w: '25%' })]];
-  const ts = []; sessionSubjects(se).forEach(x => { let l = teachersOfSubject(x.sub, x.g); if (!l.length) l = S.st.filter(s => s.sub.trim() === x.sub && +s.g === x.g).map(s => s.t).filter(Boolean); l.forEach(t => { if (!fxRm('agree', t)) ts.push([t, x.sub]); }); });
-  fxAdds('agree').forEach(x => ts.push([x.n, x.w || '']));
+  const ts = []; sessionSubjects(se).forEach(x => { let l = teachersOfSubject(x.sub, x.g); if (!l.length) l = S.st.filter(s => s.sub.trim() === x.sub && +s.g === x.g).map(s => s.t).filter(Boolean); l.forEach(t => { if (!fxRm('agree', t, se.key)) ts.push([t, x.sub]); }); });
+  fxAdds('agree', se.key).forEach(x => ts.push([x.n, x.w || '']));
   ts.forEach(r => rows.push([{ v: `<b>${esc(r[0])}</b>`, al: 'right' }, esc(r[1]), '']));
   for (let i = ts.length; i < Math.max(6, ts.length + 2); i++) rows.push(['&nbsp;', '', '']);
   return title('محضر اتفاقية التصحيح وسلامة الأسئلة ونموذج الإجابة من الأخطاء', yearLine()) + sesInfo(se) + sp(10) +
@@ -3701,27 +3702,37 @@ function stuGuidePage() {
 /* ----- عرض النماذج ----- */
 /* حرية الأسماء: لكل نموذج فيه أسماء يمكن حذف أي اسم أو إضافة أسماء جديدة دون المساس بالبيانات الأصلية */
 const FX_FORMS = { tList: 'المعلمون في الكشف', obsInstr: 'المعلمون الموقّعون على التعليمات', receipt: 'المعلمون في بيان الاستلام', openEnv: 'أعضاء لجنة فتح المظروف', agree: 'المعلمون في محضر الاتفاقية' };
+const FX_SES = {}, FX_PER = { openEnv: 1, agree: 1 };
+function fxK(id, ses) { return ses ? id + '@' + ses : id; }
 function fxOf(id) { S.s.fx = S.s.fx || {}; return S.s.fx[id] || { rm: [], add: [] }; }
-function fxRm(id, n) { return (fxOf(id).rm || []).includes(normName(n || '')); }
-function fxAdds(id) { return (fxOf(id).add || []).filter(x => x && x.n); }
+/* الاستبعاد والإضافة: على مستوى النموذج كله، أو لفترة بعينها (محضر الفتح والاتفاقية) */
+function fxRm(id, n, ses) { const k = normName(n || ''); return (fxOf(id).rm || []).includes(k) || (!!ses && (fxOf(fxK(id, ses)).rm || []).includes(k)); }
+function fxAdds(id, ses) { return (fxOf(id).add || []).concat(ses ? (fxOf(fxK(id, ses)).add || []) : []).filter(x => x && x.n); }
+function sesLbl(se) { return `${dayName(se.day)} ${dateShort(se.day)}${se.day.p.length > 1 ? ' — الفترة ' + (se.pi + 1) : ''}`; }
 function fxList(id, names) { return names.filter(n => n && !fxRm(id, n)).concat(fxAdds(id).map(x => x.n)); }
-function fxBase(id) {
+function fxBase(id, ses) {
+  const sl = ses ? sessions().filter(x => x.key === ses) : sessions();
   if (id === 'tList' || id === 'obsInstr') return S.teachers.filter(Boolean);
   if (id === 'receipt') return [...new Set(S.st.map(x => x.t).filter(Boolean))];
-  if (id === 'openEnv') { const l = S.s.openMembers.map(m => m.n).filter(Boolean); if (S.s.openWithTeachers) sessions().forEach(se => sessionSubjects(se).forEach(x => { const t = teacherOf(x.sub, x.g); if (t) l.push(t); })); return [...new Set(l)]; }
-  if (id === 'agree') { const l = []; sessions().forEach(se => sessionSubjects(se).forEach(x => { let t = teachersOfSubject(x.sub, x.g); if (!t.length) t = S.st.filter(s => s.sub.trim() === x.sub && +s.g === x.g).map(s => s.t).filter(Boolean); l.push(...t); })); return [...new Set(l)]; }
+  if (id === 'openEnv') { const l = S.s.openMembers.map(m => m.n).filter(Boolean); if (S.s.openWithTeachers) sl.forEach(se => sessionSubjects(se).forEach(x => { const t = teacherOf(x.sub, x.g); if (t) l.push(t); })); return [...new Set(l)]; }
+  if (id === 'agree') { const l = []; sl.forEach(se => sessionSubjects(se).forEach(x => { let t = teachersOfSubject(x.sub, x.g); if (!t.length) t = S.st.filter(s => s.sub.trim() === x.sub && +s.g === x.g).map(s => s.t).filter(Boolean); l.push(...t); })); return [...new Set(l)]; }
   return [];
 }
 function fxPanel(id) {
   if (!FX_FORMS[id]) return '';
-  const base = fxBase(id), adds = fxAdds(id), f = fxOf(id), nrm = (f.rm || []).length;
-  const pool = tchAll().filter(n => !base.includes(n) && !adds.some(x => x.n === n));
+  const ses = FX_PER[id] && sessions().some(x => x.key === FX_SES[id]) ? FX_SES[id] : '', key = fxK(id, ses);
+  const base = fxBase(id, ses), own = fxOf(key), ownAdd = (own.add || []).filter(x => x && x.n), gl = ses ? fxOf(id) : null;
+  const isRm = n => fxRm(id, n, ses), glRm = n => !!gl && (gl.rm || []).includes(normName(n));
+  const shown = base.filter(n => !isRm(n)).length + fxAdds(id, ses).length;
+  const pool = tchAll().filter(n => !base.includes(n) && !fxAdds(id, ses).some(x => x.n === n));
   const wLbl = id === 'agree' ? 'المادة' : id === 'openEnv' ? 'العمل' : id === 'receipt' ? 'المادة' : '';
-  return `<div class="fxp"><div class="fxh">👥 ${FX_FORMS[id]} <b>${base.length - nrm + adds.length}</b> <small class="mut">اضغط أي اسم لإخفائه من النموذج أو إرجاعه</small></div>
-  <div class="chips fxc">${base.map(n => `<button type="button" class="chip${fxRm(id, n) ? ' off' : ' on'}" data-act="fxTog" data-fx="${id}" data-n="${esc(n)}">${fxRm(id, n) ? '↺ ' : '✓ '}${esc(n)}</button>`).join('') || '<span class="mut">لا توجد أسماء من البيانات</span>'}
-  ${adds.map((x, j) => `<span class="chip on add">➕ ${esc(x.n)}${x.w ? ` <small>(${esc(x.w)})</small>` : ''}<button type="button" class="x" data-act="fxDel" data-fx="${id}" data-j="${j}" title="حذف">×</button></span>`).join('')}</div>
-  <div class="fxadd"><select class="in" data-fxadd="${id}"><option value="">➕ إضافة اسم…</option>${pool.map(n => `<option>${esc(n)}</option>`).join('')}<option value="__new">✎ كتابة اسم جديد…</option></select>${wLbl ? `<input class="in" id="fxw_${id}" placeholder="${wLbl} (اختياري)" style="max-width:11rem">` : ''}
-  ${nrm || adds.length ? `<button type="button" class="btn sm ghost" data-act="fxReset" data-fx="${id}">استعادة الأسماء الأصلية</button>` : ''}${base.length ? `<button type="button" class="btn sm ghost" data-act="fxNone" data-fx="${id}">استبعاد الكل</button>` : ''}</div></div>`;
+  const sesSel = FX_PER[id] ? `<select class="in fxses" data-fxses="${id}"><option value="">كل الفترات</option>${sessions().map(se => `<option value="${se.key}"${se.key === ses ? ' selected' : ''}>${esc(sesLbl(se))}</option>`).join('')}</select>` : '';
+  return `<div class="fxp"><div class="fxh">👥 ${FX_FORMS[id]} <b>${shown}</b> ${sesSel}<small class="mut">${ses ? 'التعديل هنا لهذه الفترة فقط' : 'اضغط أي اسم لإخفائه من النموذج أو إرجاعه'}</small></div>
+  <div class="chips fxc">${base.map(n => glRm(n) ? `<span class="chip off" title="مستبعد من كل الفترات">${esc(n)}</span>` : `<button type="button" class="chip${isRm(n) ? ' off' : ' on'}" data-act="fxTog" data-fx="${key}" data-n="${esc(n)}">${isRm(n) ? '↺ ' : '✓ '}${esc(n)}</button>`).join('') || '<span class="mut">لا توجد أسماء من البيانات</span>'}
+  ${(ses ? (gl.add || []).filter(x => x && x.n).map(x => `<span class="chip on add">➕ ${esc(x.n)} <small>(كل الفترات)</small></span>`).join('') : '')}
+  ${ownAdd.map((x, j) => `<span class="chip on add">➕ ${esc(x.n)}${x.w ? ` <small>(${esc(x.w)})</small>` : ''}<button type="button" class="x" data-act="fxDel" data-fx="${key}" data-j="${j}" title="حذف">×</button></span>`).join('')}</div>
+  <div class="fxadd"><select class="in" data-fxadd="${key}"><option value="">➕ إضافة اسم…</option>${pool.map(n => `<option>${esc(n)}</option>`).join('')}<option value="__new">✎ كتابة اسم جديد…</option></select>${wLbl ? `<input class="in" id="fxw_${key.replace('@', '_')}" placeholder="${wLbl} (اختياري)" style="max-width:11rem">` : ''}
+  ${(own.rm || []).length || ownAdd.length ? `<button type="button" class="btn sm ghost" data-act="fxReset" data-fx="${key}">استعادة الأسماء الأصلية</button>` : ''}${base.length ? `<button type="button" class="btn sm ghost" data-act="fxNone" data-fx="${key}">استبعاد الكل</button>` : ''}</div></div>`;
 }
 function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
@@ -3987,7 +3998,8 @@ function hexOf(c) {
   return null;
 }
 function ptOf(v) { if (!v) return null; const m = String(v).match(/([\d.]+)\s*(pt|px)?/); if (!m) return null; return m[2] === 'px' ? +m[1] * 0.75 : +m[1]; }
-function wordDoc(groups, name) {
+async function wordDoc(groups, name) {
+  let WK = 1, WH = 1; /* معامل تحجيم الصفحة في Word حتى تبقى كل صفحة في ورقة واحدة */
   const D = window.docx;
   if (!D) return toast('مكتبة Word لم تُحمّل بعد، أعد المحاولة', true);
   const NOB = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
@@ -3997,7 +4009,7 @@ function wordDoc(groups, name) {
   const CLS = { ih: { size: 11, bold: true }, dt: { size: 15, bold: true, center: true }, ds: { size: 10.5, center: true }, txt: { size: 12.5, justify: true }, lbl: { size: 12, bold: true }, note: { size: 9.5 }, cut: { size: 10, center: true, color: '999999' } };
   function runs(node, st, out) {
     node.childNodes.forEach(n => {
-      if (n.nodeType === 3) { const t = deLig(n.nodeValue.replace(/\s+/g, ' ')); if (t.trim() || (t === ' ' && out.length)) out.push(new D.TextRun({ text: t, bold: st.bold, boldComplexScript: st.bold, color: st.color || undefined, size: Math.round(st.size * 2), sizeComplexScript: Math.round(st.size * 2), rightToLeft: true, font: { ascii: 'Arial', hAnsi: 'Arial', cs: 'Arial' } })); return; }
+      if (n.nodeType === 3) { const t = deLig(n.nodeValue.replace(/\s+/g, ' ')); if (t.trim() || (t === ' ' && out.length)) out.push(new D.TextRun({ text: t, bold: st.bold, boldComplexScript: st.bold, color: st.color || undefined, size: Math.round(st.size * 2 * WK), sizeComplexScript: Math.round(st.size * 2 * WK), rightToLeft: true, font: { ascii: 'Arial', hAnsi: 'Arial', cs: 'Arial' } })); return; }
       if (n.nodeType !== 1) return;
       if (n.tagName === 'BR') { out.push(new D.TextRun({ text: '', break: 1 })); return; }
       if (n.tagName === 'IMG') { const src = n.getAttribute('src') || ''; if (src.startsWith('data:image/')) out.push(new D.ImageRun({ data: b64ToBytes(src), transformation: { width: +n.getAttribute('width') || 50, height: +n.getAttribute('height') || 50 } })); return; }
@@ -4032,7 +4044,7 @@ function wordDoc(groups, name) {
           const small = n.classList.contains('small');
           Array.from(n.children).forEach((li, i) => {
             const s2 = Object.assign({}, st, { size: small ? 10 : 10.5, bold: false });
-            const r = runs(li, s2, []); r.unshift(new D.TextRun({ text: (n.tagName === 'OL' ? (i + 1) + '. ' : '• '), bold: s2.bold, size: s2.size * 2, sizeComplexScript: s2.size * 2, rightToLeft: true }));
+            const r = runs(li, s2, []); r.unshift(new D.TextRun({ text: (n.tagName === 'OL' ? (i + 1) + '. ' : '• '), bold: s2.bold, size: Math.round(s2.size * 2 * WK), sizeComplexScript: Math.round(s2.size * 2 * WK), rightToLeft: true }));
             out.push(new D.Paragraph({ bidirectional: true, indent: { start: 280 }, spacing: { after: 30 }, children: r }));
           });
         } else {
@@ -4071,7 +4083,7 @@ function wordDoc(groups, name) {
     const rows = trs.map(tr => {
       const h = Math.max(minH, ...Array.from(tr.cells).map(td => parseFloat(td.style.height) || 0));
       return new D.TableRow({
-        height: h ? { value: Math.round(h * 15), rule: D.HeightRule.ATLEAST } : undefined,
+        height: h ? { value: Math.round(h * 15 * WH), rule: D.HeightRule.ATLEAST } : undefined,
         children: Array.from(tr.cells).map(td => {
           const st = { size: ptOf(td.style.fontSize) || baseSize, bold: td.tagName === 'TH' || /bold/.test(td.style.fontWeight), color: hexOf(td.style.color) };
           const hasBlock = Array.from(td.children).some(c => BLOCK.has(c.tagName));
@@ -4096,23 +4108,27 @@ function wordDoc(groups, name) {
   }
   const sections = [];
   const tmp = document.createElement('div');
-  groups.forEach(g => g.pages.forEach(pg => {
+  const stg = document.createElement('div'); stg.className = 'measure'; document.body.appendChild(stg);
+  toast('جارٍ تجهيز ملف Word…');
+  for (const g of groups) for (const pg of g.pages) {
     const land = !!g.land;
     const pageW = land ? 16838 : 11906, M = 567, W = pageW - 2 * M;
     const imgW = Math.round(W / 15) - 4;
-    tmp.innerHTML = pg;
+    { const P = land ? PAPER.l : PAPER.p; stg.style.width = P.w + 'px'; stg.innerHTML = pageWrap(pg, land); const el = stg.firstElementChild; el.style.width = P.w + 'px'; el.style.padding = '0'; el.style.minHeight = '0';
+      await waitImgs(stg); try { layoutPages([el]); } catch (e) { } const sc = Math.min(1, +fitScales([el])[0] || 1);
+      WK = sc * 0.96; WH = sc * 0.9; tmp.innerHTML = el.querySelector('.pbody').innerHTML; }
     sections.push({
       properties: { page: { size: { orientation: land ? D.PageOrientation.LANDSCAPE : D.PageOrientation.PORTRAIT, width: 11906, height: 16838 }, margin: { top: 450 + Math.round(imgW * 215 / 1700 * 15), bottom: 420 + Math.round(imgW * FTR_H / 1700 * 15), left: M, right: M, header: 280, footer: 280 } } },
       headers: { default: new D.Header({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.ImageRun({ data: HDRB, transformation: { width: imgW, height: Math.round(imgW * 215 / 1700) } })] })] }) },
       footers: { default: new D.Footer({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.ImageRun({ data: FTRB, transformation: { width: imgW, height: Math.round(imgW * FTR_H / 1700) } })] })] }) },
       children: blocks(tmp, { size: 11, bold: false }, W)
     });
-  }));
+  }
+  stg.remove();
   const doc = new D.Document({
     creator: S.s.school, title: name, styles: { default: { document: { run: { font: 'Arial', size: 22, rightToLeft: true }, paragraph: { } } } },
     sections
   });
-  toast('جارٍ تجهيز ملف Word…');
   D.Packer.toBlob(doc).then(blob => download(blob, name + '.docx')).catch(e => { console.error(e); toast('تعذر إنشاء ملف Word: ' + e.message, true); });
 }
 function download(blob, name) {
@@ -4509,7 +4525,8 @@ document.addEventListener('change', async e => {
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
   if (el.dataset.fd) { if (!S.s.fdate) S.s.fdate = {}; const k = el.dataset.fd, o = S.s.fdate[k] = S.s.fdate[k] || {}; o[el.dataset.f] = el.value;
     if (el.dataset.f === 'm' && el.value === 'fix' && !o.d) o.d = todayIso(); if (el.dataset.f === 'm' && el.value === 'all') delete S.s.fdate[k]; save(); render(); return; }
-  if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id) || {}).value || ''; S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(id).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[id] = true; save(); render(); return toast('أُضيف ' + v); }
+  if (el.dataset.fxses) { FX_SES[el.dataset.fxses] = el.value; return render(); }
+  if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id.replace('@', '_')) || {}).value || ''; const [fid, fs] = id.split('@'); S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(fid, fs).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[fid] = true; save(); render(); return toast('أُضيف ' + v); }
   if (el.dataset.coadd != null) { const x = S.st[+el.dataset.coadd]; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('اسم المعلم المشارك:') || '').trim(); if (!v) { el.value = ''; return; } } (x.co = x.co || []).includes(v) || x.co.push(v); ST_OPEN[+el.dataset.coadd] = 1; save(); render(); return toast('أُضيف ' + v + ' — سيصدر له خطاب مستقل'); }
   if (el.dataset.dl) { S.s.deadlineIso = el.value; S.s.deadline = el.value ? hDate(el.value) : ''; save(); render(); return toast(el.value ? `آخر موعد للتسليم: ${S.s.deadline}` : 'أُزيل الموعد'); }
   if (el.classList.contains('fo')) { FO[el.dataset.o] = el.value; renderPreview(); return; }
@@ -4569,8 +4586,8 @@ document.addEventListener('click', async e => {
       if (a === 'fxTog') { const k = normName(b.dataset.n); f.rm = f.rm.includes(k) ? f.rm.filter(z => z !== k) : f.rm.concat(k); }
       if (a === 'fxDel') f.add.splice(j, 1);
       if (a === 'fxReset') { f.rm = []; f.add = []; toast('أُعيدت الأسماء الأصلية'); }
-      if (a === 'fxNone') f.rm = fxBase(id).map(normName);
-      QOPEN[id] = true; return re(); }
+      if (a === 'fxNone') { const [fid, fs] = id.split('@'); f.rm = fxBase(fid, fs).map(normName); }
+      QOPEN[id.split('@')[0]] = true; return re(); }
     case 'stCoDel': { const x = S.st[i]; x.co.splice(j, 1); ST_OPEN[i] = 1; return re(); }
     case 'stCopyG': case 'stCopyAll': { const src = S.st[i]; let n = 0; S.st.forEach((x, k) => { if (k === i || (a === 'stCopyG' && +x.g !== +src.g)) return; ST_KEYS.filter(q => q !== 'n' || +x.g === +src.g).forEach(q => { if (src[q]) x[q] = src[q]; else delete x[q]; }); n++; }); toast(`نُسخت التفاصيل إلى ${n} مادة`); return re(); }
     case 'stReset': { ST_KEYS.forEach(q => delete S.st[i][q]); ST_OPEN[i] = 1; toast('تعتمد هذه المادة الإعدادات العامة الآن'); return re(); }
@@ -6563,7 +6580,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795285433';
+var BUILD_ID = '1795286301';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
@@ -6930,13 +6947,24 @@ function vEvalCard() {
   </section>`;
 }
 function planProcPages(o) {
-  const list = PLAN_PROC.filter(p => !o || !o.pp || o.pp === p.id), out = [];
-  list.forEach(p => { let body;
-    if (p.rows) body = T([[H('م', { w: '5%' }), H('الحالة', { w: '33%' }), H('الإجراءات')], ...p.rows.map(([c, st], i) => [i + 1, { v: `<b>${esc(c)}</b>`, al: 'right' }, { v: `<ol class="ins small" style="margin:0">${st.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`, al: 'right' }])]);
-    else body = `<ol class="ins">${procOf(p).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
-    out.push(title(esc(p.t), yearLine()) + body); });
-  if (list.length > 1) return packFit(out, false, sp(14));
-  return out;
+  const list = PLAN_PROC.filter(p => !o || !o.pp || o.pp === p.id);
+  const itemsOf = p => p.rows || procOf(p);
+  const mk = (p, a, b) => title(esc(p.t) + (a ? ' (تابع)' : ''), yearLine()) + (p.rows
+    ? T([[H('م', { w: '5%' }), H('الحالة', { w: '33%' }), H('الإجراءات')], ...p.rows.slice(a, b).map(([c, st], i) => [a + i + 1, { v: `<b>${esc(c)}</b>`, al: 'right' }, { v: `<ol class="ins small" style="margin:0">${st.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`, al: 'right' }])])
+    : `<ol class="ins" start="${a + 1}">${procOf(p).slice(a, b).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`);
+  /* تعبئة الصفحات بالقياس: يكتمل القسم في صفحته إن اتسع، وإلا يكمل في التالية (تابع) دون ترك فراغات كبيرة */
+  const pages = []; let cur = '';
+  const join = h => cur ? cur + sp(14) + h : h, fits = h => bodyFits(join(h), false), flush = () => { if (cur) pages.push(cur); cur = ''; };
+  list.forEach(p => { const n = itemsOf(p).length; let a = 0;
+    while (a < n) {
+      if (fits(mk(p, a, n))) { cur = join(mk(p, a, n)); a = n; break; }
+      let b = n - 1; while (b > a && !fits(mk(p, a, b))) b--;
+      if (b - a >= (cur ? 2 : 1)) { cur = join(mk(p, a, b)); a = b; flush(); }
+      else if (cur) flush();
+      else { cur = mk(p, a, a + 1); a++; flush(); }
+    } });
+  flush();
+  return pages;
 }
 function planEvalPages(o) {
   const ev = (S.s.planX && S.s.planX.ev) || {}, blank = o && o.blank, pages = [];
