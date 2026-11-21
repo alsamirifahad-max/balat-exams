@@ -1128,6 +1128,7 @@ function render() {
   if (TAB === 'files') renderStuTable();
   if (TAB === 'assign' && typeof taFilter === 'function' && (TAF.q || TAF.need)) taFilter();
   $$('.pthumb').forEach(b => { const pg = b.firstElementChild; if (!pg) return; const k = b.clientWidth / (pg.classList.contains('land') ? 1123 : 794); pg.style.transform = `scale(${k})`; });
+  deLigDom(document.getElementById("main"));
   if (TAB === 'home') setTimeout(renderThumbs, 30);
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
@@ -1268,6 +1269,8 @@ function vSettings() {
     </table></div>
     <div class="acts"><button class="btn sm" data-act="addOpen" type="button">إضافة عضو</button>
     <label class="ck"><input type="checkbox" data-k="s.openWithTeachers" data-bool="1" ${s.openWithTeachers ? 'checked' : ''}> إضافة معلمي مواد الفترة تلقائياً إلى المحضر</label></div>
+    ${qbar('openEnv', 'محضر فتح المظروف (كل الفترات):')}
+    ${qbar('agree', 'محضر اتفاقية التصحيح (كل الفترات):')}
   </section>
   <section class="card">
     <h2>الصفوف والشعب</h2>
@@ -1654,9 +1657,10 @@ function vStaff() {
     ${qbar('stList', 'كشف المعلمين المكلفين:')}
     ${qbar('assign', 'خطابات التكليف:')}
     ${qbar('receipt', 'بيان استلام الأسئلة:')}
-    <p class="hint">يُملأ من الإسناد: لكل مادة في الجدول المعلم الأكثر شعباً، ويمكنك تغييره. جميع معلمي المادة يظهرون في محضر اتفاقية التصحيح.</p>
+    <p class="hint">يُملأ من الإسناد: لكل مادة المعلم الأكثر شعباً، وغيّره متى شئت. اضغط «⚙ التفاصيل» في أي مادة لإضافة معلمين مشاركين وتحديد العدد المطلوب والدرجة وموعد التسليم وتوزيع الفقرات — يصدر لكل معلم خطاب مستقل في صفحة واحدة.</p>
+    ${stDefaultsBar()}
     <div class="tw"><table class="et stack strows"><tr><th>المادة</th><th>الصف</th><th>المعلم المكلف بالأسئلة</th><th>معلمو المادة في الإسناد</th><th>درجة الاختبار</th><th></th></tr>
-    ${S.st.map((x, i) => `<tr><td>${pickSel(`st.${i}.sub`, x.sub, subOpts(x.g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td><select class="in" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td>${pickSel(`st.${i}.t`, x.t, tchOpts(teachersOfSubject(x.sub, x.g), 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}</td><td class="tnames">${esc(teachersOfSubject(x.sub, x.g).join('، ')) || '<span class="warnt">لا يوجد</span>'}</td><td>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark), style: 'width:5rem' })}</td><td><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف">×</button></td></tr>`).join('')}
+    ${S.st.map((x, i) => stRow(x, i)).join('')}
     </table></div>
     <div class="acts"><button class="btn sm" data-act="addSt" type="button">إضافة مادة</button><button class="btn sm ghost" data-act="stFromSchedule" type="button">إضافة مواد الجدول الناقصة</button></div>
   </section>
@@ -2004,8 +2008,9 @@ function obsTablePages(o) {
   return out;
 }
 function openEnvPage(se) {
-  const mem = S.s.openMembers.map(m => ({ ...m }));
+  const mem = S.s.openMembers.filter(m => m.n && !fxRm('openEnv', m.n)).map(m => ({ ...m }));
   if (S.s.openWithTeachers) sessionSubjects(se).forEach(x => { const t = teacherOf(x.sub, x.g); if (t && !mem.some(m => normName(m.n) === normName(t))) mem.push({ n: t, w: 'معلم ' + x.sub, r: 'عضواً' }); });
+  const mem2 = mem.filter(m => !fxRm('openEnv', m.n)); mem.length = 0; mem.push(...mem2); fxAdds('openEnv').forEach(x => { if (!mem.some(m => normName(m.n) === normName(x.n))) mem.push({ n: x.n, w: x.w || '', r: 'عضواً' }); });
   const rows = [[H('م', { w: '6%' }), H('الاسم'), H('عمله'), H('الصفة', { w: '12%' }), H('التوقيع', { w: '20%' })]];
   mem.forEach((m, i) => rows.push([i + 1, { v: `<b>${esc(m.n)}</b>`, al: 'right' }, esc(m.w), esc(m.r), '']));
   return title('محضر فتح مظروف أسئلة', yearLine()) + sesInfo(se) + sp(10) +
@@ -2014,7 +2019,8 @@ function openEnvPage(se) {
 }
 function agreePage(se) {
   const rows = [[H('المعلم'), H('مادة التدريس'), H('التوقيع', { w: '25%' })]];
-  const ts = []; sessionSubjects(se).forEach(x => { let l = teachersOfSubject(x.sub, x.g); if (!l.length) l = S.st.filter(s => s.sub.trim() === x.sub && +s.g === x.g).map(s => s.t).filter(Boolean); l.forEach(t => ts.push([t, x.sub])); });
+  const ts = []; sessionSubjects(se).forEach(x => { let l = teachersOfSubject(x.sub, x.g); if (!l.length) l = S.st.filter(s => s.sub.trim() === x.sub && +s.g === x.g).map(s => s.t).filter(Boolean); l.forEach(t => { if (!fxRm('agree', t)) ts.push([t, x.sub]); }); });
+  fxAdds('agree').forEach(x => ts.push([x.n, x.w || '']));
   ts.forEach(r => rows.push([{ v: `<b>${esc(r[0])}</b>`, al: 'right' }, esc(r[1]), '']));
   for (let i = ts.length; i < Math.max(6, ts.length + 2); i++) rows.push(['&nbsp;', '', '']);
   return title('محضر اتفاقية التصحيح وسلامة الأسئلة ونموذج الإجابة من الأخطاء', yearLine()) + sesInfo(se) + sp(10) +
@@ -2073,22 +2079,68 @@ function specialPages(o) {
 function receiptTable() {
   const tot = gradeTotals();
   const rows = [[H('اسم المعلم'), H('المادة'), H('الصف'), H('عدد الأوراق'), H('الإجابة النموذجية بالداخل'), H('التوقيع', { w: '16%' })]];
-  G.forEach(g => { const l = S.st.filter(x => +x.g === g); l.forEach((x, i) => { const r = [{ v: `<b>${esc(x.t)}</b>`, al: 'right' }, Gc(g, `<b>${esc(x.sub)}</b>`)]; if (i === 0) r.push(Gc(g, `<b>${GNAME[g].replace('الصف ', '')}</b>`, { rs: l.length }), Gc(g, `<b>${tot[g]}</b>`, { rs: l.length })); r.push('☐', ''); rows.push(r); }); });
+  G.forEach(g => { const l = S.st.filter(x => +x.g === g && x.t && !fxRm('receipt', x.t)); l.forEach((x, i) => { const r = [{ v: `<b>${esc(x.t)}</b>`, al: 'right' }, Gc(g, `<b>${esc(x.sub)}</b>`)]; if (i === 0) r.push(Gc(g, `<b>${GNAME[g].replace('الصف ', '')}</b>`, { rs: l.length }), Gc(g, `<b>${tot[g]}</b>`, { rs: l.length })); r.push('☐', ''); rows.push(r); }); });
+  fxAdds('receipt').forEach(x => rows.push([{ v: `<b>${esc(x.n)}</b>`, al: 'right' }, esc(x.w || ''), '', '', '☐', '']));
   return T(rows, { cls: 'tall' });
 }
+const ST_MODES = ['ورقياً', 'إلكترونياً', 'ورقياً وإلكترونياً'];
+const ST_PARTS = 'الدور الأول + الدور الثاني + نموذج الإجابة';
+function stDue(x) { const iso = x.due || S.s.deadlineIso || ''; return iso ? hDate(iso) : (S.s.deadline || ''); }
+function stCount(x) { const t = gradeTotals(); return x.n || t[x.g] || ''; }
+function stDefaultsBar() {
+  const d = S.s.stDef || {};
+  return `<details class="fold stdef"${SD_OPEN.v ? ' open' : ''}><summary>⚙ إعدادات عامة لجميع المكلفين (تُطبَّق على من لم تُحدَّد له قيمة خاصة)</summary><div class="stgrid">
+    <label>درجة الاختبار${inp('s.mark', S.s.mark, { num: 1, type: 'number', style: 'width:6rem' })}</label>
+    <label>آخر موعد للتسليم<input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}"></label>
+    <label>طريقة الإعداد<select class="in" data-k="s.stDef.mode">${ST_MODES.map(m => `<option${(d.mode || 'ورقياً') === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
+    <label>المطلوب تسليمه${inp('s.stDef.parts', d.parts || ST_PARTS)}</label>
+    <label>اختيار من متعدد (فقرة)${inp('s.stDef.mc', d.mc || '', { ph: '—', style: 'width:5rem' })}</label>
+    <label>مزاوجة (فقرة)${inp('s.stDef.mt', d.mt || '', { ph: '—', style: 'width:5rem' })}</label>
+    <label>صواب وخطأ (فقرة)${inp('s.stDef.tf', d.tf || '', { ph: '—', style: 'width:5rem' })}</label>
+    <label>أخرى${inp('s.stDef.otn', d.otn || '', { ph: 'نوع السؤال', style: 'width:8rem' })}${inp('s.stDef.ot', d.ot || '', { ph: 'فقرة', style: 'width:4.5rem' })}</label>
+  </div><div class="acts"><button class="btn sm ghost" type="button" data-act="stResetAll">مسح القيم الخاصة من كل المواد (اعتماد العامة)</button></div></details>`;
+}
+function stRow(x, i) {
+  const tos = teachersOfSubject(x.sub, x.g), co = x.co || [], d = S.s.stDef || {};
+  const chips = co.map((n, j) => `<span class="chip">${esc(n)}<button type="button" class="x" data-act="stCoDel" data-i="${i}" data-j="${j}" title="إزالة">×</button></span>`).join('');
+  const pool = tchAll().filter(n => n !== x.t && !co.includes(n)), first = tos.filter(n => pool.includes(n));
+  const addSel = `<select class="in coadd" data-coadd="${i}"><option value="">➕ إضافة معلم مشارك…</option>${first.length ? `<optgroup label="معلمو المادة">${first.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` : ''}<optgroup label="جميع المعلمين">${pool.filter(n => !first.includes(n)).map(n => `<option>${esc(n)}</option>`).join('')}</optgroup><option value="__new">✎ كتابة اسم غير موجود…</option></select>`;
+  const custom = x.n || x.due || x.mode || x.parts || x.mc || x.mt || x.tf || x.ot || x.otn || co.length;
+  return `<tr><td>${pickSel(`st.${i}.sub`, x.sub, subOpts(x.g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td><select class="in" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td>${pickSel(`st.${i}.t`, x.t, tchOpts(tos, 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}${co.length ? `<div class="chips">${chips}</div>` : ''}</td><td class="tnames">${esc(tos.join('، ')) || '<span class="warnt">لا يوجد</span>'}</td><td>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark), style: 'width:5rem' })}</td><td><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف">×</button></td></tr>
+  <tr class="stdet"><td colspan="6"><details class="fold" data-sto="${i}"${ST_OPEN[i] ? ' open' : ''}><summary>⚙ التفاصيل${custom ? ' <span class="badge">مخصّص</span>' : ''} — ${esc(stCount(x))} ورقة · ${esc(x.mark || S.s.mark)} درجة · ${esc(stDue(x) || 'بدون موعد')}${co.length ? ` · ${co.length + 1} معلمين` : ''}</summary><div class="stgrid">
+    <label>معلم مشارك${addSel}</label>
+    <label>العدد المطلوب (أوراق)${inp(`st.${i}.n`, x.n || '', { num: 1, type: 'number', ph: String(gradeTotals()[x.g] || ''), style: 'width:6rem' })}</label>
+    <label>موعد التسليم<input class="in" type="date" data-k="st.${i}.due" value="${esc(x.due || '')}">${x.due ? `<small class="fdv">${esc(hDate(x.due))}</small>` : `<small class="mut">${S.s.deadline ? 'العام: ' + esc(S.s.deadline) : 'العام غير محدد'}</small>`}</label>
+    <label>طريقة الإعداد<select class="in" data-k="st.${i}.mode"><option value="">(العامة: ${esc(d.mode || 'ورقياً')})</option>${ST_MODES.map(m => `<option${x.mode === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
+    <label>المطلوب تسليمه${inp(`st.${i}.parts`, x.parts || '', { ph: d.parts || ST_PARTS })}</label>
+    <label>اختيار من متعدد${inp(`st.${i}.mc`, x.mc || '', { ph: d.mc || 'فقرة', style: 'width:5rem' })}</label>
+    <label>مزاوجة${inp(`st.${i}.mt`, x.mt || '', { ph: d.mt || 'فقرة', style: 'width:5rem' })}</label>
+    <label>صواب وخطأ${inp(`st.${i}.tf`, x.tf || '', { ph: d.tf || 'فقرة', style: 'width:5rem' })}</label>
+    <label>أخرى${inp(`st.${i}.otn`, x.otn || '', { ph: d.otn || 'نوع السؤال', style: 'width:8rem' })}${inp(`st.${i}.ot`, x.ot || '', { ph: d.ot || 'فقرة', style: 'width:4.5rem' })}</label>
+  </div><div class="acts"><button class="btn sm ghost" type="button" data-act="stCopyG" data-i="${i}">نسخ هذه التفاصيل لكل مواد ${GSHORT[x.g] || ''}</button><button class="btn sm ghost" type="button" data-act="stCopyAll" data-i="${i}">نسخها لجميع المواد</button><button class="btn sm ghost" type="button" data-act="stReset" data-i="${i}">اعتماد الإعدادات العامة</button><button class="btn sm" type="button" data-act="stPrev" data-i="${i}">👁 معاينة خطاب هذه المادة</button></div></details></td></tr>`;
+}
+const ST_OPEN = {}, SD_OPEN = { v: 0 };
+document.addEventListener('toggle', e => { const d = e.target; if (!d.dataset) return; if (d.dataset.sto != null) ST_OPEN[d.dataset.sto] = d.open; if (d.classList && d.classList.contains('stdef')) SD_OPEN.v = d.open; }, true);
+const ST_KEYS = ['n', 'due', 'mode', 'parts', 'mc', 'mt', 'tf', 'ot', 'otn', 'mark'];
 function assignPages(o) {
-  const tot = gradeTotals(); const gs = S.s.gs || {};
-  return S.st.filter(x => gOk(o, x.g)).flatMap(x => { const letter =
-    T([[{ v: `<b style="font-size:15pt">تكليف وضع أسئلة الاختبارات النهائية</b><br>للعام الدراسي ${esc(S.s.yearTxt)} ( الفصل الدراسي ${esc(S.s.sem)} )`, bg: HCOL, cs: 3 }], [L('الأخ المعلم', { w: '25%' }), { v: `<b style="font-size:14pt">${esc(x.t)}</b>` }, L('وفقه الله', { w: '20%' })]]) + sp(10) +
-    `<p class="txt">السلام عليكم ورحمة الله وبركاته</p><p class="txt">نظراً لقرب موعد الاختبارات النهائية للفصل الدراسي ${esc(S.s.sem)}، وبناءً على الصلاحيات الممنوحة لمدير المدرسة، وبناءً على ما تقتضيه مصلحة العمل، واستناداً إلى ما ورد في الدليل التنظيمي للاختبارات النهائية،</p>
-    <p class="txt">عليه فقد تم تكليفكم بوضع أسئلة الاختبار الموضحة أدناه بالجدول ( ورقياً ) مع مراعاة شروط إعداد أسئلة الاختبارات ووضع نماذج الإجابة وتسليمها لإدارة المدرسة في موعد أقصاه ${S.s.deadline ? `<b>${esc(S.s.deadline)}</b>` : 'يوم ........................ الموافق &nbsp;&nbsp; / &nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; هـ'} أسئلة ( الدور الأول + الدور الثاني + نموذج الإجابة ).</p><p class="txt">وتقبلوا تحياتنا ...</p>` +
-    T([[H('المقرر'), H('الشعب الدراسية'), H('العدد المطلوب'), H('درجة الاختبار')], [Gc(x.g, `<b>${esc(x.sub)}</b>`), GNAME[x.g].replace('الصف ', ''), `<b>${tot[x.g]}</b>`, `<b>${x.mark || S.s.mark}</b>`]]) + sp(8) +
-    T([[H('يتم تقسيم درجات الأسئلة وفق التالي :', { cs: 2 })], ['........ فقرة', 'اختيار من متعدد'], ['........ فقرة', 'مزاوجة'], ['........ فقرة', 'صواب وخطأ'], ['........ فقرة', 'أخرى: ....................']]) + sp(20) +
-    sigs([['المعلم', x.t], ['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]);
-  if (!gs.include) return [letter];
-  if (gs.place === 'inside') return [letter.replace(/<table class="sg"[\s\S]*$/, '') + `<p class="lbl" style="text-align:center">بيان توزيع الدرجات</p>` + gsContent(true) + sp(6) + sigs([['المعلم', x.t], ['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]])];
-  return [letter, title('بيان توزيع الدرجات', `مرفق بتكليف وضع أسئلة مادة ${esc(x.sub)} – ${GNAME[x.g]}`) + gsContent(false)];
-  });
+  const gs = S.s.gs || {}, d = S.s.stDef || {};
+  const list = o && o.only != null ? [S.st[o.only]].filter(Boolean) : S.st.filter(x => gOk(o, x.g) && (x.sub || x.t));
+  return list.flatMap(x => [x.t, ...(x.co || [])].filter(Boolean).concat(x.t ? [] : ['']).flatMap(tn => {
+    const due = stDue(x), mode = x.mode || d.mode || 'ورقياً', parts = x.parts || d.parts || ST_PARTS, mark = x.mark || S.s.mark;
+    const others = [x.t, ...(x.co || [])].filter(n => n && n !== tn);
+    const v = (k, ph) => x[k] || d[k] ? `<b>${esc(x[k] || d[k])}</b> فقرة` : (ph || '........ فقرة');
+    const otn = x.otn || d.otn;
+    const letter =
+    T([[{ v: `<b style="font-size:14pt">تكليف وضع أسئلة الاختبارات النهائية</b><br>للعام الدراسي ${esc(S.s.yearTxt)} ( الفصل الدراسي ${esc(S.s.sem)} )`, bg: HCOL, cs: 3 }], [L('الأخ المعلم', { w: '22%' }), { v: `<b style="font-size:13.5pt">${esc(tn) || '................................................'}</b>` }, L('وفقه الله', { w: '18%' })]]) + sp(6) +
+    `<p class="txt">السلام عليكم ورحمة الله وبركاته</p><p class="txt">نظراً لقرب موعد الاختبارات النهائية للفصل الدراسي ${esc(S.s.sem)}، وبناءً على الصلاحيات الممنوحة لمدير المدرسة، وما تقتضيه مصلحة العمل، واستناداً إلى ما ورد في الدليل التنظيمي للاختبارات النهائية،</p>
+    <p class="txt">فقد تم تكليفكم بوضع أسئلة الاختبار الموضحة أدناه بالجدول ( ${esc(mode)} )${others.length ? ` بالمشاركة مع الأستاذ/ ${others.map(esc).join(' والأستاذ/ ')}` : ''} مع مراعاة شروط إعداد أسئلة الاختبارات ووضع نماذج الإجابة، وتسليمها لإدارة المدرسة في موعد أقصاه ${due ? `<b>${esc(due)}</b>` : 'يوم ................ الموافق &nbsp; / &nbsp; / &nbsp;&nbsp;&nbsp; هـ'}، والمطلوب: ( ${esc(parts)} ).</p><p class="txt">وتقبلوا تحياتنا ...</p>` +
+    T([[H('المقرر'), H('الصف'), H('العدد المطلوب'), H('درجة الاختبار')], [Gc(x.g, `<b>${esc(x.sub)}</b>`), GNAME[x.g] ? GNAME[x.g].replace('الصف ', '') : '', `<b>${esc(stCount(x))}</b>`, `<b>${esc(mark)}</b>`]]) + sp(6) +
+    T([[H('يتم تقسيم درجات الأسئلة وفق التالي :', { cs: 2 })], [v('mc'), 'اختيار من متعدد'], [v('mt'), 'مزاوجة'], [v('tf'), 'صواب وخطأ'], [v('ot'), 'أخرى: ' + (otn ? `<b>${esc(otn)}</b>` : '....................')]]) + sp(12) +
+    sigs([['المعلم', tn], ['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]]);
+    if (!gs.include) return [letter];
+    if (gs.place === 'inside') return [letter.replace(/<table class="sg"[\s\S]*$/, '') + `<p class="lbl" style="text-align:center">بيان توزيع الدرجات</p>` + gsContent(true) + sp(6) + sigs([['المعلم', tn], ['وكيل الشؤون التعليمية', S.s.eduDep], ['مدير المدرسة', S.s.principal]])];
+    return [letter, title('بيان توزيع الدرجات', `مرفق بتكليف وضع أسئلة مادة ${esc(x.sub)} – ${GNAME[x.g]}`) + gsContent(false)];
+  }));
 }
 function completePages(o) {
   return G.filter(g => gOk(o, g)).map(g => {
@@ -2146,7 +2198,7 @@ function stListPages(o = {}) {
   return out;
 }
 function tListPages() {
-  const t = arSort(S.teachers.filter(Boolean)), D = densOf(), pg = Math.max(1, Math.ceil(t.length / (D.per * 2))), half = Math.max(1, Math.ceil(t.length / (pg * 2))), out = [];
+  const t = arSort(fxList('tList', S.teachers.filter(Boolean))), D = densOf(), pg = Math.max(1, Math.ceil(t.length / (D.per * 2))), half = Math.max(1, Math.ceil(t.length / (pg * 2))), out = [];
   for (let k = 0; k < Math.max(1, t.length); k += half * 2) {
     const rows = [[H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' }), H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' })]];
     const a = t.slice(k, k + half), b = t.slice(k + half, k + half * 2);
@@ -2171,7 +2223,7 @@ function taLoadPages() {
 const OBS_INSTR = ['التأكد من أن الأسئلة وورقة الإجابة الموزعة تخص الطالب.', 'التأكد من أن الطالب قام بكتابة اسمه على ورقة الأسئلة.', 'يحل الطالب جميع الأسئلة بورقة الأسئلة بقلم أزرق، وبعد مضي نصف ساعة يتم توزيع ورقة الإجابة ليظلل الإجابات بالقلم الرصاص المعتمد من إدارة المدرسة، والتأكد من أن الطالب قام بعملية التظليل لكافة الإجابات.', 'عند انتهاء الطالب من الإجابة تجمع أوراق الأسئلة والإجابات وأقلام الرصاص.', 'التأكد من أن الطالب في مكانه المخصص حسب الكروكي المعلق بالباب.', 'يجب وجود الملاحظ داخل اللجنة قبل دخول الطلاب (بربع ساعة) وعليه أن يأخذ وضعاً مناسباً أثناء الملاحظة.', 'لا ينبغي جلوس الملاحظ في اللجنة حتى خروج آخر طالب، وفي حالة وجود ما يبرر ذلك عليه إبلاغ المشرف فوراً لاستبداله بملاحظ آخر.', 'يجب العمل على إيجاد الهدوء داخل اللجنة والبعد عن الضجيج.', 'ينبغي للملاحظ أن يتصرف بحكمة وأن يأخذ الأمور بروية وأن يبتعد عن الانفعال.', 'عند ملاحظة أي أمر يؤثر على سير الاختبار يقوم الملاحظ بإبلاغ أقرب مسؤول ولا ينشغل عن ملاحظة اللجنة.', 'لا يجوز السماح داخل اللجنة بتبادل الأدوات المكتبية بين الطلاب، أو أوراق الأسئلة أو سواها.', 'ممنوع الانشغال بترتيب أوراق الإجابة وتنظيمها أو أي أمر آخر داخل اللجنة طالما أن فيها طلاباً.', 'لا يسمح الملاحظ بخروج أي طالب من اللجنة قبل مضي نصف الوقت وسماع الجرس، وينبغي أن يتم توقيع الطالب في كشف تسليم أوراق الإجابة على مقعده دون قيامه.', 'الزمن المقرر للإجابة ملك الطالب وعلى الملاحظ تركه حتى نهاية الوقت المقرر لكل مادة.', 'في حالة غياب طالب يتم تظليل ورقة الإجابة بقلم الرصاص في المكان المخصص لذلك وتوضع في ترتيبها مع أوراق الإجابة، ويكتب محضر غياب للطالب المتغيب ويوقع من قبل الملاحظ ومراقب اللجنة ويسلم للكنترول.', 'لا يحق لأحد قراءة أسئلة الاختبار ويجوز ذلك لواضع الأسئلة عند الحاجة وبعد موافقة المشرف على الاختبار.', 'اللجنة تحت مسؤولية الملاحظ وحده وعليه ألا يسمح لأحد بدخولها ما لم تكن له صفة رسمية.', 'عند ملاحظة غش طالب أو محاولته على الملاحظ ضبط وسيلة الغش واستدعاء المشرف على الاختبار لاتخاذ الإجراء المناسب وإعداد المحضر اللازم بهذا الشأن.', 'يجب ترتيب أوراق الإجابة حسب الكشف وكل مرحلة على حدة قبل تسليمها للجنة الكنترول.', 'إذا احتاج أحد الطلاب الذهاب إلى دورة المياه على الملاحظ استدعاء أحد المشرفين على اللجان بعد التأكد من جدية الطالب.', 'يمنع طرد أي طالب من اللجنة عند أي مشكلة وعلى الملاحظ استدعاء المشرف لاتخاذ اللازم.', 'التأكيد على الطلاب بعدم طي أو ثني أوراق الإجابات.'];
 function obsInstrPages() {
   const p1 = title('مهام ومسؤوليات ملاحظي اللجان', yearLine()) + `<p class="txt">فيما يلي بعض مهام ومسؤوليات ملاحظي اللجان آمل الاطلاع عليها والتقيد بها :</p><ol class="ins small">${OBS_INSTR.map(x => `<li>${x}</li>`).join('')}</ol>`;
-  const t = S.teachers, half = Math.ceil(t.length / 2), pages = [p1];
+  const t = fxList('obsInstr', S.teachers.filter(Boolean)), half = Math.ceil(t.length / 2), pages = [p1];
   const per = fitPer(half, 26);
   for (let s = 0; s < Math.max(1, half); s += per) {
     const rows = [[H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' }), H('م', { w: '5%' }), H('اسم المعلم'), H('التوقيع', { w: '14%' })]];
@@ -2277,12 +2329,36 @@ function stuGuidePage() {
 }
 
 /* ----- عرض النماذج ----- */
+/* حرية الأسماء: لكل نموذج فيه أسماء يمكن حذف أي اسم أو إضافة أسماء جديدة دون المساس بالبيانات الأصلية */
+const FX_FORMS = { tList: 'المعلمون في الكشف', obsInstr: 'المعلمون الموقّعون على التعليمات', receipt: 'المعلمون في بيان الاستلام', openEnv: 'أعضاء لجنة فتح المظروف', agree: 'المعلمون في محضر الاتفاقية' };
+function fxOf(id) { S.s.fx = S.s.fx || {}; return S.s.fx[id] || { rm: [], add: [] }; }
+function fxRm(id, n) { return (fxOf(id).rm || []).includes(normName(n || '')); }
+function fxAdds(id) { return (fxOf(id).add || []).filter(x => x && x.n); }
+function fxList(id, names) { return names.filter(n => n && !fxRm(id, n)).concat(fxAdds(id).map(x => x.n)); }
+function fxBase(id) {
+  if (id === 'tList' || id === 'obsInstr') return S.teachers.filter(Boolean);
+  if (id === 'receipt') return [...new Set(S.st.map(x => x.t).filter(Boolean))];
+  if (id === 'openEnv') { const l = S.s.openMembers.map(m => m.n).filter(Boolean); if (S.s.openWithTeachers) sessions().forEach(se => sessionSubjects(se).forEach(x => { const t = teacherOf(x.sub, x.g); if (t) l.push(t); })); return [...new Set(l)]; }
+  if (id === 'agree') { const l = []; sessions().forEach(se => sessionSubjects(se).forEach(x => { let t = teachersOfSubject(x.sub, x.g); if (!t.length) t = S.st.filter(s => s.sub.trim() === x.sub && +s.g === x.g).map(s => s.t).filter(Boolean); l.push(...t); })); return [...new Set(l)]; }
+  return [];
+}
+function fxPanel(id) {
+  if (!FX_FORMS[id]) return '';
+  const base = fxBase(id), adds = fxAdds(id), f = fxOf(id), nrm = (f.rm || []).length;
+  const pool = tchAll().filter(n => !base.includes(n) && !adds.some(x => x.n === n));
+  const wLbl = id === 'agree' ? 'المادة' : id === 'openEnv' ? 'العمل' : id === 'receipt' ? 'المادة' : '';
+  return `<div class="fxp"><div class="fxh">👥 ${FX_FORMS[id]} <small class="mut">(${base.length - nrm + adds.length} اسماً — اضغط الاسم لاستبعاده أو إرجاعه)</small></div>
+  <div class="chips fxc">${base.map(n => `<button type="button" class="chip${fxRm(id, n) ? ' off' : ' on'}" data-act="fxTog" data-fx="${id}" data-n="${esc(n)}">${fxRm(id, n) ? '↺ ' : '✓ '}${esc(n)}</button>`).join('') || '<span class="mut">لا توجد أسماء من البيانات</span>'}
+  ${adds.map((x, j) => `<span class="chip on add">➕ ${esc(x.n)}${x.w ? ` <small>(${esc(x.w)})</small>` : ''}<button type="button" class="x" data-act="fxDel" data-fx="${id}" data-j="${j}" title="حذف">×</button></span>`).join('')}</div>
+  <div class="fxadd"><select class="in" data-fxadd="${id}"><option value="">➕ إضافة اسم…</option>${pool.map(n => `<option>${esc(n)}</option>`).join('')}<option value="__new">✎ كتابة اسم جديد…</option></select>${wLbl ? `<input class="in" id="fxw_${id}" placeholder="${wLbl} (اختياري)" style="max-width:11rem">` : ''}
+  ${nrm || adds.length ? `<button type="button" class="btn sm ghost" data-act="fxReset" data-fx="${id}">استعادة الأسماء الأصلية</button>` : ''}${base.length ? `<button type="button" class="btn sm ghost" data-act="fxNone" data-fx="${id}">استبعاد الكل</button>` : ''}</div></div>`;
+}
 function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   const dl = id === 'assign' ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
-  const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
-  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}</div>`;
+  const optsHtml = fdCtl(id) + dl + fxPanel(id), sum = [FX_FORMS[id] && ((fxOf(id).rm || []).length || fxAdds(id).length) ? '👥 أسماء معدّلة' : '', fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
+  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ ${FX_FORMS[id] ? 'الأسماء والتاريخ' : 'التاريخ على النموذج'}${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}</div>`;
 }
 let PV = null; var QOPEN = {};
 function openPreview(groups, name) {
@@ -2344,7 +2420,12 @@ function vForms() {
       <div id="preview" class="preview"></div>
     </div></div>`;
 }
+/* خط الصفحات يدمج «الله» في رمز واحد بشدة (ﷲ) فتظهر الأسماء مثل «عبدالله» بشكل غير مألوف — نفصلها بمحرف ربط غير مرئي يُبقي الحروف متصلة */
+function deLig(t) { return String(t).replace(/لله/g, 'لل\u200dه'); }
+function deLigHtml(h) { return String(h).replace(/>([^<]+)</g, (m, x) => '>' + deLig(x) + '<'); }
+function deLigDom(root) { if (!root) return; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => /^(TEXTAREA|OPTION|SCRIPT|STYLE)$/.test(n.parentNode.nodeName) || !/لله/.test(n.nodeValue) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); const L = []; let n; while ((n = tw.nextNode())) L.push(n); L.forEach(x => { x.nodeValue = deLig(x.nodeValue); }); }
 function pageWrap(content, land) {
+  content = deLigHtml(content);
   return `<div class="page${land ? ' land' : ''}"><img class="brand-hdr phdr" src="${HDR}" alt=""><div class="pbody">${content}</div><img class="brand-ftr pftr" src="${FTR}" alt=""></div>`;
 }
 /* ===== تاريخ النموذج (للنماذج التي تُوزَّع قبل الاختبارات) ===== */
@@ -2451,7 +2532,16 @@ function applyFill(el, plan) {
 }
 function layoutPages(els) { els.forEach(el => { try { applyFill(el, planFill(el)); } catch (e) { } }); }
 function waitImgs(root) { return Promise.all($$('img', root).map(i => i.complete ? 1 : new Promise(r => { i.onload = r; i.onerror = r; }))); }
+/* سفاري (آيفون وآيباد وماك) يضيف رأساً وتذييلاً وهوامش للطباعة فيتجاهل ضبط الصفحة، فيُطبع النموذج فيها من PDF مقاسه A4 بالضبط: صفحة لكل صفحة */
+function printViaPdf() { const u = navigator.userAgent; return /iPad|iPhone|iPod/.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (/Safari/.test(u) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(u)); }
 async function printPages(groups) {
+  if (printViaPdf()) {
+    const w = window.open('', '_blank'); if (w) { try { w.document.write('<meta name="viewport" content="width=device-width"><p dir="rtl" style="font:18px -apple-system,sans-serif;padding:40px;text-align:center;color:#0b3a46">جارٍ تجهيز الصفحات للطباعة…<br><small style="color:#777">ستظهر بعد لحظات، ثم اضغط زر المشاركة ⎋ ثم «طباعة»</small></p>'); } catch (e) { } }
+    const blob = await downloadPdf(groups, 'طباعة', { blob: true });
+    if (!blob) { if (w) w.close(); return; }
+    const url = URL.createObjectURL(blob); if (w) w.location.href = url; else download(blob, fname('طباعة') + '.pdf');
+    toast('افتح الملف ثم اختر «طباعة» من زر المشاركة — كل نموذج في صفحته كاملاً'); setTimeout(() => URL.revokeObjectURL(url), 120000); return;
+  }
   const root = $('#printRoot');
   root.innerHTML = groups.map(g => g.pages.map(p => pageWrap(p, g.land)).join('')).join('');
   await waitImgs(root);
@@ -2483,7 +2573,7 @@ function wordDoc(groups, name) {
   const CLS = { ih: { size: 11, bold: true }, dt: { size: 15, bold: true, center: true }, ds: { size: 10.5, center: true }, txt: { size: 12.5, justify: true }, lbl: { size: 12, bold: true }, note: { size: 9.5 }, cut: { size: 10, center: true, color: '999999' } };
   function runs(node, st, out) {
     node.childNodes.forEach(n => {
-      if (n.nodeType === 3) { const t = n.nodeValue.replace(/\s+/g, ' '); if (t.trim() || (t === ' ' && out.length)) out.push(new D.TextRun({ text: t, bold: st.bold, boldComplexScript: st.bold, color: st.color || undefined, size: Math.round(st.size * 2), sizeComplexScript: Math.round(st.size * 2), rightToLeft: true, font: { ascii: 'Arial', hAnsi: 'Arial', cs: 'Arial' } })); return; }
+      if (n.nodeType === 3) { const t = deLig(n.nodeValue.replace(/\s+/g, ' ')); if (t.trim() || (t === ' ' && out.length)) out.push(new D.TextRun({ text: t, bold: st.bold, boldComplexScript: st.bold, color: st.color || undefined, size: Math.round(st.size * 2), sizeComplexScript: Math.round(st.size * 2), rightToLeft: true, font: { ascii: 'Arial', hAnsi: 'Arial', cs: 'Arial' } })); return; }
       if (n.nodeType !== 1) return;
       if (n.tagName === 'BR') { out.push(new D.TextRun({ text: '', break: 1 })); return; }
       if (n.tagName === 'IMG') { const src = n.getAttribute('src') || ''; if (src.startsWith('data:image/')) out.push(new D.ImageRun({ data: b64ToBytes(src), transformation: { width: +n.getAttribute('width') || 50, height: +n.getAttribute('height') || 50 } })); return; }
@@ -2995,6 +3085,8 @@ document.addEventListener('change', async e => {
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
   if (el.dataset.fd) { if (!S.s.fdate) S.s.fdate = {}; const k = el.dataset.fd, o = S.s.fdate[k] = S.s.fdate[k] || {}; o[el.dataset.f] = el.value;
     if (el.dataset.f === 'm' && el.value === 'fix' && !o.d) o.d = todayIso(); if (el.dataset.f === 'm' && el.value === 'all') delete S.s.fdate[k]; save(); render(); return; }
+  if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id) || {}).value || ''; S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(id).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[id] = true; save(); render(); return toast('أُضيف ' + v); }
+  if (el.dataset.coadd != null) { const x = S.st[+el.dataset.coadd]; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('اسم المعلم المشارك:') || '').trim(); if (!v) { el.value = ''; return; } } (x.co = x.co || []).includes(v) || x.co.push(v); ST_OPEN[+el.dataset.coadd] = 1; save(); render(); return toast('أُضيف ' + v + ' — سيصدر له خطاب مستقل'); }
   if (el.dataset.dl) { S.s.deadlineIso = el.value; S.s.deadline = el.value ? hDate(el.value) : ''; save(); render(); return toast(el.value ? `آخر موعد للتسليم: ${S.s.deadline}` : 'أُزيل الموعد'); }
   if (el.classList.contains('fo')) { FO[el.dataset.o] = el.value; renderPreview(); return; }
   if (el.id === 'devName') { try { localStorage.setItem(LS_KEY + '-dev', el.value.trim()); } catch (e) { } toast('حُفظ اسم الجهاز — يظهر للأجهزة الأخرى عند وصول تعديلاتك'); return; }
@@ -3048,7 +3140,18 @@ document.addEventListener('click', async e => {
     case 'stuWord': return wordDoc([{ land: false, pages: stuPages() }], fname(SF.title.trim() || 'كشف الطلاب'));
     case 'stuExcel': return stuExcel();
     case 'addSt': S.st.push({ sub: '', g: 1, t: '' }); return re();
-    case 'delSt': S.st.splice(i, 1); return re();
+    case 'delSt': S.st.splice(i, 1); Object.keys(ST_OPEN).forEach(k => delete ST_OPEN[k]); return re();
+    case 'fxTog': case 'fxDel': case 'fxReset': case 'fxNone': { const id = b.dataset.fx; S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.rm = f.rm || []; f.add = f.add || [];
+      if (a === 'fxTog') { const k = normName(b.dataset.n); f.rm = f.rm.includes(k) ? f.rm.filter(z => z !== k) : f.rm.concat(k); }
+      if (a === 'fxDel') f.add.splice(j, 1);
+      if (a === 'fxReset') { f.rm = []; f.add = []; toast('أُعيدت الأسماء الأصلية'); }
+      if (a === 'fxNone') f.rm = fxBase(id).map(normName);
+      QOPEN[id] = true; return re(); }
+    case 'stCoDel': { const x = S.st[i]; x.co.splice(j, 1); ST_OPEN[i] = 1; return re(); }
+    case 'stCopyG': case 'stCopyAll': { const src = S.st[i]; let n = 0; S.st.forEach((x, k) => { if (k === i || (a === 'stCopyG' && +x.g !== +src.g)) return; ST_KEYS.filter(q => q !== 'n' || +x.g === +src.g).forEach(q => { if (src[q]) x[q] = src[q]; else delete x[q]; }); n++; }); toast(`نُسخت التفاصيل إلى ${n} مادة`); return re(); }
+    case 'stReset': { ST_KEYS.forEach(q => delete S.st[i][q]); ST_OPEN[i] = 1; toast('تعتمد هذه المادة الإعدادات العامة الآن'); return re(); }
+    case 'stResetAll': { if (!confirm('مسح القيم الخاصة لكل المواد واعتماد الإعدادات العامة؟ (المعلمون لا يتأثرون)')) return; S.st.forEach(x => ST_KEYS.forEach(q => delete x[q])); return re(); }
+    case 'stPrev': { const x = S.st[i]; return openPreview([{ land: false, pages: assignPages({ only: i }) }], fname('تكليف وضع أسئلة ' + (x.sub || '') + ' - ' + (GSHORT[x.g] || ''))); }
     case 'stFromSchedule': { let n = 0; S.days.forEach(d => d.p.forEach(p => G.forEach(g => { const s = (p.s[g] || '').trim(); if (s && !S.st.some(x => x.sub.trim() === s && +x.g === g)) { S.st.push({ sub: s, g, t: '' }); n++; } }))); toast(n ? `أضيفت ${n} مادة` : 'كل مواد الجدول موجودة'); return re(); }
     case 'autoObs': if (!autoObservers()) toast('أضف أسماء المعلمين أولاً', true); else toast('تم توزيع الملاحظين على جميع الفترات'); return re();
     case 'clearObs': S.obs = {}; return re();
