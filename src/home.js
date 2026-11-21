@@ -133,15 +133,14 @@ function vHome() {
   <section class="card bags">
     <h2>الحقائب الجاهزة</h2>
     <p class="hint">كل حقيبة ملف واحد مرتب بغلاف وفهرس بأرقام الصفحات. اختيارات «حقيبة اليوم» أعلاه تنطبق على أوراق كل الأيام.</p>
-    <div class="bgrid">
+    <div class="blist">
       <div class="bcard star"><div class="bct"><b>الملف الشامل لأعمال الاختبارات</b><small>كل المراحل وكل الأيام في ملف واحد للتقديم للإدارة</small></div>${bagBtns('full')}</div>
-      <div class="bcard"><div class="bct"><b>حقيبة كل الأيام</b><small>أوراق جميع أيام الاختبار مرتبة يوماً يوماً (${S.days.length} أيام)</small></div>${bagBtns('alldays')}</div>
-      ${STAGES.map((st, i) => `<div class="bcard"><div class="bct"><span class="stn">${i + 1}</span><b>${st.t}</b><small>${st.d}</small></div>${bagBtns('stage', st.k)}</div>`).join('')}
+      ${[['alldays', null, 'حقيبة كل الأيام', `أوراق أيام الاختبار (${S.days.length} أيام)`], ...STAGES.map((st, i) => ['stage', st.k, `${i + 1}. ${st.t}`, st.d])].map(([k, a, t, d]) => `<div class="brow"><div class="bct"><b>${t}</b><small>${d}</small></div>${bagBtns(k, a)}</div>`).join('')}
     </div>
   </section>
   <section class="card lib">
     <div class="libh"><h2>مكتبة النماذج</h2><input class="in" id="libQ" type="search" placeholder="ابحث في النماذج… مثل: غياب، لجنة، تكليف" value="${esc(LIBQ)}"></div>
-    <div class="libgrid" id="libGrid">${libCards()}</div>
+    <div class="libwrap" id="libGrid">${libCards()}</div>
   </section>`;
 }
 let LIBQ = '';
@@ -150,8 +149,13 @@ function libCards() {
   const q = normName(LIBQ);
   const list = FORMS.filter(f => !q || normName(f.t + ' ' + f.grp + ' ' + (KW[f.id] || '')).includes(q));
   if (!list.length) return '<p class="hint">لا توجد نماذج مطابقة.</p>';
-  return list.map(f => `<button type="button" class="lcard" data-act="libOpen" data-v="${f.id}"><span class="lthumb${f.land ? ' land' : ''}" data-thumb="${f.id}"></span><span class="lt">${esc(f.t)}</span><small>${esc(f.grp)}${f.land ? ' · أفقي' : ''}</small></button>`).join('');
+  const row = f => `<button type="button" class="lrow" data-act="libOpen" data-v="${f.id}"><span class="lt">${esc(f.t)}</span>${f.land ? '<small class="lland">أفقي</small>' : ''}<span class="lgo">معاينة ←</span></button>`;
+  if (q) return `<div class="lrows">${list.map(row).join('')}</div>`;
+  const grps = [...new Set(list.map(f => f.grp))];
+  return grps.map(g => { const l = list.filter(f => f.grp === g); return `<details class="lgrp"${LIBOPEN[g] ? ' open' : ''} data-lg="${esc(g)}"><summary><b>${esc(g)}</b><span class="lcnt">${l.length}</span></summary><div class="lrows">${l.map(row).join('')}</div></details>`; }).join('');
 }
+var LIBOPEN = {};
+document.addEventListener('toggle', e => { const d = e.target; if (d.classList && d.classList.contains('lgrp')) LIBOPEN[d.dataset.lg] = d.open; }, true);
 window.__thumbs = window.__thumbs || {};
 function renderThumbs() {
   const els = $$('[data-thumb]'); if (!els.length) return;
