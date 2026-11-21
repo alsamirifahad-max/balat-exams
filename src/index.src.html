@@ -1001,6 +1001,15 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .plm.hd .pn{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 7%,var(--surface))}
 .pli{font-size:.8rem;color:var(--muted);text-align:center}
 .pla{display:flex;gap:2px;align-items:center}
+.plmv{width:auto!important;max-width:3.6rem;padding:4px 4px!important;font-size:.8rem}
+.pladd{width:auto!important;max-width:16rem}
+.ined{display:flex;flex-direction:column;gap:10px}
+.intimes{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.intimes label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:700}.intimes .in{width:9rem}.intimes small{flex-basis:100%;font-size:.72rem}
+.inlist{margin:0;padding-inline-start:1.6em;display:flex;flex-direction:column;gap:8px}
+.inlist li{display:flex;flex-direction:column;gap:4px}.inlist li textarea{width:100%;min-width:0;resize:vertical;font-size:.88rem;line-height:1.55;min-height:4.2em}
+.inact{display:flex;gap:4px;justify-content:flex-end}.inact .pmv,.inact .x{width:30px;height:26px}
+.inprev{border:1px dashed var(--line);border-radius:12px;padding:8px 12px;font-size:.82rem}.inprev ul{margin:6px 0 0;padding-inline-start:1.2em}.inprev li{margin:3px 0}
 .pmv{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:7px;width:28px;height:30px;font-size:.62rem;cursor:pointer;padding:0}.pmv:disabled{opacity:.3}
 .pladv{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}.pladv>summary{cursor:pointer;font-size:.86rem;font-weight:700;color:var(--info)}
 .plf{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:700;color:var(--muted);margin:8px 0}.plf .in{width:100%;font-weight:500;color:var(--ink)}.plf textarea.in{line-height:1.7;resize:vertical}
@@ -1027,8 +1036,11 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
  .plm{grid-template-columns:22px minmax(0,1fr) minmax(0,1fr);row-gap:6px;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
  .plm .pn{grid-column:2/4;grid-row:1;min-height:42px;font-size:1rem}
  .plm select.in{grid-column:2;grid-row:2}.plm .pw{grid-column:3;grid-row:2}
- .plm .pk{grid-column:2/4;grid-row:3}
- .plm .pla{grid-column:2/4;grid-row:4;justify-content:flex-end;gap:6px}.pmv{width:38px;height:32px}
+ .plm{padding:7px!important;row-gap:5px!important}.plm .in{padding-top:6px;padding-bottom:6px;font-size:.88rem}
+ .plm .pn{min-height:38px!important;font-size:.95rem!important}
+ .plm .pk{grid-column:2;grid-row:3}
+ .plm .pla{grid-column:3;grid-row:3;justify-content:flex-end;gap:3px}.pmv{width:30px;height:30px}.plm .pla .x{width:28px}
+ .plm .plmv{max-width:3rem}
  .plstats b{font-size:1.15rem}.plout .btn{flex:1 1 100%}
  .mvf{grid-template-columns:1fr 1fr}
 }
@@ -1336,7 +1348,7 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 <div class="pvmodal" id="pvModal" hidden role="dialog" aria-label="معاينة قبل الطباعة">
   <div class="pvbar">
     <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div><button class="pvx" data-act="pvClose" type="button" aria-label="إغلاق">✕</button>
-    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvCols" type="button">☰ الخانات</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
+    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvEdit" id="pvEdit" type="button" hidden>✎ تعديل البيانات</button><button class="btn sm ghost" data-act="pvCols" type="button">☰ الخانات</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
   </div>
   <div class="pvcols" id="pvCols" hidden></div>
   <div class="pvbody" id="pvBody"></div>

@@ -1001,6 +1001,15 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .plm.hd .pn{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 7%,var(--surface))}
 .pli{font-size:.8rem;color:var(--muted);text-align:center}
 .pla{display:flex;gap:2px;align-items:center}
+.plmv{width:auto!important;max-width:3.6rem;padding:4px 4px!important;font-size:.8rem}
+.pladd{width:auto!important;max-width:16rem}
+.ined{display:flex;flex-direction:column;gap:10px}
+.intimes{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.intimes label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:700}.intimes .in{width:9rem}.intimes small{flex-basis:100%;font-size:.72rem}
+.inlist{margin:0;padding-inline-start:1.6em;display:flex;flex-direction:column;gap:8px}
+.inlist li{display:flex;flex-direction:column;gap:4px}.inlist li textarea{width:100%;min-width:0;resize:vertical;font-size:.88rem;line-height:1.55;min-height:4.2em}
+.inact{display:flex;gap:4px;justify-content:flex-end}.inact .pmv,.inact .x{width:30px;height:26px}
+.inprev{border:1px dashed var(--line);border-radius:12px;padding:8px 12px;font-size:.82rem}.inprev ul{margin:6px 0 0;padding-inline-start:1.2em}.inprev li{margin:3px 0}
 .pmv{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:7px;width:28px;height:30px;font-size:.62rem;cursor:pointer;padding:0}.pmv:disabled{opacity:.3}
 .pladv{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}.pladv>summary{cursor:pointer;font-size:.86rem;font-weight:700;color:var(--info)}
 .plf{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:700;color:var(--muted);margin:8px 0}.plf .in{width:100%;font-weight:500;color:var(--ink)}.plf textarea.in{line-height:1.7;resize:vertical}
@@ -1027,8 +1036,11 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
  .plm{grid-template-columns:22px minmax(0,1fr) minmax(0,1fr);row-gap:6px;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
  .plm .pn{grid-column:2/4;grid-row:1;min-height:42px;font-size:1rem}
  .plm select.in{grid-column:2;grid-row:2}.plm .pw{grid-column:3;grid-row:2}
- .plm .pk{grid-column:2/4;grid-row:3}
- .plm .pla{grid-column:2/4;grid-row:4;justify-content:flex-end;gap:6px}.pmv{width:38px;height:32px}
+ .plm{padding:7px!important;row-gap:5px!important}.plm .in{padding-top:6px;padding-bottom:6px;font-size:.88rem}
+ .plm .pn{min-height:38px!important;font-size:.95rem!important}
+ .plm .pk{grid-column:2;grid-row:3}
+ .plm .pla{grid-column:3;grid-row:3;justify-content:flex-end;gap:3px}.pmv{width:30px;height:30px}.plm .pla .x{width:28px}
+ .plm .plmv{max-width:3rem}
  .plstats b{font-size:1.15rem}.plout .btn{flex:1 1 100%}
  .mvf{grid-template-columns:1fr 1fr}
 }
@@ -1336,7 +1348,7 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 <div class="pvmodal" id="pvModal" hidden role="dialog" aria-label="معاينة قبل الطباعة">
   <div class="pvbar">
     <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div><button class="pvx" data-act="pvClose" type="button" aria-label="إغلاق">✕</button>
-    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvCols" type="button">☰ الخانات</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
+    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvEdit" id="pvEdit" type="button" hidden>✎ تعديل البيانات</button><button class="btn sm ghost" data-act="pvCols" type="button">☰ الخانات</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
   </div>
   <div class="pvcols" id="pvCols" hidden></div>
   <div class="pvbody" id="pvBody"></div>
@@ -2729,10 +2741,8 @@ function vSettings() {
   </section>
   <section class="card">
     <h2>تعليمات مهمة للاختبار</h2>
-    <p class="hint">تُطبع أسفل الجدول العام. كل سطر تعليمة مستقلة.</p>
-    <textarea class="in ta" data-k="s.instr" rows="8" id="f_instr">${esc(s.instr)}</textarea>
+    ${instrEditor()}
     <div class="grid">
-      <label>آخر موعد لتسليم الأسئلة (لخطاب التكليف) ${inp('s.deadline', s.deadline, { ph: 'مثال: الأربعاء 17 / 12 / 1447 هـ' })}</label>
       <label>درجة الاختبار الافتراضية ${inp('s.mark', s.mark, { num: 1, type: 'number' })}</label>
     </div>
   </section>`;
@@ -3283,7 +3293,7 @@ const FORMS = [
   // ===== الجداول
   { id: 'schedule', grp: 'الجداول', t: 'جدول الاختبارات العام', build: () => [
     title(`جدول الاختبارات العام للمرحلة الثانوية – الفصل الدراسي ${esc(S.s.sem)} ${esc(S.s.yearTxt)} – الدور ${esc(S.s.round)}`) + scheduleTable({ big: true }) + sp(8) +
-    `<div class="insbox"><p class="ih">تعليمات مهمة للاختبار</p><ul class="ins">${S.s.instr.split('\n').filter(x => x.trim()).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` + sp(10) +
+    `<div class="insbox"><p class="ih">تعليمات مهمة للاختبار</p><ul class="ins">${instrLines().map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` + sp(10) +
     `<table class="sg" dir="rtl" border="0" width="100%"><tr><td style="text-align:center;width:33%"><div class="sbox"><b>وكيل الشؤون التعليمية</b><br><br>${esc(S.s.eduDep)}</div></td><td style="text-align:center;width:34%"><b>ختم المدرسة</b><div class="stamp"></div></td><td style="text-align:center;width:33%"><div class="sbox"><b>مدير المدرسة</b><br><br>${esc(S.s.principal)}</div></td></tr></table>`] },
   { id: 'comSchedule', grp: 'الجداول', t: 'جدول اللجنة (يُعلّق على باب كل لجنة)', land: 1, opts: ['com'], build: o => comOpt(o).map(c => comHead(c) + sp(8) + scheduleTable()) },
   { id: 'qFile', grp: 'الجداول', t: 'ملف توزيع الأسئلة ونماذج الإجابة على اللجان', land: 1, opts: ['com'], build: o => comOpt(o).map(c => comHead(c, true) + sp(8) + scheduleTable()) },
@@ -3520,6 +3530,28 @@ function specialPages(o) {
   });
   if (rows.length === 1) rows.push([{ v: 'لا يوجد طلاب في القائمة بعد', cs: 5 }]);
   return [title(esc(sl.title), yearLine()) + T(rows)];
+}
+/* ===== تعليمات الاختبار: قائمة مرنة + أوقات الحضور والدخول تُكتب تلقائياً في النص ===== */
+const INSTR_DEF1 = 'الحضور للمدرسة قبل موعد الاختبار بنصف ساعة، الساعة ( 6:30 ص ) والدخول إلى قاعات الاختبار قبل بدء الاختبار بربع ساعة، الساعة ( 6:45 ص ).';
+const INSTR_TOK1 = 'الحضور للمدرسة قبل موعد الاختبار {مدة_الحضور}، الساعة ( {الحضور} ) والدخول إلى قاعات الاختبار قبل بدء الاختبار {مدة_الدخول}، الساعة ( {الدخول} ).';
+function instrT() { const t = S.s.instrT = S.s.instrT || {}; if (!t.a) t.a = '06:30'; if (!t.e) t.e = '06:45'; return t; }
+function instrMigrate() { if (S.s.instr && S.s.instr.includes(INSTR_DEF1)) S.s.instr = S.s.instr.replace(INSTR_DEF1, INSTR_TOK1); }
+function insT12(v) { const m = String(v || '').match(/^(\d{1,2}):(\d{2})/); if (!m) return v || ''; let h = +m[1]; const ap = h < 12 ? 'ص' : 'م'; h = h % 12 || 12; return `${h}:${m[2]} ${ap}`; }
+function examStartMin() { const d = S.days[0], p = d && d.p[0]; const m = p && String(p.t || '').match(/(\d{1,2})(?::(\d{2}))?/); if (!m) return null; let h = +m[1]; if (h < 6) h += 12; return h * 60 + (+m[2] || 0); }
+function durTxt(min) { if (min == null || min <= 0) return ''; return ({ 10: 'بعشر دقائق', 15: 'بربع ساعة', 20: 'بعشرين دقيقة', 30: 'بنصف ساعة', 45: 'بثلاثة أرباع الساعة', 60: 'بساعة', 90: 'بساعة ونصف' })[min] || `بـ ${min} دقيقة`; }
+function instrLines() {
+  instrMigrate(); const t = instrT(), st = examStartMin(), mm = v => { const m = String(v).match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
+  const da = st != null && mm(t.a) != null ? durTxt(st - mm(t.a)) : '', de = st != null && mm(t.e) != null ? durTxt(st - mm(t.e)) : '';
+  return String(S.s.instr || '').split('\n').filter(x => x.trim()).map(x => x.replace(/\{الحضور\}/g, insT12(t.a)).replace(/\{الدخول\}/g, insT12(t.e)).replace(/ ?\{مدة_الحضور\}/g, da ? ' ' + da : '').replace(/ ?\{مدة_الدخول\}/g, de ? ' ' + de : ''));
+}
+function instrEditor() {
+  instrMigrate(); const t = instrT(), L = String(S.s.instr || '').split('\n').filter(x => x.trim()), st = examStartMin();
+  return `<div class="ined">
+    <div class="intimes"><label><span>🕡 وقت الحضور للمدرسة</span><input class="in" type="time" data-k="s.instrT.a" value="${esc(t.a)}"></label><label><span>🚪 وقت الدخول للقاعات</span><input class="in" type="time" data-k="s.instrT.e" value="${esc(t.e)}"></label>
+    <small class="mut">${st != null ? `بداية الاختبار من الجدول: ${insT12(String(Math.floor(st / 60)).padStart(2, '0') + ':' + String(st % 60).padStart(2, '0'))} — تُحسب «قبل الاختبار بكذا» تلقائياً` : 'أدخل وقت الفترة في الجدول لتُحسب المدة تلقائياً'}. استخدم في أي تعليمة: {الحضور} {الدخول} {مدة_الحضور} {مدة_الدخول}</small></div>
+    <ol class="inlist">${L.map((x, i) => `<li><textarea class="in" rows="3" data-ins="${i}">${esc(x)}</textarea><span class="inact"><button type="button" class="pmv" data-act="insMv" data-i="${i}" data-d="-1"${i ? '' : ' disabled'} title="تقديم">▲</button><button type="button" class="pmv" data-act="insMv" data-i="${i}" data-d="1"${i < L.length - 1 ? '' : ' disabled'} title="تأخير">▼</button><button type="button" class="x" data-act="insDel" data-i="${i}" title="حذف">×</button></span></li>`).join('')}</ol>
+    <div class="acts wrap"><button type="button" class="btn sm pri" data-act="insAdd">＋ إضافة تعليمة</button><button type="button" class="btn sm ghost" data-act="insReset">استعادة التعليمات الافتراضية</button><button type="button" class="btn sm" data-act="qopen" data-form="schedule">👁 معاينة الجدول بالتعليمات</button></div>
+    <div class="inprev"><b>كما ستُطبع:</b><ul>${instrLines().map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
 }
 function receiptTable() {
   const tot = gradeTotals();
@@ -3835,6 +3867,8 @@ function dropCols(html, hide) {
   return tmp.innerHTML;
 }
 function applyCols(groups, name) { const h = colsHidden(name); return h.length ? groups.map(g => Object.assign({}, g, { pages: g.pages.map(p => dropCols(p, h)) })) : groups; }
+const PV_EDIT = { planCom: 'plan', planAll: 'plan', planRoles: 'plan', planOrg: 'plan', schedule: 'schedule', assign: 'staff', stList: 'staff', receipt: 'staff', openEnv: 'settings', agree: 'settings', tList: 'files', obsInstr: 'files', comPlaces: 'committees', comCounts: 'committees' };
+function pvEditBtn() { const b = $('#pvEdit'); if (b) b.hidden = !(PV && PV_EDIT[PV.fid]); }
 function pvColsBar() {
   const box = $('#pvCols'); if (!box) return; if (!PV || !PVCOLS) { box.hidden = true; return; }
   const all = colsOf(PV.orig), h = colsHidden(PV.name);
@@ -4631,6 +4665,7 @@ document.addEventListener('change', async e => {
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
   if (el.dataset.fd) { if (!S.s.fdate) S.s.fdate = {}; const k = el.dataset.fd, o = S.s.fdate[k] = S.s.fdate[k] || {}; o[el.dataset.f] = el.value;
     if (el.dataset.f === 'm' && el.value === 'fix' && !o.d) o.d = todayIso(); if (el.dataset.f === 'm' && el.value === 'all') delete S.s.fdate[k]; save(); render(); return; }
+  if (el.dataset.ins != null) { const L = String(S.s.instr || '').split('\n').filter(x => x.trim()); L[+el.dataset.ins] = el.value.replace(/\n/g, ' ').trim(); S.s.instr = L.filter(Boolean).join('\n'); save(); return render(); }
   if (el.dataset.fxses) { FX_SES[el.dataset.fxses] = el.value; return render(); }
   if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id.replace('@', '_')) || {}).value || ''; const [fid, fs] = id.split('@'); S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(fid, fs).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[fid] = true; save(); render(); return toast('أُضيف ' + v); }
   if (el.dataset.coadd != null) { const x = S.st[+el.dataset.coadd]; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('اسم المعلم المشارك:') || '').trim(); if (!v) { el.value = ''; return; } } (x.co = x.co || []).includes(v) || x.co.push(v); ST_OPEN[+el.dataset.coadd] = 1; save(); render(); return toast('أُضيف ' + v + ' — سيصدر له خطاب مستقل'); }
@@ -4694,6 +4729,11 @@ document.addEventListener('click', async e => {
       if (a === 'fxReset') { f.rm = []; f.add = []; toast('أُعيدت الأسماء الأصلية'); }
       if (a === 'fxNone') { const [fid, fs] = id.split('@'); f.rm = fxBase(fid, fs).map(normName); }
       QOPEN[id.split('@')[0]] = true; return re(); }
+    case 'insAdd': case 'insDel': case 'insMv': case 'insReset': { instrMigrate(); let L = String(S.s.instr || '').split('\n').filter(x => x.trim());
+      if (a === 'insAdd') L.push('تعليمة جديدة'); if (a === 'insDel') { if (!confirm('حذف هذه التعليمة؟')) return; L.splice(i, 1); }
+      if (a === 'insMv') { const t = i + +b.dataset.d; if (t < 0 || t >= L.length) return; [L[i], L[t]] = [L[t], L[i]]; }
+      if (a === 'insReset') { if (!confirm('استعادة التعليمات الافتراضية؟ ستُستبدل التعليمات الحالية.')) return; L = DEFAULT_STATE.s.instr.split('\n'); L = L.map(x => x === INSTR_DEF1 ? INSTR_TOK1 : x); }
+      S.s.instr = L.join('\n'); re(); if (a === 'insAdd') { const l = $$('[data-ins]'); if (l.length) { l[l.length - 1].focus(); l[l.length - 1].select(); } } return; }
     case 'stCoDel': { const x = S.st[i]; x.co.splice(j, 1); ST_OPEN[i] = 1; return re(); }
     case 'stCopyG': case 'stCopyAll': { const src = S.st[i]; let n = 0; S.st.forEach((x, k) => { if (k === i || (a === 'stCopyG' && +x.g !== +src.g)) return; ST_KEYS.filter(q => q !== 'n' || +x.g === +src.g).forEach(q => { if (src[q]) x[q] = src[q]; else delete x[q]; }); n++; }); toast(`نُسخت التفاصيل إلى ${n} مادة`); return re(); }
     case 'stReset': { ST_KEYS.forEach(q => delete S.st[i][q]); ST_OPEN[i] = 1; toast('تعتمد هذه المادة الإعدادات العامة الآن'); return re(); }
@@ -4732,7 +4772,7 @@ document.addEventListener('click', async e => {
     case 'fdAll': { const id = b.dataset.form; S.s.fdate._all = Object.assign({}, S.s.fdate[id]); Object.keys(S.s.fdate).forEach(k => { if (k !== '_all') delete S.s.fdate[k]; }); save(); render(); toast('اعتُمد هذا التاريخ لكل النماذج ✓'); break; }
     case 'qprint': case 'qword': case 'qpdf': case 'qopen': {
       const f = b.dataset.form, o = qopts(b), nm = fname(FORMS.find(x => x.id === f).t + (TA_FORMS.includes(f) ? ' - ' + setMeta(ACTIVE).n + ' - الفصل ' + setMeta(ACTIVE).sem : ''));
-      const run = () => { const g0 = groupsOf(f, o), g = a === 'qopen' ? g0 : applyCols(g0, nm); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : openPreview(g0, nm); };
+      const run = () => { const g0 = groupsOf(f, o), g = a === 'qopen' ? g0 : applyCols(g0, nm); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : (openPreview(g0, nm), PV && (PV.fid = f, PV.fo = o), pvEditBtn()); };
       return TA_FORMS.includes(f) ? withSetSemAsync(ACTIVE, run) : run();
     }
     case 'qedit': FORM = b.dataset.form; FO = {}; return go('forms');
@@ -4752,6 +4792,7 @@ document.addEventListener('click', async e => {
     case 'pvPdf': if (PV) downloadPdf(PV.groups, PV.name); return;
     case 'pvWord': if (PV) wordDoc(PV.groups, PV.name); return;
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
+    case 'pvEdit': { if (!PV || !PV_EDIT[PV.fid]) return; const t = PV_EDIT[PV.fid], fo = PV.fo || {}; if (PV.fid === 'planCom' && fo.pc && typeof PLAN_OPEN !== 'undefined') PLAN_OPEN[fo.pc] = true; closePreview(); go(t); return; }
     case 'pvCols': PVCOLS = !PVCOLS; return pvColsBar();
     case 'pvCol': case 'pvColAll': { if (!PV) return; const k = colKey(PV.name); S.s.colsHide = S.s.colsHide || {}; let h = S.s.colsHide[k] || [];
       h = a === 'pvColAll' ? [] : h.includes(b.dataset.v) ? h.filter(x => x !== b.dataset.v) : h.concat(b.dataset.v);
@@ -6694,7 +6735,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795291481';
+var BUILD_ID = '1795294204';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
@@ -6741,14 +6782,16 @@ function planRO() { if (typeof exReadOnly === 'function' && exReadOnly()) { toas
 
 function planComCard(c, i) {
   const open = !!PLAN_OPEN[c.id], head = planHead(c), anyW = c.m.some(x => x.w), anyK = c.m.some(x => x.k);
-  const roleSel = (x, j) => { const list = PLAN_ROLES.includes(x.r) || !x.r ? PLAN_ROLES : [x.r, ...PLAN_ROLES]; return `<select class="in" data-pk="coms.${i}.m.${j}.r" aria-label="الصفة">${list.map(r => `<option${r === (x.r || 'عضواً') ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select>`; };
+  const roleSel = (x, j) => { const list = PLAN_ROLES.includes(x.r) || !x.r ? PLAN_ROLES : [x.r, ...PLAN_ROLES]; return `<select class="in" data-pk="coms.${i}.m.${j}.r" aria-label="الصفة">${list.map(r => `<option${r === (x.r || 'عضواً') ? ' selected' : ''}>${esc(r)}</option>`).join('')}<option value="__other">✎ صفة أخرى…</option></select>`; };
+  const P0 = planGet(), others = P0.coms.map((o, k) => [o, k]).filter(([, k]) => k !== i);
+  const mvSel = j => others.length ? `<select class="in plmv" data-pmv="${i}.${j}" title="نقل أو نسخ إلى لجنة أخرى" aria-label="نقل"><option value="">⇄</option><optgroup label="نقل إلى">${others.map(([o, k]) => `<option value="m${k}">${esc(o.t)}</option>`).join('')}</optgroup><optgroup label="نسخ إلى">${others.map(([o, k]) => `<option value="c${k}">${esc(o.t)}</option>`).join('')}</optgroup></select>` : '';
   const rows = c.m.map((x, j) => `<div class="plm${/رئيس/.test(x.r || '') && !/نائب/.test(x.r || '') ? ' hd' : ''}">
       <b class="pli">${j + 1}</b>
       <input class="in pn" data-pk="coms.${i}.m.${j}.n" value="${esc(x.n || '')}" list="tlist" placeholder="اسم العضو" aria-label="الاسم">
       ${roleSel(x, j)}
       <input class="in pw" data-pk="coms.${i}.m.${j}.w" value="${esc(x.w || '')}" list="plwork" placeholder="العمل (معلم، موجه…)" aria-label="العمل">
       <input class="in pk" data-pk="coms.${i}.m.${j}.k" value="${esc(x.k || '')}" placeholder="المهمة داخل اللجنة" aria-label="المهمة">
-      <span class="pla"><button type="button" class="pmv" data-pact="mUp" data-c="${i}" data-j="${j}" title="تقديم"${j ? '' : ' disabled'}>▲</button><button type="button" class="pmv" data-pact="mDn" data-c="${i}" data-j="${j}" title="تأخير"${j < c.m.length - 1 ? '' : ' disabled'}>▼</button><button type="button" class="x" data-pact="mDel" data-c="${i}" data-j="${j}" title="حذف العضو">×</button></span>
+      <span class="pla">${mvSel(j)}<button type="button" class="pmv" data-pact="mUp" data-c="${i}" data-j="${j}" title="تقديم"${j ? '' : ' disabled'}>▲</button><button type="button" class="pmv" data-pact="mDn" data-c="${i}" data-j="${j}" title="تأخير"${j < c.m.length - 1 ? '' : ' disabled'}>▼</button><button type="button" class="x" data-pact="mDel" data-c="${i}" data-j="${j}" title="حذف العضو">×</button></span>
     </div>`).join('');
   return `<details class="plcom" style="--pc:${c.c || PLAN_COLS[i % PLAN_COLS.length]}" data-pid="${esc(c.id)}"${open ? ' open' : ''}>
     <summary><i class="pldot"></i><span class="plt"><b>${esc(c.t)}</b><small>${head ? 'الرئيس: ' + esc(head) : (c.m.length ? '<em class="warnt">بلا رئيس</em>' : esc(c.note ? 'تُحدَّد يومياً' : 'لا أعضاء بعد'))}</small></span><span class="plcnt">${c.m.length}<small>عضو</small></span><span class="plchev" aria-hidden="true">‹</span></summary>
@@ -6756,7 +6799,7 @@ function planComCard(c, i) {
       ${qbar('planCom', 'قرار التشكيل:', '', { pc: c.id })}
       <div class="plmh${anyW || anyK ? '' : ' slim'}"><span>م</span><span>الاسم</span><span>الصفة</span><span>العمل</span><span>المهمة</span><span></span></div>
       <div class="plms">${rows || '<p class="mut plnone">لا يوجد أعضاء — أضف أول عضو.</p>'}</div>
-      <div class="acts wrap"><button type="button" class="btn sm pri" data-pact="mAdd" data-c="${i}">＋ إضافة عضو</button></div>
+      <div class="acts wrap"><button type="button" class="btn sm pri" data-pact="mAdd" data-c="${i}">＋ عضو جديد</button><select class="in pladd" data-padd="${i}"><option value="">👤 إضافة من المعلمين…</option>${(typeof tchAll === 'function' ? tchAll() : S.teachers).filter(n => !c.m.some(x => normName(x.n || '') === normName(n))).map(n => `<option>${esc(n)}</option>`).join('')}</select></div>
       <details class="pladv"><summary>مهام اللجنة (${c.d.length}) ونص القرار</summary>
         <label class="plf">اسم اللجنة<input class="in" data-pk="coms.${i}.t" value="${esc(c.t)}"></label>
         <label class="plf">نص القرار (الديباجة)<textarea class="in" rows="3" data-pk="coms.${i}.pre">${esc(c.pre || '')}</textarea></label>
@@ -6856,6 +6899,11 @@ FD_IDS.push('planAll', 'planCom', 'planRoles');
 document.addEventListener('toggle', e => { const d = e.target; if (!d.classList || !d.classList.contains('plcom')) return; const id = d.dataset.pid; if (!!PLAN_OPEN[id] === d.open) return; PLAN_OPEN[id] = d.open; render(); }, true);
 document.addEventListener('change', e => {
   const el = e.target; if (!el.dataset) return;
+  if (el.dataset.pk && el.value === '__other') { if (planRO()) return render(); const v = (prompt('اكتب الصفة:') || '').trim(); if (!v) return render(); const P = planEdit(); const ks = el.dataset.pk.split('.'); let o = P; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; save(); return render(); }
+  if (el.dataset.padd != null) { if (planRO()) return render(); const v = el.value; if (!v) return; const P = planEdit(), c = P.coms[+el.dataset.padd]; c.m.push({ n: v, w: 'معلم', r: c.m.length ? 'عضواً' : 'رئيساً', k: '' }); save(); toast('أُضيف ' + v + ' إلى ' + c.t); return render(); }
+  if (el.dataset.pmv) { if (planRO()) return render(); const v = el.value; if (!v) return; const [ci, j] = el.dataset.pmv.split('.').map(Number), P = planEdit(), src = P.coms[ci], x = src.m[j], dst = P.coms[+v.slice(1)];
+    if (!dst || !x) return render(); dst.m.push(Object.assign({}, x, { r: /رئيس/.test(x.r || '') && dst.m.some(y => /رئيس/.test(y.r || '') && !/نائب/.test(y.r || '')) ? 'عضواً' : x.r })); if (v[0] === 'm') src.m.splice(j, 1);
+    PLAN_OPEN[dst.id] = true; save(); toast((v[0] === 'm' ? 'نُقل ' : 'نُسخ ') + (x.n || 'العضو') + ' إلى ' + dst.t); return render(); }
   if (el.dataset.pk) { if (planRO()) return render(); const P = planEdit(); const ks = el.dataset.pk.split('.'); let o = P; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = String(el.value).trim(); save(); if (/\.(r|t|n)$/.test(el.dataset.pk)) { const a = document.activeElement, pk = a && a.dataset && a.dataset.pk; render(); if (pk) { const f = document.querySelector(`[data-pk="${pk}"]`); if (f) f.focus(); } } return; }
   if (el.dataset.pd != null) { if (planRO()) return render(); const P = planEdit(); P.coms[+el.dataset.pd].d = String(el.value).split('\n').map(x => x.replace(/^\s*[\d٠-٩]+\s*[.\-)]\s*/, '').trim()).filter(Boolean); save(); }
 });

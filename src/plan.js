@@ -19,14 +19,16 @@ function planRO() { if (typeof exReadOnly === 'function' && exReadOnly()) { toas
 
 function planComCard(c, i) {
   const open = !!PLAN_OPEN[c.id], head = planHead(c), anyW = c.m.some(x => x.w), anyK = c.m.some(x => x.k);
-  const roleSel = (x, j) => { const list = PLAN_ROLES.includes(x.r) || !x.r ? PLAN_ROLES : [x.r, ...PLAN_ROLES]; return `<select class="in" data-pk="coms.${i}.m.${j}.r" aria-label="الصفة">${list.map(r => `<option${r === (x.r || 'عضواً') ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select>`; };
+  const roleSel = (x, j) => { const list = PLAN_ROLES.includes(x.r) || !x.r ? PLAN_ROLES : [x.r, ...PLAN_ROLES]; return `<select class="in" data-pk="coms.${i}.m.${j}.r" aria-label="الصفة">${list.map(r => `<option${r === (x.r || 'عضواً') ? ' selected' : ''}>${esc(r)}</option>`).join('')}<option value="__other">✎ صفة أخرى…</option></select>`; };
+  const P0 = planGet(), others = P0.coms.map((o, k) => [o, k]).filter(([, k]) => k !== i);
+  const mvSel = j => others.length ? `<select class="in plmv" data-pmv="${i}.${j}" title="نقل أو نسخ إلى لجنة أخرى" aria-label="نقل"><option value="">⇄</option><optgroup label="نقل إلى">${others.map(([o, k]) => `<option value="m${k}">${esc(o.t)}</option>`).join('')}</optgroup><optgroup label="نسخ إلى">${others.map(([o, k]) => `<option value="c${k}">${esc(o.t)}</option>`).join('')}</optgroup></select>` : '';
   const rows = c.m.map((x, j) => `<div class="plm${/رئيس/.test(x.r || '') && !/نائب/.test(x.r || '') ? ' hd' : ''}">
       <b class="pli">${j + 1}</b>
       <input class="in pn" data-pk="coms.${i}.m.${j}.n" value="${esc(x.n || '')}" list="tlist" placeholder="اسم العضو" aria-label="الاسم">
       ${roleSel(x, j)}
       <input class="in pw" data-pk="coms.${i}.m.${j}.w" value="${esc(x.w || '')}" list="plwork" placeholder="العمل (معلم، موجه…)" aria-label="العمل">
       <input class="in pk" data-pk="coms.${i}.m.${j}.k" value="${esc(x.k || '')}" placeholder="المهمة داخل اللجنة" aria-label="المهمة">
-      <span class="pla"><button type="button" class="pmv" data-pact="mUp" data-c="${i}" data-j="${j}" title="تقديم"${j ? '' : ' disabled'}>▲</button><button type="button" class="pmv" data-pact="mDn" data-c="${i}" data-j="${j}" title="تأخير"${j < c.m.length - 1 ? '' : ' disabled'}>▼</button><button type="button" class="x" data-pact="mDel" data-c="${i}" data-j="${j}" title="حذف العضو">×</button></span>
+      <span class="pla">${mvSel(j)}<button type="button" class="pmv" data-pact="mUp" data-c="${i}" data-j="${j}" title="تقديم"${j ? '' : ' disabled'}>▲</button><button type="button" class="pmv" data-pact="mDn" data-c="${i}" data-j="${j}" title="تأخير"${j < c.m.length - 1 ? '' : ' disabled'}>▼</button><button type="button" class="x" data-pact="mDel" data-c="${i}" data-j="${j}" title="حذف العضو">×</button></span>
     </div>`).join('');
   return `<details class="plcom" style="--pc:${c.c || PLAN_COLS[i % PLAN_COLS.length]}" data-pid="${esc(c.id)}"${open ? ' open' : ''}>
     <summary><i class="pldot"></i><span class="plt"><b>${esc(c.t)}</b><small>${head ? 'الرئيس: ' + esc(head) : (c.m.length ? '<em class="warnt">بلا رئيس</em>' : esc(c.note ? 'تُحدَّد يومياً' : 'لا أعضاء بعد'))}</small></span><span class="plcnt">${c.m.length}<small>عضو</small></span><span class="plchev" aria-hidden="true">‹</span></summary>
@@ -34,7 +36,7 @@ function planComCard(c, i) {
       ${qbar('planCom', 'قرار التشكيل:', '', { pc: c.id })}
       <div class="plmh${anyW || anyK ? '' : ' slim'}"><span>م</span><span>الاسم</span><span>الصفة</span><span>العمل</span><span>المهمة</span><span></span></div>
       <div class="plms">${rows || '<p class="mut plnone">لا يوجد أعضاء — أضف أول عضو.</p>'}</div>
-      <div class="acts wrap"><button type="button" class="btn sm pri" data-pact="mAdd" data-c="${i}">＋ إضافة عضو</button></div>
+      <div class="acts wrap"><button type="button" class="btn sm pri" data-pact="mAdd" data-c="${i}">＋ عضو جديد</button><select class="in pladd" data-padd="${i}"><option value="">👤 إضافة من المعلمين…</option>${(typeof tchAll === 'function' ? tchAll() : S.teachers).filter(n => !c.m.some(x => normName(x.n || '') === normName(n))).map(n => `<option>${esc(n)}</option>`).join('')}</select></div>
       <details class="pladv"><summary>مهام اللجنة (${c.d.length}) ونص القرار</summary>
         <label class="plf">اسم اللجنة<input class="in" data-pk="coms.${i}.t" value="${esc(c.t)}"></label>
         <label class="plf">نص القرار (الديباجة)<textarea class="in" rows="3" data-pk="coms.${i}.pre">${esc(c.pre || '')}</textarea></label>
@@ -134,6 +136,11 @@ FD_IDS.push('planAll', 'planCom', 'planRoles');
 document.addEventListener('toggle', e => { const d = e.target; if (!d.classList || !d.classList.contains('plcom')) return; const id = d.dataset.pid; if (!!PLAN_OPEN[id] === d.open) return; PLAN_OPEN[id] = d.open; render(); }, true);
 document.addEventListener('change', e => {
   const el = e.target; if (!el.dataset) return;
+  if (el.dataset.pk && el.value === '__other') { if (planRO()) return render(); const v = (prompt('اكتب الصفة:') || '').trim(); if (!v) return render(); const P = planEdit(); const ks = el.dataset.pk.split('.'); let o = P; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; save(); return render(); }
+  if (el.dataset.padd != null) { if (planRO()) return render(); const v = el.value; if (!v) return; const P = planEdit(), c = P.coms[+el.dataset.padd]; c.m.push({ n: v, w: 'معلم', r: c.m.length ? 'عضواً' : 'رئيساً', k: '' }); save(); toast('أُضيف ' + v + ' إلى ' + c.t); return render(); }
+  if (el.dataset.pmv) { if (planRO()) return render(); const v = el.value; if (!v) return; const [ci, j] = el.dataset.pmv.split('.').map(Number), P = planEdit(), src = P.coms[ci], x = src.m[j], dst = P.coms[+v.slice(1)];
+    if (!dst || !x) return render(); dst.m.push(Object.assign({}, x, { r: /رئيس/.test(x.r || '') && dst.m.some(y => /رئيس/.test(y.r || '') && !/نائب/.test(y.r || '')) ? 'عضواً' : x.r })); if (v[0] === 'm') src.m.splice(j, 1);
+    PLAN_OPEN[dst.id] = true; save(); toast((v[0] === 'm' ? 'نُقل ' : 'نُسخ ') + (x.n || 'العضو') + ' إلى ' + dst.t); return render(); }
   if (el.dataset.pk) { if (planRO()) return render(); const P = planEdit(); const ks = el.dataset.pk.split('.'); let o = P; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = String(el.value).trim(); save(); if (/\.(r|t|n)$/.test(el.dataset.pk)) { const a = document.activeElement, pk = a && a.dataset && a.dataset.pk; render(); if (pk) { const f = document.querySelector(`[data-pk="${pk}"]`); if (f) f.focus(); } } return; }
   if (el.dataset.pd != null) { if (planRO()) return render(); const P = planEdit(); P.coms[+el.dataset.pd].d = String(el.value).split('\n').map(x => x.replace(/^\s*[\d٠-٩]+\s*[.\-)]\s*/, '').trim()).filter(Boolean); save(); }
 });

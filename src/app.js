@@ -1280,10 +1280,8 @@ function vSettings() {
   </section>
   <section class="card">
     <h2>تعليمات مهمة للاختبار</h2>
-    <p class="hint">تُطبع أسفل الجدول العام. كل سطر تعليمة مستقلة.</p>
-    <textarea class="in ta" data-k="s.instr" rows="8" id="f_instr">${esc(s.instr)}</textarea>
+    ${instrEditor()}
     <div class="grid">
-      <label>آخر موعد لتسليم الأسئلة (لخطاب التكليف) ${inp('s.deadline', s.deadline, { ph: 'مثال: الأربعاء 17 / 12 / 1447 هـ' })}</label>
       <label>درجة الاختبار الافتراضية ${inp('s.mark', s.mark, { num: 1, type: 'number' })}</label>
     </div>
   </section>`;
@@ -1834,7 +1832,7 @@ const FORMS = [
   // ===== الجداول
   { id: 'schedule', grp: 'الجداول', t: 'جدول الاختبارات العام', build: () => [
     title(`جدول الاختبارات العام للمرحلة الثانوية – الفصل الدراسي ${esc(S.s.sem)} ${esc(S.s.yearTxt)} – الدور ${esc(S.s.round)}`) + scheduleTable({ big: true }) + sp(8) +
-    `<div class="insbox"><p class="ih">تعليمات مهمة للاختبار</p><ul class="ins">${S.s.instr.split('\n').filter(x => x.trim()).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` + sp(10) +
+    `<div class="insbox"><p class="ih">تعليمات مهمة للاختبار</p><ul class="ins">${instrLines().map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` + sp(10) +
     `<table class="sg" dir="rtl" border="0" width="100%"><tr><td style="text-align:center;width:33%"><div class="sbox"><b>وكيل الشؤون التعليمية</b><br><br>${esc(S.s.eduDep)}</div></td><td style="text-align:center;width:34%"><b>ختم المدرسة</b><div class="stamp"></div></td><td style="text-align:center;width:33%"><div class="sbox"><b>مدير المدرسة</b><br><br>${esc(S.s.principal)}</div></td></tr></table>`] },
   { id: 'comSchedule', grp: 'الجداول', t: 'جدول اللجنة (يُعلّق على باب كل لجنة)', land: 1, opts: ['com'], build: o => comOpt(o).map(c => comHead(c) + sp(8) + scheduleTable()) },
   { id: 'qFile', grp: 'الجداول', t: 'ملف توزيع الأسئلة ونماذج الإجابة على اللجان', land: 1, opts: ['com'], build: o => comOpt(o).map(c => comHead(c, true) + sp(8) + scheduleTable()) },
@@ -2071,6 +2069,28 @@ function specialPages(o) {
   });
   if (rows.length === 1) rows.push([{ v: 'لا يوجد طلاب في القائمة بعد', cs: 5 }]);
   return [title(esc(sl.title), yearLine()) + T(rows)];
+}
+/* ===== تعليمات الاختبار: قائمة مرنة + أوقات الحضور والدخول تُكتب تلقائياً في النص ===== */
+const INSTR_DEF1 = 'الحضور للمدرسة قبل موعد الاختبار بنصف ساعة، الساعة ( 6:30 ص ) والدخول إلى قاعات الاختبار قبل بدء الاختبار بربع ساعة، الساعة ( 6:45 ص ).';
+const INSTR_TOK1 = 'الحضور للمدرسة قبل موعد الاختبار {مدة_الحضور}، الساعة ( {الحضور} ) والدخول إلى قاعات الاختبار قبل بدء الاختبار {مدة_الدخول}، الساعة ( {الدخول} ).';
+function instrT() { const t = S.s.instrT = S.s.instrT || {}; if (!t.a) t.a = '06:30'; if (!t.e) t.e = '06:45'; return t; }
+function instrMigrate() { if (S.s.instr && S.s.instr.includes(INSTR_DEF1)) S.s.instr = S.s.instr.replace(INSTR_DEF1, INSTR_TOK1); }
+function insT12(v) { const m = String(v || '').match(/^(\d{1,2}):(\d{2})/); if (!m) return v || ''; let h = +m[1]; const ap = h < 12 ? 'ص' : 'م'; h = h % 12 || 12; return `${h}:${m[2]} ${ap}`; }
+function examStartMin() { const d = S.days[0], p = d && d.p[0]; const m = p && String(p.t || '').match(/(\d{1,2})(?::(\d{2}))?/); if (!m) return null; let h = +m[1]; if (h < 6) h += 12; return h * 60 + (+m[2] || 0); }
+function durTxt(min) { if (min == null || min <= 0) return ''; return ({ 10: 'بعشر دقائق', 15: 'بربع ساعة', 20: 'بعشرين دقيقة', 30: 'بنصف ساعة', 45: 'بثلاثة أرباع الساعة', 60: 'بساعة', 90: 'بساعة ونصف' })[min] || `بـ ${min} دقيقة`; }
+function instrLines() {
+  instrMigrate(); const t = instrT(), st = examStartMin(), mm = v => { const m = String(v).match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
+  const da = st != null && mm(t.a) != null ? durTxt(st - mm(t.a)) : '', de = st != null && mm(t.e) != null ? durTxt(st - mm(t.e)) : '';
+  return String(S.s.instr || '').split('\n').filter(x => x.trim()).map(x => x.replace(/\{الحضور\}/g, insT12(t.a)).replace(/\{الدخول\}/g, insT12(t.e)).replace(/ ?\{مدة_الحضور\}/g, da ? ' ' + da : '').replace(/ ?\{مدة_الدخول\}/g, de ? ' ' + de : ''));
+}
+function instrEditor() {
+  instrMigrate(); const t = instrT(), L = String(S.s.instr || '').split('\n').filter(x => x.trim()), st = examStartMin();
+  return `<div class="ined">
+    <div class="intimes"><label><span>🕡 وقت الحضور للمدرسة</span><input class="in" type="time" data-k="s.instrT.a" value="${esc(t.a)}"></label><label><span>🚪 وقت الدخول للقاعات</span><input class="in" type="time" data-k="s.instrT.e" value="${esc(t.e)}"></label>
+    <small class="mut">${st != null ? `بداية الاختبار من الجدول: ${insT12(String(Math.floor(st / 60)).padStart(2, '0') + ':' + String(st % 60).padStart(2, '0'))} — تُحسب «قبل الاختبار بكذا» تلقائياً` : 'أدخل وقت الفترة في الجدول لتُحسب المدة تلقائياً'}. استخدم في أي تعليمة: {الحضور} {الدخول} {مدة_الحضور} {مدة_الدخول}</small></div>
+    <ol class="inlist">${L.map((x, i) => `<li><textarea class="in" rows="3" data-ins="${i}">${esc(x)}</textarea><span class="inact"><button type="button" class="pmv" data-act="insMv" data-i="${i}" data-d="-1"${i ? '' : ' disabled'} title="تقديم">▲</button><button type="button" class="pmv" data-act="insMv" data-i="${i}" data-d="1"${i < L.length - 1 ? '' : ' disabled'} title="تأخير">▼</button><button type="button" class="x" data-act="insDel" data-i="${i}" title="حذف">×</button></span></li>`).join('')}</ol>
+    <div class="acts wrap"><button type="button" class="btn sm pri" data-act="insAdd">＋ إضافة تعليمة</button><button type="button" class="btn sm ghost" data-act="insReset">استعادة التعليمات الافتراضية</button><button type="button" class="btn sm" data-act="qopen" data-form="schedule">👁 معاينة الجدول بالتعليمات</button></div>
+    <div class="inprev"><b>كما ستُطبع:</b><ul>${instrLines().map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
 }
 function receiptTable() {
   const tot = gradeTotals();
@@ -2386,6 +2406,8 @@ function dropCols(html, hide) {
   return tmp.innerHTML;
 }
 function applyCols(groups, name) { const h = colsHidden(name); return h.length ? groups.map(g => Object.assign({}, g, { pages: g.pages.map(p => dropCols(p, h)) })) : groups; }
+const PV_EDIT = { planCom: 'plan', planAll: 'plan', planRoles: 'plan', planOrg: 'plan', schedule: 'schedule', assign: 'staff', stList: 'staff', receipt: 'staff', openEnv: 'settings', agree: 'settings', tList: 'files', obsInstr: 'files', comPlaces: 'committees', comCounts: 'committees' };
+function pvEditBtn() { const b = $('#pvEdit'); if (b) b.hidden = !(PV && PV_EDIT[PV.fid]); }
 function pvColsBar() {
   const box = $('#pvCols'); if (!box) return; if (!PV || !PVCOLS) { box.hidden = true; return; }
   const all = colsOf(PV.orig), h = colsHidden(PV.name);
@@ -3182,6 +3204,7 @@ document.addEventListener('change', async e => {
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
   if (el.dataset.fd) { if (!S.s.fdate) S.s.fdate = {}; const k = el.dataset.fd, o = S.s.fdate[k] = S.s.fdate[k] || {}; o[el.dataset.f] = el.value;
     if (el.dataset.f === 'm' && el.value === 'fix' && !o.d) o.d = todayIso(); if (el.dataset.f === 'm' && el.value === 'all') delete S.s.fdate[k]; save(); render(); return; }
+  if (el.dataset.ins != null) { const L = String(S.s.instr || '').split('\n').filter(x => x.trim()); L[+el.dataset.ins] = el.value.replace(/\n/g, ' ').trim(); S.s.instr = L.filter(Boolean).join('\n'); save(); return render(); }
   if (el.dataset.fxses) { FX_SES[el.dataset.fxses] = el.value; return render(); }
   if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id.replace('@', '_')) || {}).value || ''; const [fid, fs] = id.split('@'); S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(fid, fs).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[fid] = true; save(); render(); return toast('أُضيف ' + v); }
   if (el.dataset.coadd != null) { const x = S.st[+el.dataset.coadd]; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('اسم المعلم المشارك:') || '').trim(); if (!v) { el.value = ''; return; } } (x.co = x.co || []).includes(v) || x.co.push(v); ST_OPEN[+el.dataset.coadd] = 1; save(); render(); return toast('أُضيف ' + v + ' — سيصدر له خطاب مستقل'); }
@@ -3245,6 +3268,11 @@ document.addEventListener('click', async e => {
       if (a === 'fxReset') { f.rm = []; f.add = []; toast('أُعيدت الأسماء الأصلية'); }
       if (a === 'fxNone') { const [fid, fs] = id.split('@'); f.rm = fxBase(fid, fs).map(normName); }
       QOPEN[id.split('@')[0]] = true; return re(); }
+    case 'insAdd': case 'insDel': case 'insMv': case 'insReset': { instrMigrate(); let L = String(S.s.instr || '').split('\n').filter(x => x.trim());
+      if (a === 'insAdd') L.push('تعليمة جديدة'); if (a === 'insDel') { if (!confirm('حذف هذه التعليمة؟')) return; L.splice(i, 1); }
+      if (a === 'insMv') { const t = i + +b.dataset.d; if (t < 0 || t >= L.length) return; [L[i], L[t]] = [L[t], L[i]]; }
+      if (a === 'insReset') { if (!confirm('استعادة التعليمات الافتراضية؟ ستُستبدل التعليمات الحالية.')) return; L = DEFAULT_STATE.s.instr.split('\n'); L = L.map(x => x === INSTR_DEF1 ? INSTR_TOK1 : x); }
+      S.s.instr = L.join('\n'); re(); if (a === 'insAdd') { const l = $$('[data-ins]'); if (l.length) { l[l.length - 1].focus(); l[l.length - 1].select(); } } return; }
     case 'stCoDel': { const x = S.st[i]; x.co.splice(j, 1); ST_OPEN[i] = 1; return re(); }
     case 'stCopyG': case 'stCopyAll': { const src = S.st[i]; let n = 0; S.st.forEach((x, k) => { if (k === i || (a === 'stCopyG' && +x.g !== +src.g)) return; ST_KEYS.filter(q => q !== 'n' || +x.g === +src.g).forEach(q => { if (src[q]) x[q] = src[q]; else delete x[q]; }); n++; }); toast(`نُسخت التفاصيل إلى ${n} مادة`); return re(); }
     case 'stReset': { ST_KEYS.forEach(q => delete S.st[i][q]); ST_OPEN[i] = 1; toast('تعتمد هذه المادة الإعدادات العامة الآن'); return re(); }
@@ -3283,7 +3311,7 @@ document.addEventListener('click', async e => {
     case 'fdAll': { const id = b.dataset.form; S.s.fdate._all = Object.assign({}, S.s.fdate[id]); Object.keys(S.s.fdate).forEach(k => { if (k !== '_all') delete S.s.fdate[k]; }); save(); render(); toast('اعتُمد هذا التاريخ لكل النماذج ✓'); break; }
     case 'qprint': case 'qword': case 'qpdf': case 'qopen': {
       const f = b.dataset.form, o = qopts(b), nm = fname(FORMS.find(x => x.id === f).t + (TA_FORMS.includes(f) ? ' - ' + setMeta(ACTIVE).n + ' - الفصل ' + setMeta(ACTIVE).sem : ''));
-      const run = () => { const g0 = groupsOf(f, o), g = a === 'qopen' ? g0 : applyCols(g0, nm); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : openPreview(g0, nm); };
+      const run = () => { const g0 = groupsOf(f, o), g = a === 'qopen' ? g0 : applyCols(g0, nm); return a === 'qprint' ? printPages(g) : a === 'qword' ? wordDoc(g, nm) : a === 'qpdf' ? downloadPdf(g, nm) : (openPreview(g0, nm), PV && (PV.fid = f, PV.fo = o), pvEditBtn()); };
       return TA_FORMS.includes(f) ? withSetSemAsync(ACTIVE, run) : run();
     }
     case 'qedit': FORM = b.dataset.form; FO = {}; return go('forms');
@@ -3303,6 +3331,7 @@ document.addEventListener('click', async e => {
     case 'pvPdf': if (PV) downloadPdf(PV.groups, PV.name); return;
     case 'pvWord': if (PV) wordDoc(PV.groups, PV.name); return;
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
+    case 'pvEdit': { if (!PV || !PV_EDIT[PV.fid]) return; const t = PV_EDIT[PV.fid], fo = PV.fo || {}; if (PV.fid === 'planCom' && fo.pc && typeof PLAN_OPEN !== 'undefined') PLAN_OPEN[fo.pc] = true; closePreview(); go(t); return; }
     case 'pvCols': PVCOLS = !PVCOLS; return pvColsBar();
     case 'pvCol': case 'pvColAll': { if (!PV) return; const k = colKey(PV.name); S.s.colsHide = S.s.colsHide || {}; let h = S.s.colsHide[k] || [];
       h = a === 'pvColAll' ? [] : h.includes(b.dataset.v) ? h.filter(x => x !== b.dataset.v) : h.concat(b.dataset.v);
