@@ -174,11 +174,11 @@ function rr(ctx, x, y, w, h, r) {
   ctx.quadraticCurveTo(x, y + h, x, y + h - bl); ctx.lineTo(x, y + t); ctx.quadraticCurveTo(x, y, x + t, y); ctx.closePath();
 }
 function fitText(ctx, txt, maxW, size, weight) {
-  let s = size; ctx.font = `${weight} ${s}px Tajawal, Arial, sans-serif`;
-  while (ctx.measureText(txt).width > maxW && s > 12) { s -= 1; ctx.font = `${weight} ${s}px Tajawal, Arial, sans-serif`; }
+  let s = size; ctx.font = `${weight} ${s}px Cairo, Arial, sans-serif`;
+  while (ctx.measureText(txt).width > maxW && s > 12) { s -= 1; ctx.font = `${weight} ${s}px Cairo, Arial, sans-serif`; }
 }
 async function drawBrand() {
-  try { await Promise.all([document.fonts.load('700 30px Tajawal'), document.fonts.load('800 30px Tajawal')]); } catch (e) { }
+  try { await Promise.all([document.fonts.load('700 30px Cairo'), document.fonts.load('800 30px Cairo')]); } catch (e) { }
   if (!LOGO.complete) await new Promise(r => { LOGO.onload = r; LOGO.onerror = r; });
   const W = 1700, H = 215, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d'); x.direction = 'rtl';
@@ -1128,7 +1128,6 @@ function render() {
   if (TAB === 'files') renderStuTable();
   if (TAB === 'assign' && typeof taFilter === 'function' && (TAF.q || TAF.need)) taFilter();
   $$('.pthumb').forEach(b => { const pg = b.firstElementChild; if (!pg) return; const k = b.clientWidth / (pg.classList.contains('land') ? 1123 : 794); pg.style.transform = `scale(${k})`; });
-  deLigDom(document.getElementById("main"));
   if (TAB === 'home') setTimeout(renderThumbs, 30);
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
@@ -1657,11 +1656,8 @@ function vStaff() {
     ${qbar('stList', 'كشف المعلمين المكلفين:')}
     ${qbar('assign', 'خطابات التكليف:')}
     ${qbar('receipt', 'بيان استلام الأسئلة:')}
-    <p class="hint">يُملأ من الإسناد: لكل مادة المعلم الأكثر شعباً، وغيّره متى شئت. اضغط «⚙ التفاصيل» في أي مادة لإضافة معلمين مشاركين وتحديد العدد المطلوب والدرجة وموعد التسليم وتوزيع الفقرات — يصدر لكل معلم خطاب مستقل في صفحة واحدة.</p>
     ${stDefaultsBar()}
-    <div class="tw"><table class="et stack strows"><tr><th>المادة</th><th>الصف</th><th>المعلم المكلف بالأسئلة</th><th>معلمو المادة في الإسناد</th><th>درجة الاختبار</th><th></th></tr>
-    ${S.st.map((x, i) => stRow(x, i)).join('')}
-    </table></div>
+    <div class="stcards">${S.st.map((x, i) => stRow(x, i)).join('') || '<p class="emptyp">لا توجد مواد بعد — اضغط «إضافة مواد الجدول الناقصة».</p>'}</div>
     <div class="acts"><button class="btn sm" data-act="addSt" type="button">إضافة مادة</button><button class="btn sm ghost" data-act="stFromSchedule" type="button">إضافة مواد الجدول الناقصة</button></div>
   </section>
   <section class="card">
@@ -2089,35 +2085,32 @@ function stDue(x) { const iso = x.due || S.s.deadlineIso || ''; return iso ? hDa
 function stCount(x) { const t = gradeTotals(); return x.n || t[x.g] || ''; }
 function stDefaultsBar() {
   const d = S.s.stDef || {};
-  return `<details class="fold stdef"${SD_OPEN.v ? ' open' : ''}><summary>⚙ إعدادات عامة لجميع المكلفين (تُطبَّق على من لم تُحدَّد له قيمة خاصة)</summary><div class="stgrid">
-    <label>درجة الاختبار${inp('s.mark', S.s.mark, { num: 1, type: 'number', style: 'width:6rem' })}</label>
-    <label>آخر موعد للتسليم<input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}"></label>
-    <label>طريقة الإعداد<select class="in" data-k="s.stDef.mode">${ST_MODES.map(m => `<option${(d.mode || 'ورقياً') === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
-    <label>المطلوب تسليمه${inp('s.stDef.parts', d.parts || ST_PARTS)}</label>
-    <label>اختيار من متعدد (فقرة)${inp('s.stDef.mc', d.mc || '', { ph: '—', style: 'width:5rem' })}</label>
-    <label>مزاوجة (فقرة)${inp('s.stDef.mt', d.mt || '', { ph: '—', style: 'width:5rem' })}</label>
-    <label>صواب وخطأ (فقرة)${inp('s.stDef.tf', d.tf || '', { ph: '—', style: 'width:5rem' })}</label>
-    <label>أخرى${inp('s.stDef.otn', d.otn || '', { ph: 'نوع السؤال', style: 'width:8rem' })}${inp('s.stDef.ot', d.ot || '', { ph: 'فقرة', style: 'width:4.5rem' })}</label>
-  </div><div class="acts"><button class="btn sm ghost" type="button" data-act="stResetAll">مسح القيم الخاصة من كل المواد (اعتماد العامة)</button></div></details>`;
+  return `<div class="stdef"><div class="stdh">الإعدادات العامة <small>تنطبق على كل المواد ما لم تغيّرها في المادة نفسها</small></div><div class="stf">
+    <label><span>الدرجة</span>${inp('s.mark', S.s.mark, { num: 1, type: 'number' })}</label>
+    <label class="w2"><span>آخر موعد للتسليم</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}"></label>
+    <label><span>الطريقة</span><select class="in" data-k="s.stDef.mode">${ST_MODES.map(m => `<option${(d.mode || 'ورقياً') === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
+    <label><span>اسم السؤال الآخر</span>${inp('s.stDef.otn', d.otn || '', { ph: 'مثل: مقالي' })}</label>
+    <label class="w2"><span>المطلوب تسليمه</span>${inp('s.stDef.parts', d.parts || '', { ph: ST_PARTS })}</label>
+  </div>${S.s.deadline ? `<div class="stdue">⏳ ${esc(S.s.deadline)}</div>` : ''}</div>`;
 }
 function stRow(x, i) {
   const tos = teachersOfSubject(x.sub, x.g), co = x.co || [], d = S.s.stDef || {};
-  const chips = co.map((n, j) => `<span class="chip">${esc(n)}<button type="button" class="x" data-act="stCoDel" data-i="${i}" data-j="${j}" title="إزالة">×</button></span>`).join('');
   const pool = tchAll().filter(n => n !== x.t && !co.includes(n)), first = tos.filter(n => pool.includes(n));
-  const addSel = `<select class="in coadd" data-coadd="${i}"><option value="">➕ إضافة معلم مشارك…</option>${first.length ? `<optgroup label="معلمو المادة">${first.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` : ''}<optgroup label="جميع المعلمين">${pool.filter(n => !first.includes(n)).map(n => `<option>${esc(n)}</option>`).join('')}</optgroup><option value="__new">✎ كتابة اسم غير موجود…</option></select>`;
-  const custom = x.n || x.due || x.mode || x.parts || x.mc || x.mt || x.tf || x.ot || x.otn || co.length;
-  return `<tr><td>${pickSel(`st.${i}.sub`, x.sub, subOpts(x.g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td><select class="in" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td>${pickSel(`st.${i}.t`, x.t, tchOpts(tos, 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}${co.length ? `<div class="chips">${chips}</div>` : ''}</td><td class="tnames">${esc(tos.join('، ')) || '<span class="warnt">لا يوجد</span>'}</td><td>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark), style: 'width:5rem' })}</td><td><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف">×</button></td></tr>
-  <tr class="stdet"><td colspan="6"><details class="fold" data-sto="${i}"${ST_OPEN[i] ? ' open' : ''}><summary>⚙ التفاصيل${custom ? ' <span class="badge">مخصّص</span>' : ''} — ${esc(stCount(x))} ورقة · ${esc(x.mark || S.s.mark)} درجة · ${esc(stDue(x) || 'بدون موعد')}${co.length ? ` · ${co.length + 1} معلمين` : ''}</summary><div class="stgrid">
-    <label>معلم مشارك${addSel}</label>
-    <label>العدد المطلوب (أوراق)${inp(`st.${i}.n`, x.n || '', { num: 1, type: 'number', ph: String(gradeTotals()[x.g] || ''), style: 'width:6rem' })}</label>
-    <label>موعد التسليم<input class="in" type="date" data-k="st.${i}.due" value="${esc(x.due || '')}">${x.due ? `<small class="fdv">${esc(hDate(x.due))}</small>` : `<small class="mut">${S.s.deadline ? 'العام: ' + esc(S.s.deadline) : 'العام غير محدد'}</small>`}</label>
-    <label>طريقة الإعداد<select class="in" data-k="st.${i}.mode"><option value="">(العامة: ${esc(d.mode || 'ورقياً')})</option>${ST_MODES.map(m => `<option${x.mode === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
-    <label>المطلوب تسليمه${inp(`st.${i}.parts`, x.parts || '', { ph: d.parts || ST_PARTS })}</label>
-    <label>اختيار من متعدد${inp(`st.${i}.mc`, x.mc || '', { ph: d.mc || 'فقرة', style: 'width:5rem' })}</label>
-    <label>مزاوجة${inp(`st.${i}.mt`, x.mt || '', { ph: d.mt || 'فقرة', style: 'width:5rem' })}</label>
-    <label>صواب وخطأ${inp(`st.${i}.tf`, x.tf || '', { ph: d.tf || 'فقرة', style: 'width:5rem' })}</label>
-    <label>أخرى${inp(`st.${i}.otn`, x.otn || '', { ph: d.otn || 'نوع السؤال', style: 'width:8rem' })}${inp(`st.${i}.ot`, x.ot || '', { ph: d.ot || 'فقرة', style: 'width:4.5rem' })}</label>
-  </div><div class="acts"><button class="btn sm ghost" type="button" data-act="stCopyG" data-i="${i}">نسخ هذه التفاصيل لكل مواد ${GSHORT[x.g] || ''}</button><button class="btn sm ghost" type="button" data-act="stCopyAll" data-i="${i}">نسخها لجميع المواد</button><button class="btn sm ghost" type="button" data-act="stReset" data-i="${i}">اعتماد الإعدادات العامة</button><button class="btn sm" type="button" data-act="stPrev" data-i="${i}">👁 معاينة خطاب هذه المادة</button></div></details></td></tr>`;
+  const addSel = `<select class="in coadd" data-coadd="${i}"><option value="">＋ معلم</option>${first.length ? `<optgroup label="معلمو المادة">${first.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` : ''}<optgroup label="جميع المعلمين">${pool.filter(n => !first.includes(n)).map(n => `<option>${esc(n)}</option>`).join('')}</optgroup><option value="__new">✎ اسم غير موجود…</option></select>`;
+  const due = x.due || '';
+  const f = (k, lbl, ph, cls = '') => `<label class="${cls}"><span>${lbl}</span>${inp(`st.${i}.${k}`, x[k] || '', { ph: String(ph || '—') })}</label>`;
+  return `<div class="stc" style="--gc:${GCOL[x.g] || '#eee'}">
+  <div class="stc-h"><div class="stc-sub">${pickSel(`st.${i}.sub`, x.sub, subOpts(x.g), { kind: 's', ph: '— المادة —', other: 'كتابة مادة أخرى…' })}</div><select class="in stc-g" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف المادة">×</button></div>
+  <div class="stc-t"><span class="stc-l">المكلف</span>${pickSel(`st.${i}.t`, x.t, tchOpts(tos, 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}</div>
+  <div class="stc-co">${co.map((n, j) => `<span class="pill">${esc(n)}<button type="button" data-act="stCoDel" data-i="${i}" data-j="${j}" title="إزالة">×</button></span>`).join('')}${addSel}</div>
+  <div class="stf">
+    <label><span>العدد</span>${inp(`st.${i}.n`, x.n || '', { num: 1, type: 'number', ph: String(gradeTotals()[x.g] || '') })}</label>
+    <label><span>الدرجة</span>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark) })}</label>
+    <label class="w2"><span>موعد التسليم</span><input class="in${due ? '' : ' ph'}" type="date" data-k="st.${i}.due" value="${esc(due)}"></label>
+  </div>
+  <div class="stf q">${f('mc', 'متعدد', d.mc)}${f('mt', 'مزاوجة', d.mt)}${f('tf', 'صح/خطأ', d.tf)}${f('ot', esc(x.otn || d.otn || 'أخرى'), d.ot)}</div>
+  <div class="stc-f"><span class="stc-sum">${esc(stDue(x) || 'بدون موعد')} · ${esc(x.mode || d.mode || 'ورقياً')}</span><button class="lnk" type="button" data-act="stPrev" data-i="${i}">👁 معاينة</button><button class="lnk" type="button" data-act="stCopyAll" data-i="${i}">نسخ للكل</button></div>
+  </div>`;
 }
 const ST_OPEN = {}, SD_OPEN = { v: 0 };
 document.addEventListener('toggle', e => { const d = e.target; if (!d.dataset) return; if (d.dataset.sto != null) ST_OPEN[d.dataset.sto] = d.open; if (d.classList && d.classList.contains('stdef')) SD_OPEN.v = d.open; }, true);
@@ -2347,7 +2340,7 @@ function fxPanel(id) {
   const base = fxBase(id), adds = fxAdds(id), f = fxOf(id), nrm = (f.rm || []).length;
   const pool = tchAll().filter(n => !base.includes(n) && !adds.some(x => x.n === n));
   const wLbl = id === 'agree' ? 'المادة' : id === 'openEnv' ? 'العمل' : id === 'receipt' ? 'المادة' : '';
-  return `<div class="fxp"><div class="fxh">👥 ${FX_FORMS[id]} <small class="mut">(${base.length - nrm + adds.length} اسماً — اضغط الاسم لاستبعاده أو إرجاعه)</small></div>
+  return `<div class="fxp"><div class="fxh">👥 ${FX_FORMS[id]} <b>${base.length - nrm + adds.length}</b> <small class="mut">اضغط أي اسم لإخفائه من النموذج أو إرجاعه</small></div>
   <div class="chips fxc">${base.map(n => `<button type="button" class="chip${fxRm(id, n) ? ' off' : ' on'}" data-act="fxTog" data-fx="${id}" data-n="${esc(n)}">${fxRm(id, n) ? '↺ ' : '✓ '}${esc(n)}</button>`).join('') || '<span class="mut">لا توجد أسماء من البيانات</span>'}
   ${adds.map((x, j) => `<span class="chip on add">➕ ${esc(x.n)}${x.w ? ` <small>(${esc(x.w)})</small>` : ''}<button type="button" class="x" data-act="fxDel" data-fx="${id}" data-j="${j}" title="حذف">×</button></span>`).join('')}</div>
   <div class="fxadd"><select class="in" data-fxadd="${id}"><option value="">➕ إضافة اسم…</option>${pool.map(n => `<option>${esc(n)}</option>`).join('')}<option value="__new">✎ كتابة اسم جديد…</option></select>${wLbl ? `<input class="in" id="fxw_${id}" placeholder="${wLbl} (اختياري)" style="max-width:11rem">` : ''}
@@ -2357,8 +2350,8 @@ function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   const dl = id === 'assign' ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
-  const optsHtml = fdCtl(id) + dl + fxPanel(id), sum = [FX_FORMS[id] && ((fxOf(id).rm || []).length || fxAdds(id).length) ? '👥 أسماء معدّلة' : '', fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
-  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ ${FX_FORMS[id] ? 'الأسماء والتاريخ' : 'التاريخ على النموذج'}${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}</div>`;
+  const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
+  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}${fxPanel(id)}</div>`;
 }
 let PV = null; var QOPEN = {};
 function openPreview(groups, name) {
@@ -2425,7 +2418,6 @@ function deLig(t) { return String(t).replace(/لله/g, 'لل\u200dه'); }
 function deLigHtml(h) { return String(h).replace(/>([^<]+)</g, (m, x) => '>' + deLig(x) + '<'); }
 function deLigDom(root) { if (!root) return; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => /^(TEXTAREA|OPTION|SCRIPT|STYLE)$/.test(n.parentNode.nodeName) || !/لله/.test(n.nodeValue) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); const L = []; let n; while ((n = tw.nextNode())) L.push(n); L.forEach(x => { x.nodeValue = deLig(x.nodeValue); }); }
 function pageWrap(content, land) {
-  content = deLigHtml(content);
   return `<div class="page${land ? ' land' : ''}"><img class="brand-hdr phdr" src="${HDR}" alt=""><div class="pbody">${content}</div><img class="brand-ftr pftr" src="${FTR}" alt=""></div>`;
 }
 /* ===== تاريخ النموذج (للنماذج التي تُوزَّع قبل الاختبارات) ===== */

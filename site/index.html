@@ -17,21 +17,21 @@
 <script src="xlsx.full.min.js"></script>
 <script src="docx.umd.js" defer></script>
 <style>
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/tajawal-arabic-400-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/tajawal-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/tajawal-arabic-500-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/tajawal-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/tajawal-arabic-700-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/tajawal-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/tajawal-arabic-800-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/tajawal-latin-800-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/cairo-arabic-400-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/cairo-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/cairo-arabic-500-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/cairo-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cairo-arabic-700-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cairo-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/cairo-arabic-800-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/cairo-latin-800-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 /* التخطيط: شريط علوي بهوية الوزارة، تبويبات أفقية، ومحتوى في بطاقات؛ صفحة النماذج: قائمة جانبية + معاينة ورق A4 */
 :root{
   --navy:#0b3a46; --navy2:#12505f; --accent:#1f9d66; --accent-ink:#ffffff;
   --bg:#f3f1ec; --surface:#fffdf9; --surface2:#f9f6f0; --ink:#1d2a2f; --muted:#56676c; --line:#e2dbcf; --soft:#efe9de;
   --info:#13707d; --info-bg:#e5f1f0; --info-line:#97cdcc; --shadow:0 1px 2px rgba(12,40,48,.06),0 6px 18px rgba(12,40,48,.05);
   --warn:#b4541a; --bad:#b3193f; --ok:#16794e;
-  --ui:'Tajawal',Tahoma,Arial,sans-serif; --doc:'Tajawal','Sakkal Majalla',Arial,sans-serif;
+  --ui:'Cairo',Tahoma,Arial,sans-serif; --doc:'Cairo','Sakkal Majalla',Arial,sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121a1d;--surface:#18242a;--surface2:#1e2d33;--ink:#e7ece9;--muted:#a5b4b2;--line:#2d3f45;--soft:#22353b;--accent:#3cc38f;--info:#8ccbd0;--info-bg:#17333a;--info-line:#3a7179;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}}
@@ -94,9 +94,31 @@ select.in{text-overflow:ellipsis}
 .strows tr.stdet td{padding:0 6px 8px;border-top:0}
 .strows .stdet .fold{margin:0}
 .strows .stdet summary{font-size:.82rem;color:var(--muted);cursor:pointer;padding:4px 2px}
-.fxp{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+.stdef{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 0 14px}
+.stdh{font-weight:800;font-size:.92rem;margin-bottom:6px}.stdh small{font-weight:400;color:var(--muted);font-size:.75rem;margin-inline-start:6px}
+.stdue{font-size:.8rem;color:var(--accent);font-weight:700;margin-top:6px}
+.stf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+.stf label{display:flex;flex-direction:column;gap:3px;min-width:0}.stf label>span{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stf .in{width:100%;min-width:0;padding:7px 8px;font-size:.9rem}.stf .w2{grid-column:span 2}
+.stf.q{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:6px}.stf.q .in{text-align:center}
+.stcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.stc{border:1px solid var(--line);border-inline-start:6px solid var(--gc);border-radius:14px;background:var(--surface);padding:10px 12px}
+.stc-h{display:flex;gap:8px;align-items:center}.stc-sub{flex:1;min-width:0}.stc-sub .in,.stc-sub select{font-weight:800;width:100%}
+.stc-g{width:auto;max-width:6.5rem;background:var(--gc)!important;color:#1d2a2f!important;font-weight:700}
+.stc-t{display:flex;gap:8px;align-items:center;margin-top:8px}.stc-t>:last-child{flex:1;min-width:0}.stc-t select{width:100%}
+.stc-l{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.stc-co{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.stc-co .pill{display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));border-radius:999px;padding:3px 4px 3px 10px;font-size:.8rem;font-weight:700;color:var(--ink)}
+.stc-co .pill button{border:0;background:none;color:#be123c;font-size:1rem;cursor:pointer;padding:0 4px}
+.stc-co .coadd{width:auto;max-width:9rem;padding:4px 8px;font-size:.8rem;border-style:dashed}
+.stdef .stf{grid-template-columns:repeat(3,minmax(0,1fr))}.stdef .stf .w2{grid-column:span 2}
+@media(max-width:480px){.stdef .stf{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stc-f{display:flex;align-items:center;gap:10px;margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+.stc-sum{flex:1;font-size:.75rem;color:var(--muted)}
+.lnk{border:0;background:none;color:var(--accent);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;padding:4px 2px}
+.fxp{flex-basis:100%;border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
 .fxh{font-weight:700;font-size:.88rem;margin-bottom:6px}
-.fxc{gap:6px}.fxc .chip{font-size:.8rem;padding:3px 10px}
+.fxc{gap:5px}.fxc .chip{font-size:.76rem;padding:2px 9px;max-width:100%}
 .fxc .chip.off{opacity:.55;text-decoration:line-through}
 .fxc .chip.add{padding-left:4px}.fxc .chip .x{width:20px;height:20px}
 .fxadd{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}.fxadd .in{max-width:15rem}
@@ -1529,11 +1551,11 @@ function rr(ctx, x, y, w, h, r) {
   ctx.quadraticCurveTo(x, y + h, x, y + h - bl); ctx.lineTo(x, y + t); ctx.quadraticCurveTo(x, y, x + t, y); ctx.closePath();
 }
 function fitText(ctx, txt, maxW, size, weight) {
-  let s = size; ctx.font = `${weight} ${s}px Tajawal, Arial, sans-serif`;
-  while (ctx.measureText(txt).width > maxW && s > 12) { s -= 1; ctx.font = `${weight} ${s}px Tajawal, Arial, sans-serif`; }
+  let s = size; ctx.font = `${weight} ${s}px Cairo, Arial, sans-serif`;
+  while (ctx.measureText(txt).width > maxW && s > 12) { s -= 1; ctx.font = `${weight} ${s}px Cairo, Arial, sans-serif`; }
 }
 async function drawBrand() {
-  try { await Promise.all([document.fonts.load('700 30px Tajawal'), document.fonts.load('800 30px Tajawal')]); } catch (e) { }
+  try { await Promise.all([document.fonts.load('700 30px Cairo'), document.fonts.load('800 30px Cairo')]); } catch (e) { }
   if (!LOGO.complete) await new Promise(r => { LOGO.onload = r; LOGO.onerror = r; });
   const W = 1700, H = 215, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d'); x.direction = 'rtl';
@@ -2483,7 +2505,6 @@ function render() {
   if (TAB === 'files') renderStuTable();
   if (TAB === 'assign' && typeof taFilter === 'function' && (TAF.q || TAF.need)) taFilter();
   $$('.pthumb').forEach(b => { const pg = b.firstElementChild; if (!pg) return; const k = b.clientWidth / (pg.classList.contains('land') ? 1123 : 794); pg.style.transform = `scale(${k})`; });
-  deLigDom(document.getElementById("main"));
   if (TAB === 'home') setTimeout(renderThumbs, 30);
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
@@ -3012,11 +3033,8 @@ function vStaff() {
     ${qbar('stList', 'كشف المعلمين المكلفين:')}
     ${qbar('assign', 'خطابات التكليف:')}
     ${qbar('receipt', 'بيان استلام الأسئلة:')}
-    <p class="hint">يُملأ من الإسناد: لكل مادة المعلم الأكثر شعباً، وغيّره متى شئت. اضغط «⚙ التفاصيل» في أي مادة لإضافة معلمين مشاركين وتحديد العدد المطلوب والدرجة وموعد التسليم وتوزيع الفقرات — يصدر لكل معلم خطاب مستقل في صفحة واحدة.</p>
     ${stDefaultsBar()}
-    <div class="tw"><table class="et stack strows"><tr><th>المادة</th><th>الصف</th><th>المعلم المكلف بالأسئلة</th><th>معلمو المادة في الإسناد</th><th>درجة الاختبار</th><th></th></tr>
-    ${S.st.map((x, i) => stRow(x, i)).join('')}
-    </table></div>
+    <div class="stcards">${S.st.map((x, i) => stRow(x, i)).join('') || '<p class="emptyp">لا توجد مواد بعد — اضغط «إضافة مواد الجدول الناقصة».</p>'}</div>
     <div class="acts"><button class="btn sm" data-act="addSt" type="button">إضافة مادة</button><button class="btn sm ghost" data-act="stFromSchedule" type="button">إضافة مواد الجدول الناقصة</button></div>
   </section>
   <section class="card">
@@ -3444,35 +3462,32 @@ function stDue(x) { const iso = x.due || S.s.deadlineIso || ''; return iso ? hDa
 function stCount(x) { const t = gradeTotals(); return x.n || t[x.g] || ''; }
 function stDefaultsBar() {
   const d = S.s.stDef || {};
-  return `<details class="fold stdef"${SD_OPEN.v ? ' open' : ''}><summary>⚙ إعدادات عامة لجميع المكلفين (تُطبَّق على من لم تُحدَّد له قيمة خاصة)</summary><div class="stgrid">
-    <label>درجة الاختبار${inp('s.mark', S.s.mark, { num: 1, type: 'number', style: 'width:6rem' })}</label>
-    <label>آخر موعد للتسليم<input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}"></label>
-    <label>طريقة الإعداد<select class="in" data-k="s.stDef.mode">${ST_MODES.map(m => `<option${(d.mode || 'ورقياً') === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
-    <label>المطلوب تسليمه${inp('s.stDef.parts', d.parts || ST_PARTS)}</label>
-    <label>اختيار من متعدد (فقرة)${inp('s.stDef.mc', d.mc || '', { ph: '—', style: 'width:5rem' })}</label>
-    <label>مزاوجة (فقرة)${inp('s.stDef.mt', d.mt || '', { ph: '—', style: 'width:5rem' })}</label>
-    <label>صواب وخطأ (فقرة)${inp('s.stDef.tf', d.tf || '', { ph: '—', style: 'width:5rem' })}</label>
-    <label>أخرى${inp('s.stDef.otn', d.otn || '', { ph: 'نوع السؤال', style: 'width:8rem' })}${inp('s.stDef.ot', d.ot || '', { ph: 'فقرة', style: 'width:4.5rem' })}</label>
-  </div><div class="acts"><button class="btn sm ghost" type="button" data-act="stResetAll">مسح القيم الخاصة من كل المواد (اعتماد العامة)</button></div></details>`;
+  return `<div class="stdef"><div class="stdh">الإعدادات العامة <small>تنطبق على كل المواد ما لم تغيّرها في المادة نفسها</small></div><div class="stf">
+    <label><span>الدرجة</span>${inp('s.mark', S.s.mark, { num: 1, type: 'number' })}</label>
+    <label class="w2"><span>آخر موعد للتسليم</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}"></label>
+    <label><span>الطريقة</span><select class="in" data-k="s.stDef.mode">${ST_MODES.map(m => `<option${(d.mode || 'ورقياً') === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
+    <label><span>اسم السؤال الآخر</span>${inp('s.stDef.otn', d.otn || '', { ph: 'مثل: مقالي' })}</label>
+    <label class="w2"><span>المطلوب تسليمه</span>${inp('s.stDef.parts', d.parts || '', { ph: ST_PARTS })}</label>
+  </div>${S.s.deadline ? `<div class="stdue">⏳ ${esc(S.s.deadline)}</div>` : ''}</div>`;
 }
 function stRow(x, i) {
   const tos = teachersOfSubject(x.sub, x.g), co = x.co || [], d = S.s.stDef || {};
-  const chips = co.map((n, j) => `<span class="chip">${esc(n)}<button type="button" class="x" data-act="stCoDel" data-i="${i}" data-j="${j}" title="إزالة">×</button></span>`).join('');
   const pool = tchAll().filter(n => n !== x.t && !co.includes(n)), first = tos.filter(n => pool.includes(n));
-  const addSel = `<select class="in coadd" data-coadd="${i}"><option value="">➕ إضافة معلم مشارك…</option>${first.length ? `<optgroup label="معلمو المادة">${first.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` : ''}<optgroup label="جميع المعلمين">${pool.filter(n => !first.includes(n)).map(n => `<option>${esc(n)}</option>`).join('')}</optgroup><option value="__new">✎ كتابة اسم غير موجود…</option></select>`;
-  const custom = x.n || x.due || x.mode || x.parts || x.mc || x.mt || x.tf || x.ot || x.otn || co.length;
-  return `<tr><td>${pickSel(`st.${i}.sub`, x.sub, subOpts(x.g), { kind: 's', ph: '— اختر المادة —', other: 'كتابة مادة أخرى…' })}</td><td><select class="in" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select></td><td>${pickSel(`st.${i}.t`, x.t, tchOpts(tos, 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}${co.length ? `<div class="chips">${chips}</div>` : ''}</td><td class="tnames">${esc(tos.join('، ')) || '<span class="warnt">لا يوجد</span>'}</td><td>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark), style: 'width:5rem' })}</td><td><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف">×</button></td></tr>
-  <tr class="stdet"><td colspan="6"><details class="fold" data-sto="${i}"${ST_OPEN[i] ? ' open' : ''}><summary>⚙ التفاصيل${custom ? ' <span class="badge">مخصّص</span>' : ''} — ${esc(stCount(x))} ورقة · ${esc(x.mark || S.s.mark)} درجة · ${esc(stDue(x) || 'بدون موعد')}${co.length ? ` · ${co.length + 1} معلمين` : ''}</summary><div class="stgrid">
-    <label>معلم مشارك${addSel}</label>
-    <label>العدد المطلوب (أوراق)${inp(`st.${i}.n`, x.n || '', { num: 1, type: 'number', ph: String(gradeTotals()[x.g] || ''), style: 'width:6rem' })}</label>
-    <label>موعد التسليم<input class="in" type="date" data-k="st.${i}.due" value="${esc(x.due || '')}">${x.due ? `<small class="fdv">${esc(hDate(x.due))}</small>` : `<small class="mut">${S.s.deadline ? 'العام: ' + esc(S.s.deadline) : 'العام غير محدد'}</small>`}</label>
-    <label>طريقة الإعداد<select class="in" data-k="st.${i}.mode"><option value="">(العامة: ${esc(d.mode || 'ورقياً')})</option>${ST_MODES.map(m => `<option${x.mode === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>
-    <label>المطلوب تسليمه${inp(`st.${i}.parts`, x.parts || '', { ph: d.parts || ST_PARTS })}</label>
-    <label>اختيار من متعدد${inp(`st.${i}.mc`, x.mc || '', { ph: d.mc || 'فقرة', style: 'width:5rem' })}</label>
-    <label>مزاوجة${inp(`st.${i}.mt`, x.mt || '', { ph: d.mt || 'فقرة', style: 'width:5rem' })}</label>
-    <label>صواب وخطأ${inp(`st.${i}.tf`, x.tf || '', { ph: d.tf || 'فقرة', style: 'width:5rem' })}</label>
-    <label>أخرى${inp(`st.${i}.otn`, x.otn || '', { ph: d.otn || 'نوع السؤال', style: 'width:8rem' })}${inp(`st.${i}.ot`, x.ot || '', { ph: d.ot || 'فقرة', style: 'width:4.5rem' })}</label>
-  </div><div class="acts"><button class="btn sm ghost" type="button" data-act="stCopyG" data-i="${i}">نسخ هذه التفاصيل لكل مواد ${GSHORT[x.g] || ''}</button><button class="btn sm ghost" type="button" data-act="stCopyAll" data-i="${i}">نسخها لجميع المواد</button><button class="btn sm ghost" type="button" data-act="stReset" data-i="${i}">اعتماد الإعدادات العامة</button><button class="btn sm" type="button" data-act="stPrev" data-i="${i}">👁 معاينة خطاب هذه المادة</button></div></details></td></tr>`;
+  const addSel = `<select class="in coadd" data-coadd="${i}"><option value="">＋ معلم</option>${first.length ? `<optgroup label="معلمو المادة">${first.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` : ''}<optgroup label="جميع المعلمين">${pool.filter(n => !first.includes(n)).map(n => `<option>${esc(n)}</option>`).join('')}</optgroup><option value="__new">✎ اسم غير موجود…</option></select>`;
+  const due = x.due || '';
+  const f = (k, lbl, ph, cls = '') => `<label class="${cls}"><span>${lbl}</span>${inp(`st.${i}.${k}`, x[k] || '', { ph: String(ph || '—') })}</label>`;
+  return `<div class="stc" style="--gc:${GCOL[x.g] || '#eee'}">
+  <div class="stc-h"><div class="stc-sub">${pickSel(`st.${i}.sub`, x.sub, subOpts(x.g), { kind: 's', ph: '— المادة —', other: 'كتابة مادة أخرى…' })}</div><select class="in stc-g" data-k="st.${i}.g" data-num="1" id="st_g_${i}">${G.map(g => `<option value="${g}"${+x.g === g ? ' selected' : ''}>${GSHORT[g]}</option>`).join('')}</select><button class="x" data-act="delSt" data-i="${i}" type="button" title="حذف المادة">×</button></div>
+  <div class="stc-t"><span class="stc-l">المكلف</span>${pickSel(`st.${i}.t`, x.t, tchOpts(tos, 'معلمو المادة في الإسناد'), { ph: '— اختر المعلم —' })}</div>
+  <div class="stc-co">${co.map((n, j) => `<span class="pill">${esc(n)}<button type="button" data-act="stCoDel" data-i="${i}" data-j="${j}" title="إزالة">×</button></span>`).join('')}${addSel}</div>
+  <div class="stf">
+    <label><span>العدد</span>${inp(`st.${i}.n`, x.n || '', { num: 1, type: 'number', ph: String(gradeTotals()[x.g] || '') })}</label>
+    <label><span>الدرجة</span>${inp(`st.${i}.mark`, x.mark || '', { num: 1, type: 'number', ph: String(S.s.mark) })}</label>
+    <label class="w2"><span>موعد التسليم</span><input class="in${due ? '' : ' ph'}" type="date" data-k="st.${i}.due" value="${esc(due)}"></label>
+  </div>
+  <div class="stf q">${f('mc', 'متعدد', d.mc)}${f('mt', 'مزاوجة', d.mt)}${f('tf', 'صح/خطأ', d.tf)}${f('ot', esc(x.otn || d.otn || 'أخرى'), d.ot)}</div>
+  <div class="stc-f"><span class="stc-sum">${esc(stDue(x) || 'بدون موعد')} · ${esc(x.mode || d.mode || 'ورقياً')}</span><button class="lnk" type="button" data-act="stPrev" data-i="${i}">👁 معاينة</button><button class="lnk" type="button" data-act="stCopyAll" data-i="${i}">نسخ للكل</button></div>
+  </div>`;
 }
 const ST_OPEN = {}, SD_OPEN = { v: 0 };
 document.addEventListener('toggle', e => { const d = e.target; if (!d.dataset) return; if (d.dataset.sto != null) ST_OPEN[d.dataset.sto] = d.open; if (d.classList && d.classList.contains('stdef')) SD_OPEN.v = d.open; }, true);
@@ -3702,7 +3717,7 @@ function fxPanel(id) {
   const base = fxBase(id), adds = fxAdds(id), f = fxOf(id), nrm = (f.rm || []).length;
   const pool = tchAll().filter(n => !base.includes(n) && !adds.some(x => x.n === n));
   const wLbl = id === 'agree' ? 'المادة' : id === 'openEnv' ? 'العمل' : id === 'receipt' ? 'المادة' : '';
-  return `<div class="fxp"><div class="fxh">👥 ${FX_FORMS[id]} <small class="mut">(${base.length - nrm + adds.length} اسماً — اضغط الاسم لاستبعاده أو إرجاعه)</small></div>
+  return `<div class="fxp"><div class="fxh">👥 ${FX_FORMS[id]} <b>${base.length - nrm + adds.length}</b> <small class="mut">اضغط أي اسم لإخفائه من النموذج أو إرجاعه</small></div>
   <div class="chips fxc">${base.map(n => `<button type="button" class="chip${fxRm(id, n) ? ' off' : ' on'}" data-act="fxTog" data-fx="${id}" data-n="${esc(n)}">${fxRm(id, n) ? '↺ ' : '✓ '}${esc(n)}</button>`).join('') || '<span class="mut">لا توجد أسماء من البيانات</span>'}
   ${adds.map((x, j) => `<span class="chip on add">➕ ${esc(x.n)}${x.w ? ` <small>(${esc(x.w)})</small>` : ''}<button type="button" class="x" data-act="fxDel" data-fx="${id}" data-j="${j}" title="حذف">×</button></span>`).join('')}</div>
   <div class="fxadd"><select class="in" data-fxadd="${id}"><option value="">➕ إضافة اسم…</option>${pool.map(n => `<option>${esc(n)}</option>`).join('')}<option value="__new">✎ كتابة اسم جديد…</option></select>${wLbl ? `<input class="in" id="fxw_${id}" placeholder="${wLbl} (اختياري)" style="max-width:11rem">` : ''}
@@ -3712,8 +3727,8 @@ function qbar(id, label, extra = '', opts) {
   const od = opts ? ` data-o='${esc(JSON.stringify(opts))}'` : '';
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   const dl = id === 'assign' ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
-  const optsHtml = fdCtl(id) + dl + fxPanel(id), sum = [FX_FORMS[id] && ((fxOf(id).rm || []).length || fxAdds(id).length) ? '👥 أسماء معدّلة' : '', fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
-  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ ${FX_FORMS[id] ? 'الأسماء والتاريخ' : 'التاريخ على النموذج'}${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}</div>`;
+  const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : '', id === 'assign' && S.s.deadline ? '⏳ ' + S.s.deadline : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
+  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}${fxPanel(id)}</div>`;
 }
 let PV = null; var QOPEN = {};
 function openPreview(groups, name) {
@@ -3780,7 +3795,6 @@ function deLig(t) { return String(t).replace(/لله/g, 'لل\u200dه'); }
 function deLigHtml(h) { return String(h).replace(/>([^<]+)</g, (m, x) => '>' + deLig(x) + '<'); }
 function deLigDom(root) { if (!root) return; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => /^(TEXTAREA|OPTION|SCRIPT|STYLE)$/.test(n.parentNode.nodeName) || !/لله/.test(n.nodeValue) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); const L = []; let n; while ((n = tw.nextNode())) L.push(n); L.forEach(x => { x.nodeValue = deLig(x.nodeValue); }); }
 function pageWrap(content, land) {
-  content = deLigHtml(content);
   return `<div class="page${land ? ' land' : ''}"><img class="brand-hdr phdr" src="${HDR}" alt=""><div class="pbody">${content}</div><img class="brand-ftr pftr" src="${FTR}" alt=""></div>`;
 }
 /* ===== تاريخ النموذج (للنماذج التي تُوزَّع قبل الاختبارات) ===== */
@@ -6494,7 +6508,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795282911';
+var BUILD_ID = '1795284487';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';

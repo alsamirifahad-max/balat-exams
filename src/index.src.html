@@ -17,21 +17,21 @@
 <script src="xlsx.full.min.js"></script>
 <script src="docx.umd.js" defer></script>
 <style>
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/tajawal-arabic-400-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/tajawal-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/tajawal-arabic-500-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/tajawal-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/tajawal-arabic-700-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/tajawal-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/tajawal-arabic-800-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:'Tajawal';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/tajawal-latin-800-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/cairo-arabic-400-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/cairo-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/cairo-arabic-500-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/cairo-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cairo-arabic-700-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cairo-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/cairo-arabic-800-normal.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/cairo-latin-800-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 /* التخطيط: شريط علوي بهوية الوزارة، تبويبات أفقية، ومحتوى في بطاقات؛ صفحة النماذج: قائمة جانبية + معاينة ورق A4 */
 :root{
   --navy:#0b3a46; --navy2:#12505f; --accent:#1f9d66; --accent-ink:#ffffff;
   --bg:#f3f1ec; --surface:#fffdf9; --surface2:#f9f6f0; --ink:#1d2a2f; --muted:#56676c; --line:#e2dbcf; --soft:#efe9de;
   --info:#13707d; --info-bg:#e5f1f0; --info-line:#97cdcc; --shadow:0 1px 2px rgba(12,40,48,.06),0 6px 18px rgba(12,40,48,.05);
   --warn:#b4541a; --bad:#b3193f; --ok:#16794e;
-  --ui:'Tajawal',Tahoma,Arial,sans-serif; --doc:'Tajawal','Sakkal Majalla',Arial,sans-serif;
+  --ui:'Cairo',Tahoma,Arial,sans-serif; --doc:'Cairo','Sakkal Majalla',Arial,sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121a1d;--surface:#18242a;--surface2:#1e2d33;--ink:#e7ece9;--muted:#a5b4b2;--line:#2d3f45;--soft:#22353b;--accent:#3cc38f;--info:#8ccbd0;--info-bg:#17333a;--info-line:#3a7179;--shadow:0 1px 2px rgba(0,0,0,.35);--warn:#f0a36b;--bad:#f47c97;--ok:#62d9a2;color-scheme:dark}}
@@ -94,9 +94,31 @@ select.in{text-overflow:ellipsis}
 .strows tr.stdet td{padding:0 6px 8px;border-top:0}
 .strows .stdet .fold{margin:0}
 .strows .stdet summary{font-size:.82rem;color:var(--muted);cursor:pointer;padding:4px 2px}
-.fxp{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+.stdef{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 0 14px}
+.stdh{font-weight:800;font-size:.92rem;margin-bottom:6px}.stdh small{font-weight:400;color:var(--muted);font-size:.75rem;margin-inline-start:6px}
+.stdue{font-size:.8rem;color:var(--accent);font-weight:700;margin-top:6px}
+.stf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+.stf label{display:flex;flex-direction:column;gap:3px;min-width:0}.stf label>span{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stf .in{width:100%;min-width:0;padding:7px 8px;font-size:.9rem}.stf .w2{grid-column:span 2}
+.stf.q{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:6px}.stf.q .in{text-align:center}
+.stcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.stc{border:1px solid var(--line);border-inline-start:6px solid var(--gc);border-radius:14px;background:var(--surface);padding:10px 12px}
+.stc-h{display:flex;gap:8px;align-items:center}.stc-sub{flex:1;min-width:0}.stc-sub .in,.stc-sub select{font-weight:800;width:100%}
+.stc-g{width:auto;max-width:6.5rem;background:var(--gc)!important;color:#1d2a2f!important;font-weight:700}
+.stc-t{display:flex;gap:8px;align-items:center;margin-top:8px}.stc-t>:last-child{flex:1;min-width:0}.stc-t select{width:100%}
+.stc-l{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.stc-co{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.stc-co .pill{display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));border-radius:999px;padding:3px 4px 3px 10px;font-size:.8rem;font-weight:700;color:var(--ink)}
+.stc-co .pill button{border:0;background:none;color:#be123c;font-size:1rem;cursor:pointer;padding:0 4px}
+.stc-co .coadd{width:auto;max-width:9rem;padding:4px 8px;font-size:.8rem;border-style:dashed}
+.stdef .stf{grid-template-columns:repeat(3,minmax(0,1fr))}.stdef .stf .w2{grid-column:span 2}
+@media(max-width:480px){.stdef .stf{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stc-f{display:flex;align-items:center;gap:10px;margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+.stc-sum{flex:1;font-size:.75rem;color:var(--muted)}
+.lnk{border:0;background:none;color:var(--accent);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;padding:4px 2px}
+.fxp{flex-basis:100%;border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
 .fxh{font-weight:700;font-size:.88rem;margin-bottom:6px}
-.fxc{gap:6px}.fxc .chip{font-size:.8rem;padding:3px 10px}
+.fxc{gap:5px}.fxc .chip{font-size:.76rem;padding:2px 9px;max-width:100%}
 .fxc .chip.off{opacity:.55;text-decoration:line-through}
 .fxc .chip.add{padding-left:4px}.fxc .chip .x{width:20px;height:20px}
 .fxadd{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}.fxadd .in{max-width:15rem}
