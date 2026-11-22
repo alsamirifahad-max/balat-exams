@@ -1001,6 +1001,13 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .plm.hd .pn{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 7%,var(--surface))}
 .pli{font-size:.8rem;color:var(--muted);text-align:center}
 .pla{display:flex;gap:2px;align-items:center}
+.plnew{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:6px;margin:8px 0}
+.plri{display:flex;gap:6px;align-items:center;font-size:.82rem;margin:4px 0 8px}
+.plrs{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+.plr{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1.1fr) 28px;gap:5px;align-items:center;border-inline-start:4px solid var(--pc);background:var(--surface);border-radius:8px;padding:4px 6px}
+.plr .plrc{font-size:.8rem}.plr .in{padding:5px 7px;font-size:.82rem;min-width:0}
+.pladd2{margin-top:6px;width:auto!important;max-width:100%;font-size:.82rem;border-style:dashed}
+@media(max-width:600px){.plnew{grid-template-columns:1fr 1fr}.plnew .btn{grid-column:1/-1}.plr{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 28px}.plr .plrc{grid-column:1/-1}}
 .plmv{width:auto!important;max-width:3.6rem;padding:4px 4px!important;font-size:.8rem}
 .pladd{width:auto!important;max-width:16rem}
 .tsp{flex-basis:100%;margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}.tsp>summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(--info)}
@@ -6784,7 +6791,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795351117';
+var BUILD_ID = '1795351322';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
@@ -6859,16 +6866,21 @@ function planComCard(c, i) {
 }
 function planPeopleView() {
   const q = normName(PLAN_Q), ppl = planPeople().filter(p => !q || normName(p.n).includes(q));
-  return `<input class="in plq" type="search" placeholder="🔎 ابحث عن اسم…" value="${esc(PLAN_Q)}" oninput="PLAN_Q=this.value;planPplRender()">
+  return `<div class="plnew"><input class="in" id="plNewN" list="tlist" placeholder="＋ مكلَّف جديد: اكتب الاسم أو اختره"><select class="in" id="plNewC">${planGet().coms.map((c, k) => `<option value="${k}">${esc(c.t)}</option>`).join('')}</select><button type="button" class="btn sm pri" data-pact="pNew">إضافة</button></div>
+  <label class="ck plri"><input type="checkbox" data-k="s.planRolesIn"${S.s.planRolesIn !== false ? ' checked' : ''}> إلحاق «بيان توزيع الأدوار» بقرار ${esc((planGet().coms[0] || {}).t || 'لجنة الاختبارات')} عند طباعته</label>
+  <input class="in plq" type="search" placeholder="🔎 ابحث عن اسم…" value="${esc(PLAN_Q)}" oninput="PLAN_Q=this.value;planPplRender()">
   <div id="plPpl" class="plppl">${planPplRows(ppl)}</div>`;
 }
 function planPplRows(ppl) {
   if (!ppl.length) return '<p class="mut">لا يوجد اسم مطابق.</p>';
-  return ppl.map(p => `<div class="plp${p.l.length >= 4 ? ' hv' : ''}">
+  const P = planGet();
+  const roleSel = (ci, j, r) => { const list = PLAN_ROLES.includes(r) || !r ? PLAN_ROLES : [r, ...PLAN_ROLES]; return `<select class="in" data-pk="coms.${ci}.m.${j}.r">${list.map(x => `<option${x === (r || 'عضواً') ? ' selected' : ''}>${esc(x)}</option>`).join('')}<option value="__other">✎ صفة أخرى…</option></select>`; };
+  return ppl.map(p => { const mine = new Set(p.l.map(({ c }) => c)); return `<div class="plp${p.l.length >= 4 ? ' hv' : ''}">
     <div class="plpn"><b>${esc(p.n)}</b><span class="plload" title="عدد التكليفات">${p.l.length}</span>
-      ${PLAN_REP === p.n ? `<span class="plrep"><input class="in" id="plRepIn" list="tlist" placeholder="اسم البديل"><button type="button" class="btn sm pri" data-pact="repGo" data-n="${esc(p.n)}">إحلال</button><button type="button" class="btn sm ghost" data-pact="repX">إلغاء</button></span>` : `<button type="button" class="btn sm ghost plrb" data-pact="rep" data-n="${esc(p.n)}">🔁 إحلال في كل اللجان</button>`}</div>
-    <div class="plch">${p.l.map(({ c, x }) => `<button type="button" class="plchip" style="--pc:${c.c || '#475569'}" data-pact="goCom" data-id="${esc(c.id)}"><b>${esc(c.t.replace(/^لجنة\s+/, ''))}</b><span>${esc(x.r || 'عضواً')}${x.k ? ' · ' + esc(x.k) : ''}</span></button>`).join('')}</div>
-  </div>`).join('');
+      ${PLAN_REP === p.n ? `<span class="plrep"><input class="in" id="plRepIn" list="tlist" placeholder="اسم البديل"><button type="button" class="btn sm pri" data-pact="repGo" data-n="${esc(p.n)}">إحلال</button><button type="button" class="btn sm ghost" data-pact="repX">إلغاء</button></span>` : `<button type="button" class="btn sm ghost plrb" data-pact="rep" data-n="${esc(p.n)}">⇄ إحلال/تعديل الاسم</button>`}</div>
+    <div class="plrs">${p.l.map(({ c, x }) => { const ci = P.coms.indexOf(c), j = c.m.indexOf(x); return `<div class="plr" style="--pc:${c.c || '#475569'}"><b class="plrc">${esc(c.t.replace(/^لجنة\s+/, ''))}</b>${roleSel(ci, j, x.r)}<input class="in" data-pk="coms.${ci}.m.${j}.k" value="${esc(x.k || '')}" placeholder="المهمة"><button type="button" class="x" data-pact="mDel" data-c="${ci}" data-j="${j}" title="إزالة من اللجنة">×</button></div>`; }).join('')}</div>
+    <select class="in pladd2" data-padd2="${esc(p.n)}"><option value="">＋ تكليفه في لجنة أخرى…</option>${P.coms.map((c, k) => mine.has(c) ? '' : `<option value="${k}">${esc(c.t)}</option>`).join('')}</select>
+  </div>`; }).join('');
 }
 function planPplRender() { const el = $('#plPpl'); if (!el) return; const q = normName(PLAN_Q); el.innerHTML = planPplRows(planPeople().filter(p => !q || normName(p.n).includes(q))); }
 function vPlan() {
@@ -6910,6 +6922,8 @@ function planComPages(o) {
     const dh = `<p class="txt" style="font-weight:bold">مهام اللجنة:</p>`;
     if (cut >= c.d.length) out.push(top + (c.d.length ? dh + li(c.d, 1) : '') + extra + planSign());
     else { out.push(top + (cut ? dh + li(c.d.slice(0, cut), 1) : '')); out.push(title('تابع: مهام ' + esc(c.t)) + li(c.d.slice(cut), cut + 1) + extra + planSign()); }
+    /* بيان توزيع الأدوار يُلحق بقرار لجنة الاختبارات (اللجنة الأم) مباشرة */
+    if (c === P.coms[0] && (o.roles || (o.pc && o.pc !== 'all' && S.s.planRolesIn !== false) || (o.pc === 'all' && S.s.planRolesIn !== false))) out.push(...planRolesPages());
   });
   return out;
 }
@@ -6937,7 +6951,7 @@ function planOrgPage() {
 }
 OPT.pcom = o => `<label class="inl">اللجنة <select class="in fo" data-o="pc" id="fo_pc"><option value="all">جميع اللجان</option>${planGet().coms.map(c => `<option value="${esc(c.id)}"${o.pc === c.id ? ' selected' : ''}>${esc(c.t)}</option>`).join('')}</select></label>`;
 FORMS.unshift(
-  { id: 'planAll', grp: 'خطة الاختبارات', t: 'خطة الاختبارات كاملة (الهيكل والقرارات وتوزيع الأدوار)', build: () => [planOrgPage(), ...planComPages({}), ...planRolesPages()] },
+  { id: 'planAll', grp: 'خطة الاختبارات', t: 'خطة الاختبارات كاملة (الهيكل والقرارات وتوزيع الأدوار)', build: () => [planOrgPage(), ...planComPages({ roles: true })] },
   { id: 'planCom', grp: 'خطة الاختبارات', t: 'قرار تشكيل لجنة ومهامها', opts: ['pcom'], build: o => planComPages(o) },
   { id: 'planRoles', grp: 'خطة الاختبارات', t: 'بيان توزيع الأدوار بين المكلفين', build: () => planRolesPages() },
   { id: 'planOrg', grp: 'خطة الاختبارات', t: 'الخريطة التنظيمية للاختبارات', build: () => [planOrgPage()] }
@@ -6949,6 +6963,7 @@ document.addEventListener('toggle', e => { const d = e.target; if (!d.classList 
 document.addEventListener('change', e => {
   const el = e.target; if (!el.dataset) return;
   if (el.dataset.pk && el.value === '__other') { if (planRO()) return render(); const v = (prompt('اكتب الصفة:') || '').trim(); if (!v) return render(); const P = planEdit(); const ks = el.dataset.pk.split('.'); let o = P; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; save(); return render(); }
+  if (el.dataset.padd2 != null) { if (planRO()) return render(); const v = el.value; if (v === '') return; const P = planEdit(), c = P.coms[+v], n = el.dataset.padd2; const w = (planPeople().find(p => p.n === n) || { l: [] }).l.map(o => o.x.w).find(Boolean) || ''; c.m.push({ n, w, r: c.m.length ? 'عضواً' : 'رئيساً', k: '' }); save(); toast('كُلِّف ' + n + ' في ' + c.t); return render(); }
   if (el.dataset.padd != null) { if (planRO()) return render(); const v = el.value; if (!v) return; const P = planEdit(), c = P.coms[+el.dataset.padd]; c.m.push({ n: v, w: 'معلم', r: c.m.length ? 'عضواً' : 'رئيساً', k: '' }); save(); toast('أُضيف ' + v + ' إلى ' + c.t); return render(); }
   if (el.dataset.pmv) { if (planRO()) return render(); const v = el.value; if (!v) return; const [ci, j] = el.dataset.pmv.split('.').map(Number), P = planEdit(), src = P.coms[ci], x = src.m[j], dst = P.coms[+v.slice(1)];
     if (!dst || !x) return render(); dst.m.push(Object.assign({}, x, { r: /رئيس/.test(x.r || '') && dst.m.some(y => /رئيس/.test(y.r || '') && !/نائب/.test(y.r || '')) ? 'عضواً' : x.r })); if (v[0] === 'm') src.m.splice(j, 1);
@@ -6972,6 +6987,7 @@ document.addEventListener('click', async e => {
     case 'cDel': if (await confirmBox(`حذف «${P.coms[ci].t}» بأعضائها ومهامها؟`)) { P.coms.splice(ci, 1); save(); render(); } return;
     case 'approve': P.ok = !P.ok; save(); render(); toast(P.ok ? 'تم اعتماد خطة الاختبارات' : 'أُلغي الاعتماد'); return;
     case 'reset': if (await confirmBox('استرجاع أسماء ومهام خطة 1447 الأصلية؟ ستُفقد تعديلاتك على اللجان.')) { S.s.plan = null; PLAN_OPEN = {}; save(); render(); } return;
+    case 'pNew': { const n = (($('#plNewN') || {}).value || '').trim(), k = +(($('#plNewC') || {}).value || 0); if (!n) return toast('اكتب الاسم', true); const P = planEdit(), c = P.coms[k]; if (c.m.some(x => normName(x.n || '') === normName(n))) return toast('الاسم موجود في هذه اللجنة', true); c.m.push({ n, w: '', r: c.m.length ? 'عضواً' : 'رئيساً', k: '' }); PLAN_Q = ''; save(); toast('أُضيف ' + n + ' إلى ' + c.t); return render(); }
     case 'repGo': { const from = b.dataset.n, to = ($('#plRepIn') || {}).value || ''; const t = to.trim(); if (!t) return toast('اكتب اسم البديل', true); if (t === from) return; let k = 0; P.coms.forEach(c => c.m.forEach(x => { if ((x.n || '').trim() === from) { x.n = t; k++; } })); PLAN_REP = null; save(); render(); toast(`تم إحلال «${t}» مكان «${from}» في ${k} تكليف`); return; }
   }
 });
