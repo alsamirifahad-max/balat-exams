@@ -1003,6 +1003,11 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .pla{display:flex;gap:2px;align-items:center}
 .plmv{width:auto!important;max-width:3.6rem;padding:4px 4px!important;font-size:.8rem}
 .pladd{width:auto!important;max-width:16rem}
+.tsp{flex-basis:100%;margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}.tsp>summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(--info)}
+.tspb{display:flex;flex-direction:column;gap:6px;padding-top:8px}.tsh{font-weight:800;font-size:.82rem;margin-top:4px}
+.tsr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto;gap:6px;align-items:center}.tsr .inact{flex-direction:row}
+.stkp{margin:8px 0 4px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface2)}.stkp .stf{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:600px){.stkp .stf{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ined{display:flex;flex-direction:column;gap:10px}
 .intimes{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px}
 .intimes label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:700}.intimes .in{width:9rem}.intimes small{flex-basis:100%;font-size:.72rem}
@@ -1722,9 +1727,13 @@ function T(rows, o = {}) {
 const H = (v, x = {}) => Object.assign({ v, bg: HCOL, b: true }, x);
 const L = (v, x = {}) => Object.assign({ v, bg: LCOL, b: true }, x);
 const Gc = (g, v, x = {}) => Object.assign({ v, bg: GCOL[g] }, x);
-function title(t, sub) { return `<p class="dt">${t}</p>` + (sub ? `<p class="ds">${sub}</p>` : ''); }
+/* مرونة العنوان والتواقيع لكل نموذج: يُسجَّل الأصل عند البناء ويُستبدل بما يختاره المستخدم */
+let CUR_FORM = null; const TTL_SEEN = {}, SIG_SEEN = {};
+function ttlOv(t) { if (!CUR_FORM) return t; (TTL_SEEN[CUR_FORM] = TTL_SEEN[CUR_FORM] || new Set()).add(t); const o = ((S.s.ttl || {})[CUR_FORM] || {})[t]; return o ? esc(o) : t; }
+function title(t, sub) { t = ttlOv(t); return `<p class="dt">${t}</p>` + (sub ? `<p class="ds">${sub}</p>` : ''); }
 function sp(h = 6) { return `<p class="sp" style="height:${h}px;margin:0;font-size:2px">&nbsp;</p>`; }
 function sigs(list) {
+  if (CUR_FORM) { if (!SIG_SEEN[CUR_FORM]) SIG_SEEN[CUR_FORM] = list.map(x => [x[0], x[1] || '']); const ov = (S.s.sg || {})[CUR_FORM]; if (ov && ov.length) list = ov.filter(x => x[0] || x[1]); }
   return `<table class="sg" dir="rtl" border="0" cellspacing="0" cellpadding="4" width="100%"><tr>` +
     list.map(x => `<td style="text-align:center;vertical-align:top"><b>${esc(x[0])}</b><br>${x[1] ? esc(x[1]) : '&nbsp;'}<br><span class="sline">التوقيع: ....................</span></td>`).join('') + `</tr></table>`;
 }
@@ -2590,6 +2599,7 @@ function render() {
   if (TAB === 'assign' && typeof taFilter === 'function' && (TAF.q || TAF.need)) taFilter();
   $$('.pthumb').forEach(b => { const pg = b.firstElementChild; if (!pg) return; const k = b.clientWidth / (pg.classList.contains('land') ? 1123 : 794); pg.style.transform = `scale(${k})`; });
   if (TAB === 'home') setTimeout(renderThumbs, 30);
+  $$('details.tsp[open]').forEach(tspFill);
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
 }
@@ -2802,6 +2812,7 @@ function vCommittees() {
     ${qbar('comCounts', 'أعداد الطلاب في اللجان:')}
     ${qbar('comPlaces', 'مقرات اللجان:')}
     ${qbar('sticker', 'كروكي اللجان:')}
+    ${stkPanel()}
     <details class="impd"><summary>استيراد اللجان من ملف Word أو PDF أو Excel</summary>
       <p class="hint">يقبل جدول «أعداد الطلاب في اللجان» (رقم اللجنة، المقر، أول، ثاني، ثالث) فيستبدل اللجان وأعدادها، أو جدول «مقرات اللجان» فيحدّث الأدوار والمقرات فقط دون تغيير الأعداد.</p>
       <div class="drops one">${dropZone('com', 'ملف اللجان', 'Word (‎.docx/.doc) أو PDF أو Excel', '.docx,.doc,.pdf,.xlsx,.xls,.csv')}</div><div id="upMsg"></div>
@@ -3135,7 +3146,7 @@ function vStaff() {
     <h2>توزيع الملاحظين على اللجان</h2>
     ${se ? qbar('obsNames', 'أسماء الملاحظين على اللجان (الفترة المختارة):', '', { ses: OBS_SEL }) : ''}
     ${qbar('obsNames', 'أسماء الملاحظين على اللجان (كل الفترات):')}
-    <details class="setadv"><summary>نموذج آخر: جدول توزيع الملاحظين مع المقر وعدد الطلاب</summary>${qbar('obsTable', 'كل الفترات:')}${se ? qbar('obsTable', 'الفترة المختارة:', '', { ses: OBS_SEL }) : ''}</details>
+    <details class="setadv"><summary>بيان استلام أوراق الإجابات من الملاحظين</summary>${qbar('obsTable', 'كل الفترات:')}${se ? qbar('obsTable', 'الفترة المختارة:', '', { ses: OBS_SEL }) : ''}</details>
     ${typeof comCountCtl === 'function' ? comCountCtl() : ''}
     ${typeof bldCtl === 'function' ? bldCtl() : ''}
     <label class="inl">ترتيب اللجان في الكشوف <select class="in" data-k="s.obsOrd" id="f_obsOrd"><option value="place"${(S.s.obsOrd || 'place') === 'place' ? ' selected' : ''}>المبنى أولاً ثم الصالة الرياضية والمرافق</option><option value="num"${S.s.obsOrd === 'num' ? ' selected' : ''}>حسب رقم اللجنة</option></select></label>
@@ -3306,7 +3317,7 @@ const FORMS = [
   // ===== أعمال يومية
   { id: 'daily', grp: 'الأعمال اليومية', t: 'كشف الملاحظين واستلام أوراق الإجابة', opts: ['ses'], build: o => sesOpt(o).map(se => title('كشف الملاحظين واستلام أوراق الإجابة') + sesInfo(se) + sp(6) + dailyTable(se)) },
   { id: 'obsNames', grp: 'الأعمال اليومية', t: 'أسماء الملاحظين على اللجان (كشف التوقيع اليومي)', opts: ['ses'], build: o => obsNamesPages(o) },
-  { id: 'obsTable', grp: 'الأعمال اليومية', t: 'جدول توزيع الملاحظين على اللجان (مع التوقيع)', opts: ['ses'], build: o => obsTablePages(o) },
+  { id: 'obsTable', grp: 'الأعمال اليومية', t: 'بيان استلام أوراق الإجابات من الملاحظين', opts: ['ses'], build: o => obsTablePages(o) },
   { id: 'gradeStmt', grp: 'المعلمون والأسئلة', t: 'بيان توزيع الدرجات', build: () => [title('بيان توزيع الدرجات', yearLine()) + gsContent(false)] },
   { id: 'openEnv', grp: 'الأعمال اليومية', t: 'محضر فتح مظروف أسئلة', opts: ['ses'], build: o => sesOpt(o).map(openEnvPage) },
   { id: 'agree', grp: 'الأعمال اليومية', t: 'محضر اتفاقية التصحيح وسلامة الأسئلة', opts: ['ses'], build: o => sesOpt(o).map(agreePage) },
@@ -3374,9 +3385,26 @@ function comPlacesTable() {
   return T(rows, { cls: 'dense' });
 }
 function groupRuns(arr, f) { const out = []; arr.forEach(x => { const k = f(x); if (out.length && out[out.length - 1].key === k) out[out.length - 1].items.push(x); else out.push({ key: k, items: [x] }); }); return out; }
+/* كروكي اللجان: الإعدادات العامة (عدد المسارات، ترتيب الصفوف، الباب) وتقسيم يدوي اختياري لكل لجنة */
+function stkManual(c) { const v = ((S.s.stk || {}).man || {})[c.no]; if (!v) return null; const a = String(v).split(/[^\d]+/).filter(Boolean).map(Number); return a.length ? a : null; }
+const STK_ORD = [['123', 'أول ← ثاني ← ثالث'], ['132', 'أول ← ثالث ← ثاني'], ['213', 'ثاني ← أول ← ثالث'], ['231', 'ثاني ← ثالث ← أول'], ['312', 'ثالث ← أول ← ثاني'], ['321', 'ثالث ← ثاني ← أول']];
+function stkPanel() {
+  const K = S.s.stk || {}, man = K.man || {}, N = +K.cols || 6;
+  const rows = S.com.map(c => { const v = man[c.no] || '', a = stkManual(c), sum = a ? a.reduce((x, y) => x + y, 0) : 0, tot = comSum(c), bad = a && (sum !== tot || a.length !== N);
+    return `<tr><td><b>${c.no}</b></td><td>${esc(c.rm || '')}</td><td>${tot}</td><td><input class="in" data-k="s.stk.man.${c.no}" value="${esc(v)}" placeholder="تلقائي" inputmode="numeric" style="min-width:8rem"></td><td>${a ? (bad ? `<span class="warnt">${sum} من ${tot}${a.length !== N ? ` · ${a.length} مسارات` : ''}</span>` : '<span class="okt">✓</span>') : ''}</td></tr>`; }).join('');
+  return `<div class="stkp"><div class="stf">
+    <label><span>عدد المسارات</span><input class="in" type="number" min="2" max="10" data-k="s.stk.cols" data-num="1" value="${N}"></label>
+    <label class="w2"><span>ترتيب الصفوف من المسار الأول</span><select class="in" data-k="s.stk.gord">${STK_ORD.map(([v, t]) => `<option value="${v}"${(K.gord || '123') === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+    <label><span>باب الفصل</span><select class="in" data-k="s.stk.door"><option value="right"${K.door !== 'left' ? ' selected' : ''}>يمين</option><option value="left"${K.door === 'left' ? ' selected' : ''}>يسار</option></select></label></div>
+    <p class="hint">التوزيع التلقائي يجعل المسار الأول الأقل عدداً، والزيادة في المسارات الأخيرة.</p>
+    <details class="fold"><summary>✎ تقسيم يدوي لكل لجنة (اختياري)</summary><p class="hint">اكتب عدد الطلاب في كل مسار بالترتيب مفصولة بفاصلة، مثل: 5،5،6،5،6،6 — اترك الخانة فارغة للتوزيع التلقائي.</p>
+    <div class="tw"><table class="et"><tr><th>اللجنة</th><th>المقر</th><th>العدد</th><th>أعداد المسارات</th><th></th></tr>${rows}</table></div>
+    ${Object.keys(man).some(k => man[k]) ? '<div class="acts"><button type="button" class="btn sm ghost" data-act="stkReset">إلغاء التقسيم اليدوي للكل</button></div>' : ''}</details></div>`;
+}
 function stickerPage(c, o) {
-  const N = Math.max(2, Math.min(10, +o.cols || 6)), doorLeft = o.door === 'left';
-  const order = [2, 3, 1].filter(g => (+c.c[g] || 0) > 0); const pat = order.length ? order : [2, 3, 1];
+  const K = S.s.stk || {}, N = Math.max(2, Math.min(10, +o.cols || +K.cols || 6)), doorLeft = (o.door || K.door) === 'left';
+  const gord = String(K.gord || '123').split('').map(Number);
+  const order = gord.filter(g => (+c.c[g] || 0) > 0); const pat = order.length ? order : gord;
   const laneG = Array.from({ length: N }, (_, i) => pat[i % pat.length]);
   const lanesOf = {}; laneG.forEach((g, i) => (lanesOf[g] = lanesOf[g] || []).push(i));
   const counts = new Array(N).fill(0), seats = new Array(N).fill('');
@@ -3385,7 +3413,8 @@ function stickerPage(c, o) {
     const idx = lanesOf[g], n = +c.c[g] || 0, k = idx.length;
     const list = stu.filter(x => x.g === +g).sort((a, b) => a.seat - b.seat);
     let st = 0;
-    idx.forEach((li, j) => { const cnt = Math.floor(n / k) + (j < n % k ? 1 : 0); counts[li] = cnt; const part = list.slice(st, st + cnt); if (part.length) seats[li] = part.length > 1 ? `${part[0].seat} – ${part[part.length - 1].seat}` : `${part[0].seat}`; st += cnt; });
+    const man = stkManual(c);
+    idx.forEach((li, j) => { const cnt = man ? (man[li] || 0) : Math.floor(n / k) + (j >= k - n % k ? 1 : 0); counts[li] = cnt; const part = list.slice(st, st + cnt); if (part.length) seats[li] = part.length > 1 ? `${part[0].seat} – ${part[part.length - 1].seat}` : `${part[0].seat}`; st += cnt; });
   });
   // أعلى الصفحة: جدول الأعداد ثم عنوان الكروكي
   const cnt = T([...G.map(g => [Gc(g, `<b style="font-size:14pt">${GSHORT[g]}</b>`, { w: '45%' }), Gc(g, `<b style="font-size:14pt">${+c.c[g] || 0}</b>`)]), [{ v: '<b style="font-size:14pt">المجموع</b>' }, { v: `<b style="font-size:14pt">${comSum(c)}</b>` }]]);
@@ -3457,7 +3486,7 @@ function obsTablePages(o) {
       const part = rows.slice(k, k + per);
       const tr = [[H('رقم اللجنة', { w: '10%' }), H('المقر', { w: '19%' }), H('عدد الطلاب', { w: '10%' }), H('اسم الملاحظ'), H('التوقيع', { w: '22%' })]];
       part.forEach((r, i) => { const row = []; if (r.first || i === 0) { const span = r.first ? r.n : r.n - rows.slice(0, k).filter(x => x.c === r.c).length; row.push({ v: `<b>${r.c.no}</b>`, rs: Math.min(span, part.length - i) }, { v: esc(comPlace(r.c)), fs: '9.5pt', rs: Math.min(span, part.length - i) }, { v: comSum(r.c), rs: Math.min(span, part.length - i) }); } row.push({ v: `<b>${esc(r.name)}</b>`, al: 'right' }, ''); tr.push(row); });
-      out.push(title('جدول توزيع الملاحظين على اللجان') + sesInfo(se) + sp(6) + T(tr, { cls: 'dense obsT' }) + sp(8) + sigs([['وكيل شؤون الطلاب', S.s.stuDep], ['مدير المدرسة', S.s.principal]]));
+      out.push(title('بيان استلام أوراق الإجابات من الملاحظين') + sesInfo(se) + sp(6) + T(tr, { cls: 'dense obsT' }) + sp(8) + sigs([['وكيل شؤون الطلاب', S.s.stuDep], ['مدير المدرسة', S.s.principal]]));
     }
   });
   return out;
@@ -3845,7 +3874,7 @@ function qbar(id, label, extra = '', opts) {
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   const dl = false ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
   const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
-  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}${fxPanel(id)}</div>`;
+  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}${FORMS.some(f => f.id === id) ? `<details class="tsp" data-tsp="${id}"${TSP_OPEN[id] ? ' open' : ''}><summary>✎ العنوان والتواقيع</summary><div class="tspb"></div></details>` : ''}${fxPanel(id)}</div>`;
 }
 let PV = null; var QOPEN = {}, PVCOLS = false;
 /* اختيار الخانات (الأعمدة) قبل الطباعة: تُخفى الأعمدة المختارة من كل جداول النموذج، ويُحفظ الاختيار لكل نموذج */
@@ -3868,6 +3897,20 @@ function dropCols(html, hide) {
 }
 function applyCols(groups, name) { const h = colsHidden(name); return h.length ? groups.map(g => Object.assign({}, g, { pages: g.pages.map(p => dropCols(p, h)) })) : groups; }
 const PV_EDIT = { planCom: 'plan', planAll: 'plan', planRoles: 'plan', planOrg: 'plan', schedule: 'schedule', assign: 'staff', stList: 'staff', receipt: 'staff', openEnv: 'settings', agree: 'settings', tList: 'files', obsInstr: 'files', comPlaces: 'committees', comCounts: 'committees' };
+function tspFill(d) {
+  const id = d.dataset.tsp, f = FORMS.find(x => x.id === id); if (!f) return;
+  if (!TTL_SEEN[id] && !SIG_SEEN[id]) { try { buildForm(f, {}); } catch (e) { } }
+  const ttl = [...(TTL_SEEN[id] || [])].filter(t => t && !/<(table|div)/.test(t)).slice(0, 6), ov = (S.s.ttl || {})[id] || {};
+  const sg = ((S.s.sg || {})[id]) || SIG_SEEN[id] || [], cust = !!((S.s.sg || {})[id]);
+  const strip = t => t.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&');
+  d.querySelector('.tspb').innerHTML = `${ttl.length ? `<div class="tsh">عنوان النموذج</div>${ttl.map(t => `<input class="in" data-tt="${esc(id)}" data-orig="${esc(t)}" value="${esc(ov[t] || strip(t))}" placeholder="${esc(strip(t))}">`).join('')}` : ''}
+    <div class="tsh">التواقيع أسفل النموذج ${cust ? '<span class="badge">معدّلة</span>' : ''}</div>
+    ${sg.map((x, j) => `<div class="tsr"><input class="in" data-sg="${esc(id)}" data-j="${j}" data-p="0" value="${esc(x[0])}" placeholder="المنصب"><input class="in" data-sg="${esc(id)}" data-j="${j}" data-p="1" value="${esc(x[1] || '')}" placeholder="الاسم"><span class="inact"><button type="button" class="pmv" data-act="sgMv" data-fx="${esc(id)}" data-j="${j}" data-d="-1"${j ? '' : ' disabled'}>▲</button><button type="button" class="x" data-act="sgDel" data-fx="${esc(id)}" data-j="${j}" title="حذف">×</button></span></div>`).join('') || '<p class="mut">لا توجد تواقيع في هذا النموذج.</p>'}
+    <div class="acts wrap"><button type="button" class="btn sm ghost" data-act="sgAdd" data-fx="${esc(id)}">＋ توقيع</button>${cust || Object.keys(ov).length ? `<button type="button" class="btn sm ghost" data-act="tsReset" data-fx="${esc(id)}">استعادة الأصل</button>` : ''}</div>`;
+}
+const TSP_OPEN = {};
+document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.tsp) { TSP_OPEN[d.dataset.tsp] = d.open; if (d.open) tspFill(d); } }, true);
+function sgEdit(id) { S.s.sg = S.s.sg || {}; if (!S.s.sg[id]) S.s.sg[id] = (SIG_SEEN[id] || []).map(x => [x[0], x[1]]); return S.s.sg[id]; }
 function pvEditBtn() { const b = $('#pvEdit'); if (b) b.hidden = !(PV && PV_EDIT[PV.fid]); }
 function pvColsBar() {
   const box = $('#pvCols'); if (!box) return; if (!PV || !PVCOLS) { box.hidden = true; return; }
@@ -3958,7 +4001,8 @@ function fdCtl(id) {
 function fdInject(id, pages) { const t = FD_IDS.includes(id) ? fdText(id) : ''; return t ? pages.map(p => `<p class="fdl" style="text-align:left;font-size:11pt;font-weight:bold;margin:0 0 4px">التاريخ: ${esc(t)}</p>` + p) : pages; }
 function buildForm(f, o) {
   if (f.needs === 'dist' && !S.distributed) return [];
-  try { return fdInject(f.id, f.build(o || {}) || []); } catch (e) { console.error(e); return [`<p class="txt">تعذر بناء النموذج: ${esc(e.message)}</p>`]; }
+  const prev = CUR_FORM; CUR_FORM = f.id;
+  try { return fdInject(f.id, f.build(o || {}) || []); } catch (e) { console.error(e); return [`<p class="txt">تعذر بناء النموذج: ${esc(e.message)}</p>`]; } finally { CUR_FORM = prev; }
 }
 function renderPreview() {
   const f = formDef(); const pages = buildForm(f, FO);
@@ -4665,6 +4709,8 @@ document.addEventListener('change', async e => {
   if (el.dataset.sf) { SF[el.dataset.sf] = el.value; if (el.dataset.sf === 'g') SF.sec = 'all'; saveSF(); render(); return; }
   if (el.dataset.fd) { if (!S.s.fdate) S.s.fdate = {}; const k = el.dataset.fd, o = S.s.fdate[k] = S.s.fdate[k] || {}; o[el.dataset.f] = el.value;
     if (el.dataset.f === 'm' && el.value === 'fix' && !o.d) o.d = todayIso(); if (el.dataset.f === 'm' && el.value === 'all') delete S.s.fdate[k]; save(); render(); return; }
+  if (el.dataset.tt) { const id = el.dataset.tt, o = el.dataset.orig; S.s.ttl = S.s.ttl || {}; const m = S.s.ttl[id] = S.s.ttl[id] || {}; const v = el.value.trim(); if (!v || v === o.replace(/<[^>]+>/g, '')) delete m[o]; else m[o] = v; save(); return toast('حُفظ العنوان'); }
+  if (el.dataset.sg) { const L = sgEdit(el.dataset.sg); const r = L[+el.dataset.j]; if (r) r[+el.dataset.p] = el.value.trim(); save(); return toast('حُفظت التواقيع'); }
   if (el.dataset.ins != null) { const L = String(S.s.instr || '').split('\n').filter(x => x.trim()); L[+el.dataset.ins] = el.value.replace(/\n/g, ' ').trim(); S.s.instr = L.filter(Boolean).join('\n'); save(); return render(); }
   if (el.dataset.fxses) { FX_SES[el.dataset.fxses] = el.value; return render(); }
   if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id.replace('@', '_')) || {}).value || ''; const [fid, fs] = id.split('@'); S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(fid, fs).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[fid] = true; save(); render(); return toast('أُضيف ' + v); }
@@ -4734,6 +4780,9 @@ document.addEventListener('click', async e => {
       if (a === 'insMv') { const t = i + +b.dataset.d; if (t < 0 || t >= L.length) return; [L[i], L[t]] = [L[t], L[i]]; }
       if (a === 'insReset') { if (!confirm('استعادة التعليمات الافتراضية؟ ستُستبدل التعليمات الحالية.')) return; L = DEFAULT_STATE.s.instr.split('\n'); L = L.map(x => x === INSTR_DEF1 ? INSTR_TOK1 : x); }
       S.s.instr = L.join('\n'); re(); if (a === 'insAdd') { const l = $$('[data-ins]'); if (l.length) { l[l.length - 1].focus(); l[l.length - 1].select(); } } return; }
+    case 'sgAdd': case 'sgDel': case 'sgMv': case 'tsReset': { const id = b.dataset.fx; if (a === 'tsReset') { if (S.s.sg) delete S.s.sg[id]; if (S.s.ttl) delete S.s.ttl[id]; return re(); }
+      const L = sgEdit(id); if (a === 'sgAdd') L.push(['', '']); if (a === 'sgDel') L.splice(j, 1); if (a === 'sgMv') { const t = j + +b.dataset.d; if (t >= 0) [L[j], L[t]] = [L[t], L[j]]; } return re(); }
+    case 'stkReset': { if (!confirm('إلغاء التقسيم اليدوي لكل اللجان؟')) return; if (S.s.stk) S.s.stk.man = {}; return re(); }
     case 'stCoDel': { const x = S.st[i]; x.co.splice(j, 1); ST_OPEN[i] = 1; return re(); }
     case 'stCopyG': case 'stCopyAll': { const src = S.st[i]; let n = 0; S.st.forEach((x, k) => { if (k === i || (a === 'stCopyG' && +x.g !== +src.g)) return; ST_KEYS.filter(q => q !== 'n' || +x.g === +src.g).forEach(q => { if (src[q]) x[q] = src[q]; else delete x[q]; }); n++; }); toast(`نُسخت التفاصيل إلى ${n} مادة`); return re(); }
     case 'stReset': { ST_KEYS.forEach(q => delete S.st[i][q]); ST_OPEN[i] = 1; toast('تعتمد هذه المادة الإعدادات العامة الآن'); return re(); }
@@ -4857,7 +4906,7 @@ const DAY_ITEMS = [
   { k: 'agree', t: 'محضر اتفاقية التصحيح وسلامة الأسئلة', per: 'ses' },
   { k: 'daily', t: 'كشف الملاحظين واستلام أوراق الإجابة', per: 'ses' },
   { k: 'obsNames', t: 'أسماء الملاحظين على اللجان (للتوقيع)', per: 'ses' },
-  { k: 'obsTable', t: 'جدول توزيع الملاحظين مع التوقيع', per: 'ses' },
+  { k: 'obsTable', t: 'بيان استلام أوراق الإجابات من الملاحظين', per: 'ses' },
   { k: 'qEnv', t: 'ظروف أسئلة الطلاب (لكل لجنة)', per: 'ses', heavy: true },
   { k: 'aEnv', t: 'ظروف أوراق إجابات الطلاب', per: 'ses' },
   { k: 'dailyAbs', t: 'كشف الغياب اليومي', per: 'day' }
@@ -6735,7 +6784,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795294204';
+var BUILD_ID = '1795351117';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
