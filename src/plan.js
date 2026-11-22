@@ -114,7 +114,7 @@ function planRolesPages() {
   const total = ppl.reduce((a, p) => a + p.l.length, 0), per = fitPer(total, 30);
   ppl.forEach((p, i) => {
     if (!rows || n + p.l.length > per) { if (rows) pages.push(rows); rows = [head()]; n = 0; }
-    p.l.forEach(({ c, x }, j) => { const r = []; if (!j) { r.push({ v: i + 1, rs: p.l.length }); r.push({ v: `<b>${esc(p.n)}</b>${x.w ? `<br><span style="font-size:8.5pt">${esc(x.w)}</span>` : ''}`, rs: p.l.length, al: 'right' }); }
+    p.l.forEach(({ c, x }, j) => { const r = []; if (!j) { r.push({ v: i + 1, rs: p.l.length }); r.push({ v: `<b>${esc(p.n)}</b>`, rs: p.l.length, al: 'right' }); }
       r.push({ v: esc(c.t), bg: planTint(c.c) }); r.push({ v: esc(x.r || 'عضواً'), b: /رئيس/.test(x.r || '') }); r.push(esc(x.k || '—')); if (!j) r.push({ v: '', rs: p.l.length }); rows.push(r); n++; k++; });
   });
   if (rows) pages.push(rows);
