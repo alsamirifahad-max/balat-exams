@@ -14,7 +14,7 @@ function planPeople() {
   planGet().coms.forEach(c => c.m.forEach(x => { const n = (x.n || '').trim(); if (!n) return; if (!m.has(n)) m.set(n, []); m.get(n).push({ c, x }); }));
   return [...m.entries()].map(([n, l]) => ({ n, l })).sort((a, b) => b.l.length - a.l.length || a.n.localeCompare(b.n, 'ar'));
 }
-function planStats() { const P = planGet(), ppl = planPeople(); return { coms: P.coms.length, seats: P.coms.reduce((a, c) => a + c.m.length, 0), ppl: ppl.length, empty: P.coms.reduce((a, c) => a + c.m.filter(x => !(x.n || '').trim()).length, 0), noHead: P.coms.filter(c => c.m.length && !planHead(c)).length, max: ppl[0] ? ppl[0].l.length : 0 }; }
+function planStats() { const P = planGet(), ppl = planPeople(); return { coms: P.coms.length, seats: P.coms.reduce((a, c) => a + c.m.length, 0), ppl: ppl.length, empty: P.coms.reduce((a, c) => a + c.m.filter(x => !(x.n || '').trim()).length, 0), noHead: P.coms.filter(c => c.m.length && !planHead(c)).length + P.coms.filter(c => c.m.filter(x => /رئيس/.test(x.r || '') && !/نائب/.test(x.r || '')).length > 1).length, max: ppl[0] ? ppl[0].l.length : 0 }; }
 function planRO() { if (typeof exReadOnly === 'function' && exReadOnly()) { toast('هذا الجهاز للاطلاع فقط على بيانات الاختبارات', true); return true; } return false; }
 
 function planComCard(c, i) {
@@ -31,7 +31,7 @@ function planComCard(c, i) {
       <span class="pla">${mvSel(j)}<button type="button" class="pmv" data-pact="mUp" data-c="${i}" data-j="${j}" title="تقديم"${j ? '' : ' disabled'}>▲</button><button type="button" class="pmv" data-pact="mDn" data-c="${i}" data-j="${j}" title="تأخير"${j < c.m.length - 1 ? '' : ' disabled'}>▼</button><button type="button" class="x" data-pact="mDel" data-c="${i}" data-j="${j}" title="حذف العضو">×</button></span>
     </div>`).join('');
   return `<details class="plcom" style="--pc:${c.c || PLAN_COLS[i % PLAN_COLS.length]}" data-pid="${esc(c.id)}"${open ? ' open' : ''}>
-    <summary><i class="pldot"></i><span class="plt"><b>${esc(c.t)}</b><small>${head ? 'الرئيس: ' + esc(head) : (c.m.length ? '<em class="warnt">بلا رئيس</em>' : esc(c.note ? 'تُحدَّد يومياً' : 'لا أعضاء بعد'))}</small></span><span class="plcnt">${c.m.length}<small>عضو</small></span><span class="plchev" aria-hidden="true">‹</span></summary>
+    <summary><i class="pldot"></i><span class="plt"><b>${esc(c.t)}</b><small>${c.m.filter(x => /رئيس/.test(x.r || '') && !/نائب/.test(x.r || '')).length > 1 ? '<em class="warnt">⚠️ أكثر من رئيس</em> · ' : ''}${head ? 'الرئيس: ' + esc(head) : (c.m.length ? '<em class="warnt">بلا رئيس</em>' : esc(c.note ? 'تُحدَّد يومياً' : 'لا أعضاء بعد'))}</small></span><span class="plcnt">${c.m.length}<small>عضو</small></span><span class="plchev" aria-hidden="true">‹</span></summary>
     ${open ? `<div class="plb">
       ${qbar('planCom', 'قرار التشكيل:', '', { pc: c.id })}
       <div class="plmh${anyW || anyK ? '' : ' slim'}"><span>م</span><span>الاسم</span><span>الصفة</span><span>العمل</span><span>المهمة</span><span></span></div>
@@ -143,6 +143,12 @@ FD_IDS.push('planAll', 'planCom', 'planRoles');
 document.addEventListener('toggle', e => { const d = e.target; if (!d.classList || !d.classList.contains('plcom')) return; const id = d.dataset.pid; if (!!PLAN_OPEN[id] === d.open) return; PLAN_OPEN[id] = d.open; render(); }, true);
 document.addEventListener('change', e => {
   const el = e.target; if (!el.dataset) return;
+  /* تنبيه عند تعيين رئيس ثانٍ للجنة: يُعرض التبديل (الرئيس الحالي يصبح عضواً) أو الإلغاء */
+  { const m = el.dataset.pk && /^coms\.(\d+)\.m\.(\d+)\.r$/.exec(el.dataset.pk), isHd = r => /رئيس/.test(r || '') && !/نائب/.test(r || '');
+    if (m && isHd(el.value)) { const c = planGet().coms[+m[1]], j = +m[2], old = c.m.findIndex((x, k) => k !== j && isHd(x.r));
+      if (old >= 0) { if (planRO()) return render(); const on = c.m[old].n || 'العضو', nn = c.m[j].n || 'العضو';
+        if (!confirm(`⚠️ ${c.t} لها رئيس: ${on}\n\nهل تجعل ${nn} رئيساً بدلاً منه؟ (يصبح ${on} عضواً)\n\nاضغط «إلغاء» للتراجع.`)) { toast('لم يُغيَّر شيء'); return render(); }
+        const P = planEdit(); P.coms[+m[1]].m[old].r = 'عضواً'; P.coms[+m[1]].m[j].r = el.value; save(); toast(`${nn} رئيساً، و${on} عضواً`); return render(); } } }
   if (el.dataset.pk && el.value === '__other') { if (planRO()) return render(); const v = (prompt('اكتب الصفة:') || '').trim(); if (!v) return render(); const P = planEdit(); const ks = el.dataset.pk.split('.'); let o = P; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; save(); return render(); }
   if (el.dataset.padd2 != null) { if (planRO()) return render(); const v = el.value; if (v === '') return; const P = planEdit(), c = P.coms[+v], n = el.dataset.padd2; const w = (planPeople().find(p => p.n === n) || { l: [] }).l.map(o => o.x.w).find(Boolean) || ''; c.m.push({ n, w, r: c.m.length ? 'عضواً' : 'رئيساً', k: '' }); save(); toast('كُلِّف ' + n + ' في ' + c.t); return render(); }
   if (el.dataset.padd != null) { if (planRO()) return render(); const v = el.value; if (!v) return; const P = planEdit(), c = P.coms[+el.dataset.padd]; c.m.push({ n: v, w: 'معلم', r: c.m.length ? 'عضواً' : 'رئيساً', k: '' }); save(); toast('أُضيف ' + v + ' إلى ' + c.t); return render(); }
