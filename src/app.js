@@ -2445,6 +2445,15 @@ function tspFill(d) {
 const TSP_OPEN = {};
 document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.tsp) { TSP_OPEN[d.dataset.tsp] = d.open; if (d.open) tspFill(d); } }, true);
 function sgEdit(id) { S.s.sg = S.s.sg || {}; if (!S.s.sg[id]) S.s.sg[id] = (SIG_SEEN[id] || []).map(x => [x[0], x[1]]); return S.s.sg[id]; }
+/* تعديل الأسماء من داخل المعاينة مباشرة: يتحدث النموذج المعروض فوراً */
+let PVNAMES = false;
+function pvNamesBar() {
+  const btn = $('#pvNames'), box = $('#pvNamesBox'); if (!btn || !box) return;
+  const ok = !!(PV && PV.src && FX_FORMS[PV.src.fid]); btn.hidden = !ok; if (!ok || !PVNAMES) { box.hidden = true; box.innerHTML = ''; return; }
+  const id = PV.src.fid; if (FX_PER[id] && PV.src.ses && FX_SES[id] === undefined) FX_SES[id] = PV.src.ses;
+  box.hidden = false; box.innerHTML = fxPanel(id);
+}
+function pvRefresh() { if (!PV || !PV.src || !PV.src.rebuild || $('#pvModal').hidden) return; const y = $('#pvBody').scrollTop, g = PV.src.rebuild(); if (!g || !g.length) return; openPreview(g, PV.name); $('#pvBody').scrollTop = y; }
 function pvEditBtn() { const b = $('#pvEdit'); if (b) b.hidden = !(PV && PV_EDIT[PV.fid]); }
 function pvColsBar() {
   const box = $('#pvCols'); if (!box) return; if (!PV || !PVCOLS) { box.hidden = true; return; }
@@ -2456,7 +2465,7 @@ function openPreview(groups, name, orig) {
   orig = orig || groups; groups = applyCols(orig, name);
   const pages = groups.flatMap(g => g.pages.map(pg => ({ pg, land: !!g.land })));
   if (!pages.length) return toast('لا توجد صفحات للمعاينة', true);
-  const z = PV && PV.name === name ? PV.z : 0; PV = { groups, orig, name, pages, z }; pvColsBar();
+  const z = PV && PV.name === name ? PV.z : 0, src = orig.__src || null; PV = { groups, orig, name, pages, z, src, fid: src ? src.fid : undefined }; pvColsBar(); pvNamesBar(); pvEditBtn();
   $('#pvTitle').textContent = name.replace(/ - [^-]*$/, '');
   $('#pvCount').textContent = `${pages.length} صفحة`;
   const LIM = 40;
@@ -2486,7 +2495,7 @@ function toggleG(cur, v) {
   s = s.includes(+v) ? s.filter(x => x !== +v) : [...s, +v].sort();
   return s.length === G.length ? [] : s;
 }
-function groupsOf(id, o) { const f = FORMS.find(x => x.id === id); return [{ land: f.land, pages: buildForm(f, o || {}), t: f.t }]; }
+function groupsOf(id, o) { const f = FORMS.find(x => x.id === id); const g = [{ land: f.land, pages: buildForm(f, o || {}), t: f.t }]; g.__src = { fid: id, rebuild: () => groupsOf(id, o), ses: o && o.ses && o.ses !== 'all' ? o.ses : '' }; return g; }
 function formDef() { return FORMS.find(f => f.id === FORM) || FORMS[0]; }
 function vForms() {
   const grps = groupRuns(FORMS, f => f.grp);
@@ -3246,8 +3255,8 @@ document.addEventListener('change', async e => {
   if (el.dataset.tt) { const id = el.dataset.tt, o = el.dataset.orig; S.s.ttl = S.s.ttl || {}; const m = S.s.ttl[id] = S.s.ttl[id] || {}; const v = el.value.trim(); if (!v || v === o.replace(/<[^>]+>/g, '')) delete m[o]; else m[o] = v; save(); return toast('حُفظ العنوان'); }
   if (el.dataset.sg) { const L = sgEdit(el.dataset.sg); const r = L[+el.dataset.j]; if (r) r[+el.dataset.p] = el.value.trim(); save(); return toast('حُفظت التواقيع'); }
   if (el.dataset.ins != null) { const L = String(S.s.instr || '').split('\n').filter(x => x.trim()); L[+el.dataset.ins] = el.value.replace(/\n/g, ' ').trim(); S.s.instr = L.filter(Boolean).join('\n'); save(); return render(); }
-  if (el.dataset.fxses) { FX_SES[el.dataset.fxses] = el.value; return render(); }
-  if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id.replace('@', '_')) || {}).value || ''; const [fid, fs] = id.split('@'); S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(fid, fs).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[fid] = true; save(); render(); return toast('أُضيف ' + v); }
+  if (el.dataset.fxses) { FX_SES[el.dataset.fxses] = el.value; render(); return pvNamesBar(); }
+  if (el.dataset.fxadd) { const id = el.dataset.fxadd; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('الاسم:') || '').trim(); if (!v) { el.value = ''; return; } } const w = ($('#fxw_' + id.replace('@', '_')) || {}).value || ''; const [fid, fs] = id.split('@'); S.s.fx = S.s.fx || {}; const f = S.s.fx[id] = S.s.fx[id] || { rm: [], add: [] }; f.add = f.add || []; f.rm = (f.rm || []).filter(z => z !== normName(v)); if (!f.add.some(x => x.n === v) && !fxBase(fid, fs).includes(v)) f.add.push({ n: v, w: w.trim() }); QOPEN[fid] = true; save(); render(); pvRefresh(); return toast('أُضيف ' + v); }
   if (el.dataset.coadd != null) { const x = S.st[+el.dataset.coadd]; let v = el.value; if (!v) return; if (v === '__new') { v = (prompt('اسم المعلم المشارك:') || '').trim(); if (!v) { el.value = ''; return; } } (x.co = x.co || []).includes(v) || x.co.push(v); ST_OPEN[+el.dataset.coadd] = 1; save(); render(); return toast('أُضيف ' + v + ' — سيصدر له خطاب مستقل'); }
   if (el.dataset.dl) { S.s.deadlineIso = el.value; S.s.deadline = el.value ? hDate(el.value) : ''; save(); render(); return toast(el.value ? `آخر موعد للتسليم: ${S.s.deadline}` : 'أُزيل الموعد'); }
   if (el.classList.contains('fo')) { FO[el.dataset.o] = el.value; renderPreview(); return; }
@@ -3308,7 +3317,7 @@ document.addEventListener('click', async e => {
       if (a === 'fxDel') f.add.splice(j, 1);
       if (a === 'fxReset') { f.rm = []; f.add = []; toast('أُعيدت الأسماء الأصلية'); }
       if (a === 'fxNone') { const [fid, fs] = id.split('@'); f.rm = fxBase(fid, fs).map(normName); }
-      QOPEN[id.split('@')[0]] = true; return re(); }
+      QOPEN[id.split('@')[0]] = true; re(); return pvRefresh(); }
     case 'insAdd': case 'insDel': case 'insMv': case 'insReset': { instrMigrate(); let L = String(S.s.instr || '').split('\n').filter(x => x.trim());
       if (a === 'insAdd') L.push('تعليمة جديدة'); if (a === 'insDel') { if (!confirm('حذف هذه التعليمة؟')) return; L.splice(i, 1); }
       if (a === 'insMv') { const t = i + +b.dataset.d; if (t < 0 || t >= L.length) return; [L[i], L[t]] = [L[t], L[i]]; }
@@ -3377,6 +3386,7 @@ document.addEventListener('click', async e => {
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
     case 'pvEdit': { if (!PV || !PV_EDIT[PV.fid]) return; const t = PV_EDIT[PV.fid], fo = PV.fo || {}; if (PV.fid === 'planCom' && fo.pc && typeof PLAN_OPEN !== 'undefined') PLAN_OPEN[fo.pc] = true; closePreview(); go(t); return; }
     case 'pvCols': PVCOLS = !PVCOLS; return pvColsBar();
+    case 'pvNames': PVNAMES = !PVNAMES; return pvNamesBar();
     case 'pvCol': case 'pvColAll': { if (!PV) return; const k = colKey(PV.name); S.s.colsHide = S.s.colsHide || {}; let h = S.s.colsHide[k] || [];
       h = a === 'pvColAll' ? [] : h.includes(b.dataset.v) ? h.filter(x => x !== b.dataset.v) : h.concat(b.dataset.v);
       if (h.length) S.s.colsHide[k] = h; else delete S.s.colsHide[k]; save(); const y = $('#pvBody').scrollTop; openPreview(PV.orig, PV.name); $('#pvBody').scrollTop = y; return; }

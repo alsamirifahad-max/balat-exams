@@ -265,6 +265,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--accent);margin:4px 0}
 .pvbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--navy);color:#fff;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(10px + env(safe-area-inset-top,0px))}
 .pvt{display:flex;flex-direction:column;flex:1;min-width:12rem}.pvt span{font-size:.8rem;color:#b9d6d8}
 .pvcols{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;background:#0b3a46;border-top:1px solid rgba(255,255,255,.15)}.pvcols .pvcl{color:#d7e6ea;font-size:.8rem;width:100%}.pvcols .chip{font-size:.78rem;padding:3px 10px}.pvcols .chip.off{opacity:.6;text-decoration:line-through}
+.pvnames{background:var(--surface);color:var(--ink);padding:4px 12px 10px;max-height:45vh;overflow:auto;border-bottom:2px solid var(--line)}.pvnames .fxp{border-top:0;margin-top:0}
 .pvz,.pva{display:flex;gap:6px;flex-wrap:wrap}
 .pvz .chip{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}.pvz .chip.on{background:#fff;color:var(--navy)}
 .pvbar .btn.ghost{color:#fff;border-color:rgba(255,255,255,.35)}
@@ -1360,9 +1361,10 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 <div class="pvmodal" id="pvModal" hidden role="dialog" aria-label="معاينة قبل الطباعة">
   <div class="pvbar">
     <div class="pvt"><b id="pvTitle">معاينة</b><span id="pvCount"></span></div><button class="pvx" data-act="pvClose" type="button" aria-label="إغلاق">✕</button>
-    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvEdit" id="pvEdit" type="button" hidden>✎ تعديل البيانات</button><button class="btn sm ghost" data-act="pvCols" type="button">☰ الخانات</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
+    <div class="pva"><button class="btn pri pvp" data-act="pvPrint" type="button">🖨 طباعة</button><button class="btn sm" data-act="pvPdf" type="button">PDF</button><button class="btn sm" data-act="pvWord" type="button">Word</button><button class="btn sm" data-act="pvExcel" type="button">Excel</button><button class="btn sm ghost" data-act="pvEdit" id="pvEdit" type="button" hidden>✎ تعديل البيانات</button><button class="btn sm ghost" data-act="pvNames" id="pvNames" type="button" hidden>👥 الأسماء</button><button class="btn sm ghost" data-act="pvCols" type="button">☰ الخانات</button><button class="btn sm ghost" data-act="pvZoom" type="button">🔍 تكبير</button></div>
   </div>
   <div class="pvcols" id="pvCols" hidden></div>
+  <div class="pvnames" id="pvNamesBox" hidden></div>
   <div class="pvbody" id="pvBody"></div>
 </div>
 <div class="palmodal" id="palModal" hidden><div class="palbox" role="dialog" aria-label="بحث سريع"><input class="in palin" id="palIn" type="search" placeholder="اكتب: كروكي، تكليف، غياب، اسم معلم أو طالب…" autocomplete="off"><ul class="pallist" id="palList"></ul><div class="palf">↑ ↓ للتنقل · Enter للفتح · Esc للإغلاق</div></div></div>

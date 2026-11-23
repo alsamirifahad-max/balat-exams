@@ -298,7 +298,8 @@ function todayGroups(fid) {
   const it = DAY_ITEMS.find(x => x.k === fid);
   if (!it) { const pages = buildForm(f, {}); return pages.length ? [{ land: f.land, pages, t: f.t }] : []; }
   if (it.per === 'day') { const pages = buildForm(f, { ses: TODAY_DI + '_0' }); return pages.length ? [{ land: f.land, pages, t: it.t }] : []; }
-  return d.p.map((p, pi) => ({ land: f.land, pages: buildForm(f, { ses: `${TODAY_DI}_${pi}` }), t: `${it.t} – الفترة ${p.n}` })).filter(g => g.pages.length);
+  const r = d.p.map((p, pi) => ({ land: f.land, pages: buildForm(f, { ses: `${TODAY_DI}_${pi}` }), t: `${it.t} – الفترة ${p.n}` })).filter(g => g.pages.length);
+  r.__src = { fid, rebuild: () => todayGroups(fid), ses: `${TODAY_DI}_0` }; return r;
 }
 
 /* =====================================================================
