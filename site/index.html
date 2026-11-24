@@ -1338,6 +1338,58 @@ tr.now td{background:color-mix(in srgb,#0e7490 10%,transparent)}.nowtag{display:
 .pcbatch.on{position:sticky;bottom:10px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);box-shadow:0 6px 24px rgba(0,0,0,.18)}.pcbatch span{display:flex;gap:6px;flex-wrap:wrap}
 @media(max-width:720px){.ahub{grid-template-columns:1fr 1fr 1fr}.pcgo{grid-column:1/-1}.pcbar{grid-template-columns:1fr 1fr;top:44px}.pcbar .w2{grid-column:1/-1}.pcgrid{grid-template-columns:1fr 1fr;gap:8px}.pcth{height:150px;padding:8px 10px 0}.pca{grid-template-columns:1fr 1fr}.pca .btn.pri{grid-column:1/-1}.pcb p{display:none}.pcbatch b{flex:1 1 100%}}
 @media(max-width:720px){.ahubb:not(.pcgo){flex-direction:column;justify-content:center;text-align:center;gap:3px;padding:8px 4px}.ahubb:not(.pcgo) b{font-size:.76rem;line-height:1.35}.pcbatch:not(.on){padding:8px 12px;font-size:.78rem}}
+
+/* ==================================================================
+   طبقة التصميم الموحّد (للشاشة فقط — لا تمس المطبوعات)
+   خلفية محايدة · بطاقات بيضاء نظيفة · لون رئيسي واحد · ألوان الصفوف كما هي
+   ================================================================== */
+@media screen{
+:root:not([data-theme="dark"]){--bg:#f3f5f6;--surface:#ffffff;--surface2:#f7f9fa;--soft:#f1f4f5;--line:#e2e7e9;--ink:#15252a;--muted:#5d6d72;--info-bg:#eef6f7;--shadow:0 1px 2px rgba(15,40,48,.05),0 4px 14px rgba(15,40,48,.04)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f171a;--surface:#162227;--surface2:#1b2a30;--soft:#1d2c32;--line:#2a3a40;--ink:#e7ece9;--muted:#a5b4b2;--info-bg:#17333a;--shadow:none}}
+:root[data-theme="dark"]{--bg:#0f171a;--surface:#162227;--surface2:#1b2a30;--soft:#1d2c32;--line:#2a3a40;--shadow:none}
+body{background:var(--bg);letter-spacing:0}
+/* البطاقات */
+.card{background:var(--surface)!important;border:1px solid var(--line)!important;border-top-width:1px!important;border-radius:16px!important;box-shadow:var(--shadow)!important;padding:16px}
+.card h2{font-size:1.04rem!important;font-weight:800!important;color:var(--ink)!important;letter-spacing:0}
+.sbody > .card > h2::before,.sbody > section.card > h2::before{width:4px!important;background:var(--pri,#0f5a6b)!important;opacity:.85}
+/* رأس المرحلة: هادئ بلا تدرجات */
+.shero{background:var(--surface)!important;border:1px solid var(--line)!important;box-shadow:var(--shadow)}
+.shero::after{width:4px!important;background:var(--sc)!important;opacity:.9}
+.shero .sico{box-shadow:none!important}
+.shero small{color:var(--muted)!important;font-weight:700!important}
+/* مهام المرحلة */
+.tasks{background:var(--surface)!important;border:1px solid var(--line)!important;box-shadow:var(--shadow)}
+/* شرائط الخطوات الفرعية */
+.substeps{background:var(--bg)!important}
+.substeps button{background:var(--surface)!important;border-color:var(--line)!important;color:var(--muted)!important;box-shadow:none!important}
+.substeps button.on,.substeps button[aria-current="true"],.substeps button.cur{background:var(--pri,#0f5a6b)!important;border-color:var(--pri,#0f5a6b)!important;color:#fff!important}
+.substeps button.on i{background:#fff!important;color:var(--pri,#0f5a6b)!important}
+/* أشرطة الطباعة: سطر واحد هادئ بدل صندوق داخل صندوق */
+.qbar{background:var(--surface2)!important;border:1px solid var(--line)!important;border-radius:12px!important}
+/* الحقول */
+.in,select.in,textarea.in,input.in{background:var(--surface)!important;border:1px solid var(--line)!important;border-radius:10px!important;color:var(--ink)}
+.in:focus{outline:none;border-color:var(--pri,#0f5a6b)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--pri,#0f5a6b) 15%,transparent)!important}
+/* الأزرار */
+.btn{border-radius:10px!important;box-shadow:none!important;font-weight:700}
+.btn:not(.pri):not(.danger){background:var(--surface)!important;border:1px solid var(--line)!important;color:var(--ink)!important}
+.btn.ghost{background:transparent!important}
+.btn.pri{background:var(--pri,#0f5a6b)!important;border-color:var(--pri,#0f5a6b)!important;color:#fff!important}
+/* التنبيهات والتلميحات */
+.hint{background:var(--info-bg)!important;border:1px solid color-mix(in srgb,var(--info) 22%,var(--line))!important;border-radius:10px!important;color:var(--ink)!important}
+/* القوائم المطوية */
+details.fold>summary,.setadv>summary{color:var(--ink)!important;font-weight:700}
+/* الشرائح والإحصاءات */
+.hcard,.stat,.mtile{background:var(--surface)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+.chip{border-radius:999px}
+/* الشريط العلوي والتنقل */
+.top{background:#0d3b47!important}
+.top::before{height:3px!important;background:linear-gradient(90deg,#2b7fc3,#3fb36e)!important}
+/* لون رئيسي واحد لكل عناصر التمييز داخل الصفحات؛ لون المرحلة يبقى في أيقونتها وشريطها الجانبي فقط */
+#main{--accent:var(--pri,#0f5a6b)!important;--accent-ink:#fff!important}
+.tbar,.tbar.near{background:var(--surface)!important;border:1px solid var(--line)!important;border-inline-start:4px solid #ea580c!important;box-shadow:var(--shadow)!important}
+.tbar.done{background:var(--surface)!important;border-inline-start-color:#16a34a!important}
+.ahubb.pri{background:var(--pri,#0f5a6b)!important;border-color:var(--pri,#0f5a6b)!important}
+}
 </style>
 </head>
 <body>
@@ -6804,7 +6856,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795428603';
+var BUILD_ID = '1795535897';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
