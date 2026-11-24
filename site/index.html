@@ -1437,6 +1437,17 @@ nav#nav{border-top:1px solid rgba(255,255,255,.07)}
 .asrcf{position:static!important;order:99;align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
 }
 @media screen and (min-width:1100px){main#main{max-width:1280px!important}}
+.qopt{flex-basis:100%}
+.qopt>summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(--muted);padding:2px 0;list-style:none}
+.qopt>summary::-webkit-details-marker{display:none}.qopt>summary::before{content:"▸ ";color:var(--muted)}.qopt[open]>summary::before{content:"▾ "}
+.qopt>summary b{font-weight:600;color:var(--pri,#0f5a6b);font-size:.78rem}
+.qopts{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.qsec{display:flex;flex-direction:column;gap:6px}.qsec+.qsec{border-top:1px dashed var(--line);padding-top:10px}
+.qsh{font-weight:800;font-size:.84rem;color:var(--ink)}
+.qsec .fxp{border-top:0!important;margin-top:0!important;padding-top:0!important}
+.qsec.tsp{border-top:1px dashed var(--line)}
+@media screen{.hint{padding:8px 12px!important;margin:6px 0!important;font-size:.84rem;line-height:1.6}}
+@media (max-width:600px){.tsr{grid-template-columns:1fr!important;gap:4px!important;border-bottom:1px dashed var(--line);padding-bottom:6px}.tsr .inact{justify-content:flex-end}}
 </style>
 </head>
 <body>
@@ -2707,7 +2718,7 @@ function render() {
   if (TAB === 'assign' && typeof taFilter === 'function' && (TAF.q || TAF.need)) taFilter();
   $$('.pthumb').forEach(b => { const pg = b.firstElementChild; if (!pg) return; const k = b.clientWidth / (pg.classList.contains('land') ? 1123 : 794); pg.style.transform = `scale(${k})`; });
   if (TAB === 'home') setTimeout(renderThumbs, 30);
-  $$('details.tsp[open]').forEach(tspFill);
+  $$('details.qopt[open] .tsp').forEach(tspFill);
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
 }
@@ -3982,7 +3993,12 @@ function qbar(id, label, extra = '', opts) {
   const fd = FORMS.find(x => x.id === id); if (fd && (fd.opts || []).includes('grade') && !(opts && opts.g)) extra = gradeChips(QG[id], 'qG', id) + extra;
   const dl = false ? `<div class="qdate"><span>⏳ آخر موعد لتسليم الأسئلة</span><input class="in" type="date" data-dl="1" value="${esc(S.s.deadlineIso || '')}">${S.s.deadline ? `<b class="fdv">${esc(S.s.deadline)}</b>` : '<small class="mut">يُطبع خطاً فارغاً إن لم يُحدَّد</small>'}</div>` : '';
   const optsHtml = fdCtl(id) + dl, sum = [fdText(id) ? '📅 ' + fdText(id) : ''].filter(Boolean).join(' · '), ok = id + (opts && opts.li != null ? opts.li : '');
-  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${optsHtml ? `<details class="qopt"${QOPEN[ok] ? ' open' : ''} ontoggle="QOPEN['${ok}']=this.open"><summary>⚙ التاريخ على النموذج${sum ? ` <b>${esc(sum)}</b>` : ''}</summary>${optsHtml}</details>` : ''}${FORMS.some(f => f.id === id) ? `<details class="tsp" data-tsp="${id}"${TSP_OPEN[id] ? ' open' : ''}><summary>✎ العنوان والتواقيع</summary><div class="tspb"></div></details>` : ''}${fxPanel(id)}</div>`;
+  /* شريط واحد نظيف: الاسم + زر المعاينة + «⚙ خيارات» مطوية تضم التاريخ والعنوان والتواقيع والأسماء */
+  const isF = FORMS.some(f => f.id === id), hasFx = !!FX_FORMS[id];
+  const fxn = hasFx ? ((fxOf(id).rm || []).length + fxAdds(id).length) : 0, sgc = isF && ((S.s.sg || {})[id] || Object.keys((S.s.ttl || {})[id] || {}).length);
+  const tags = [sum, fxn ? '👥 أسماء معدّلة' : '', sgc ? '✎ عنوان/تواقيع معدّلة' : ''].filter(Boolean).join(' · ');
+  const body = (optsHtml ? `<div class="qsec">${optsHtml}</div>` : '') + (isF ? `<div class="qsec tsp" data-tsp="${id}"><div class="qsh">✎ العنوان والتواقيع</div><div class="tspb"></div></div>` : '') + (hasFx ? `<div class="qsec">${fxPanel(id)}</div>` : '');
+  return `<div class="qbar q1"><span class="qlbl">${label}</span>${extra}<span class="sp1"></span><button class="btn pri qgo" data-act="qopen" data-form="${id}"${od} type="button">🖨 معاينة وطباعة</button>${body ? `<details class="qopt" data-qo="${ok}"${QOPEN[ok] ? ' open' : ''}><summary>⚙ خيارات النموذج${tags ? ` <b>${esc(tags)}</b>` : ''}</summary><div class="qopts">${body}</div></details>` : ''}</div>`;
 }
 let PV = null; var QOPEN = {}, PVCOLS = false;
 /* اختيار الخانات (الأعمدة) قبل الطباعة: تُخفى الأعمدة المختارة من كل جداول النموذج، ويُحفظ الاختيار لكل نموذج */
@@ -4017,7 +4033,7 @@ function tspFill(d) {
     <div class="acts wrap"><button type="button" class="btn sm ghost" data-act="sgAdd" data-fx="${esc(id)}">＋ توقيع</button>${cust || Object.keys(ov).length ? `<button type="button" class="btn sm ghost" data-act="tsReset" data-fx="${esc(id)}">استعادة الأصل</button>` : ''}</div>`;
 }
 const TSP_OPEN = {};
-document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.tsp) { TSP_OPEN[d.dataset.tsp] = d.open; if (d.open) tspFill(d); } }, true);
+document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.qo != null) { QOPEN[d.dataset.qo] = d.open; if (d.open) $$('.tsp', d).forEach(tspFill); } }, true);
 function sgEdit(id) { S.s.sg = S.s.sg || {}; if (!S.s.sg[id]) S.s.sg[id] = (SIG_SEEN[id] || []).map(x => [x[0], x[1]]); return S.s.sg[id]; }
 /* تعديل الأسماء من داخل المعاينة مباشرة: يتحدث النموذج المعروض فوراً */
 let PVNAMES = false;
@@ -6904,7 +6920,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795536909';
+var BUILD_ID = '1795540444';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';

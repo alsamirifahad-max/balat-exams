@@ -1437,6 +1437,17 @@ nav#nav{border-top:1px solid rgba(255,255,255,.07)}
 .asrcf{position:static!important;order:99;align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
 }
 @media screen and (min-width:1100px){main#main{max-width:1280px!important}}
+.qopt{flex-basis:100%}
+.qopt>summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(--muted);padding:2px 0;list-style:none}
+.qopt>summary::-webkit-details-marker{display:none}.qopt>summary::before{content:"▸ ";color:var(--muted)}.qopt[open]>summary::before{content:"▾ "}
+.qopt>summary b{font-weight:600;color:var(--pri,#0f5a6b);font-size:.78rem}
+.qopts{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.qsec{display:flex;flex-direction:column;gap:6px}.qsec+.qsec{border-top:1px dashed var(--line);padding-top:10px}
+.qsh{font-weight:800;font-size:.84rem;color:var(--ink)}
+.qsec .fxp{border-top:0!important;margin-top:0!important;padding-top:0!important}
+.qsec.tsp{border-top:1px dashed var(--line)}
+@media screen{.hint{padding:8px 12px!important;margin:6px 0!important;font-size:.84rem;line-height:1.6}}
+@media (max-width:600px){.tsr{grid-template-columns:1fr!important;gap:4px!important;border-bottom:1px dashed var(--line);padding-bottom:6px}.tsr .inact{justify-content:flex-end}}
 </style>
 </head>
 <body>
