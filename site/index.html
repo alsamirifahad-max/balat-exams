@@ -392,6 +392,7 @@ body.noscroll{overflow:hidden}
 .page .note{font-size:9.5pt;margin:4px 0}
 .page ul.ins,.page ol.ins{font-size:10.5pt;margin:2px 0;padding-inline-start:22px;font-weight:600;line-height:1.6}
 .page ul.ins li::marker,.page ol.ins li::marker{color:#0f5a6b;font-weight:800}
+.page table.t.cmpk td,.page table.t.cmpk th{font-size:9.5pt;padding:0 4px;line-height:1.25;height:auto}
 .page table.t td[style*="d9e2f3"]{padding-top:5px;padding-bottom:5px}
 .page ol.nd,.page ul.nd{list-style:none;padding-inline-start:0}
 .page ol.nd>li,.page ul.nd>li{position:relative;padding-right:2.1em}
@@ -2947,8 +2948,8 @@ function vCommittees() {
 
 /* ----- الطلاب ----- */
 const STU_COLS = [['i', 'م'], ['n', 'اسم الطالب'], ['id', 'رقم الطالب'], ['g', 'الصف'], ['sec', 'الشعبة'], ['ph', 'رقم الجوال'], ['ph2', 'جوال ملف الإرشاد'], ['seat', 'رقم الجلوس'], ['com', 'رقم اللجنة'], ['sig', 'التوقيع'], ['note', 'ملاحظات']];
-let SF = { src: 'noor', g: 'all', sec: 'all', q: '', cols: ['i', 'n', 'g', 'sec', 'ph'], sort: 'section', split: 'section', rpp: 30, title: '' };
-try { Object.assign(SF, JSON.parse(localStorage.getItem(LS_KEY + '-sf') || '{}')); } catch (e) { }
+let SF = { src: 'noor', g: 'all', sec: 'all', q: '', cols: ['i', 'n', 'g', 'sec', 'ph'], sort: 'section', split: 'section', rpp: 'max', title: '' };
+try { Object.assign(SF, JSON.parse(localStorage.getItem(LS_KEY + '-sf') || '{}')); if (!SF.rppV) { SF.rpp = 'max'; SF.rppV = 1; } } catch (e) { }
 function saveSF() { try { localStorage.setItem(LS_KEY + '-sf', JSON.stringify(SF)); } catch (e) { } }
 function srcList() {
   if (SF.src === 'guide') return S.guide.map(x => ({ n: x.n, ph: x.ph, ph2: '', g: x.g || 0, sec: x.sec || 0, id: '', seat: null, com: null }));
@@ -3042,7 +3043,7 @@ function vStudents(noUpload) {
       <label class="inl">بحث <input class="in" data-sf="q" id="sf_q" value="${esc(SF.q)}" placeholder="اسم أو جوال"></label>
       <label class="inl">الترتيب <select class="in" data-sf="sort" id="sf_sort"><option value="section"${SF.sort === 'section' ? ' selected' : ''}>الصف ثم الشعبة ثم الاسم</option><option value="name"${SF.sort === 'name' ? ' selected' : ''}>الاسم</option><option value="seat"${SF.sort === 'seat' ? ' selected' : ''}>رقم الجلوس</option></select></label>
       <label class="inl">التقسيم <select class="in" data-sf="split" id="sf_split"><option value="section"${SF.split === 'section' ? ' selected' : ''}>كل شعبة في صفحة مستقلة</option><option value="grade"${SF.split === 'grade' ? ' selected' : ''}>كل صف في صفحات مستقلة</option><option value="none"${SF.split === 'none' ? ' selected' : ''}>قائمة متصلة</option></select></label>
-      <label class="inl">صفوف في الصفحة <input class="in" type="number" min="10" max="45" data-sf="rpp" id="sf_rpp" value="${SF.rpp}" style="width:4.5rem"></label>
+      <label class="inl">صفوف في الصفحة <select class="in" data-sf="rpp" id="sf_rpp"><option value="max"${SF.rpp === 'max' ? ' selected' : ''}>أقصى عدد (مضغوط ومقروء)</option>${[25, 30, 35, 40].map(n => `<option value="${n}"${+SF.rpp === n ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="inl">عنوان الكشف <input class="in" data-sf="title" id="sf_title" value="${esc(SF.title)}" placeholder="كشف أسماء الطلاب"></label>
     </div>
     <div class="row-label">الأعمدة المطبوعة</div>
@@ -4462,14 +4463,15 @@ function stuPages() {
   if (SF.split === 'section') { groupRuns(l.slice().sort((a, b) => a.g - b.g || a.sec - b.sec), x => x.g + '-' + x.sec).forEach(r => groups.push({ sub: r.items[0].sec ? `${gname(r.items[0].g)} – الشعبة ( ${r.items[0].sec} )` : gname(r.items[0].g), items: sortWithin(r.items) })); }
   else if (SF.split === 'grade') { groupRuns(l.slice().sort((a, b) => a.g - b.g), x => x.g).forEach(r => groups.push({ sub: gname(r.items[0].g), items: sortWithin(r.items) })); }
   else groups.push({ sub: SF.g !== 'all' ? GNAME[SF.g] : '', items: l });
-  const rpp = Math.max(10, Math.min(45, +SF.rpp || 30)), pages = [];
+  const pages = [], MAX = SF.rpp === 'max' || !+SF.rpp;
+  const hd = () => [cols.map(c => H(c[1], c[0] === 'n' ? { w: '34%' } : c[0] === 'i' ? { w: '5%' } : {}))];
   groups.forEach(gr => {
-    for (let i = 0; i < Math.max(1, gr.items.length); i += rpp) {
-      const part = gr.items.slice(i, i + rpp);
-      const rows = [cols.map(c => H(c[1], c[0] === 'n' ? { w: '34%' } : c[0] === 'i' ? { w: '5%' } : {}))];
-      part.forEach((x, k) => rows.push(cols.map(c => c[0] === 'n' ? { v: esc(x.n), al: 'right' } : c[0] === 'g' ? Gc(x.g, GSHORT[x.g] || '—') : c[0] === 'i' ? i + k + 1 : stuVal(x, c[0], i + k))));
-      pages.push(title(esc(ttl), `${gr.sub ? gr.sub + ' — ' : ''}عدد الطلاب: ${gr.items.length}${gr.items.length > rpp ? ` — صفحة ${Math.floor(i / rpp) + 1} من ${Math.ceil(gr.items.length / rpp)}` : ''}`) + T(rows, { cls: 'stu' }));
-    }
+    const n = gr.items.length, build = (a, b, last, tot) => { const rows = hd(); gr.items.slice(a, b).forEach((x, k) => rows.push(cols.map(c => c[0] === 'n' ? { v: esc(x.n), al: 'right' } : c[0] === 'g' ? Gc(x.g, GSHORT[x.g] || '—') : c[0] === 'i' ? a + k + 1 : stuVal(x, c[0], a + k))));
+      return title(esc(ttl), `${gr.sub ? gr.sub + ' — ' : ''}عدد الطلاب: ${n}${tot ? ` — صفحة ${tot}` : ''}`) + T(rows, { cls: MAX ? 'stu cmpk' : 'stu' }); };
+    let ranges = [];
+    if (MAX) { /* أقصى عدد يتسع للورقة بخط مقروء (9.5) — بالقياس الفعلي */ let a = 0; while (a < Math.max(1, n)) { let lo = a + 1, hi = Math.max(a + 1, n), best = a + 1; while (lo <= hi) { const m = (lo + hi) >> 1; if (bodyFits(build(a, m, false, '00 من 00'), false, 0.99)) { best = m; lo = m + 1; } else hi = m - 1; } ranges.push([a, best]); a = best; } }
+    else { const rpp = Math.max(10, Math.min(45, +SF.rpp)); for (let a = 0; a < Math.max(1, n); a += rpp) ranges.push([a, Math.min(n, a + rpp)]); }
+    ranges.forEach(([a, b], k) => pages.push(build(a, b, k === ranges.length - 1, ranges.length > 1 ? `${k + 1} من ${ranges.length}` : '')));
   });
   return pages;
 }
@@ -6902,7 +6904,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795536396';
+var BUILD_ID = '1795536909';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';
