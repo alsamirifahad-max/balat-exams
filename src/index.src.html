@@ -1390,6 +1390,52 @@ details.fold>summary,.setadv>summary{color:var(--ink)!important;font-weight:700}
 .tbar.done{background:var(--surface)!important;border-inline-start-color:#16a34a!important}
 .ahubb.pri{background:var(--pri,#0f5a6b)!important;border-color:var(--pri,#0f5a6b)!important}
 }
+
+/* ===== الشريط العلوي والتنقل: لون واحد هادئ ===== */
+@media screen{
+.top,nav#nav{background:#0d3b47!important}
+nav#nav{border-top:1px solid rgba(255,255,255,.07)}
+.setchip,.rolechip{background:rgba(255,255,255,.1)!important;color:#e8f2f4!important;border:1px solid rgba(255,255,255,.16)!important;font-weight:700!important}
+.rolechip i{background:rgba(255,255,255,.18)!important}
+.wkchip{background:rgba(255,255,255,.1)!important;color:#ffe3a8!important;border:1px solid rgba(255,214,140,.35)!important}
+.topchips .savestate{background:transparent!important;border:0!important;color:#b9d2d7}
+.step i{border:1.5px solid rgba(255,255,255,.35)!important;color:#d9e8eb!important;background:transparent!important}
+.step.done i{background:rgba(63,209,140,.22)!important;border-color:rgba(63,209,140,.7)!important;color:#bff3d6!important}
+.step.on{background:#fff!important;color:#0d3b47!important}
+.step.on i{background:#0d3b47!important;border-color:#0d3b47!important;color:#fff!important}
+.sline{background:rgba(255,255,255,.12)!important}
+.util.on{background:rgba(255,255,255,.14)!important}
+}
+
+/* ===== بطاقات رفع الملفات: أخف وأقصر ===== */
+@media screen{
+.fcard{box-shadow:var(--shadow);gap:10px!important;padding:14px!important}
+.fcard::before{height:0!important}
+.fcard{border-inline-start:4px solid var(--fc)!important}
+.fhead{align-items:center!important}.fnum{width:28px!important;height:28px!important;border-radius:8px!important;font-size:.85rem}
+.fhead h3{font-size:1rem!important}.fhead p{font-size:.8rem!important}
+.ffacts:has(.fnone){display:none!important}
+.ffacts{padding:8px 10px!important;min-height:0!important}
+.fcard .drop{border:1.5px dashed var(--line)!important;background:var(--surface2)!important;padding:10px 12px!important;gap:10px!important}
+.fcard .drop .dic{width:34px!important;height:34px!important;flex:0 0 34px!important;border-radius:9px}
+.fcard .drop .dtx b{font-size:.9rem}.fcard .drop .dtx small{font-size:.74rem}
+.fcard .drop>label.btn,.fcard .drop>.btn{padding:8px 14px!important}
+@media (max-width:600px){.fcard .drop .dtx{flex:1 1 calc(100% - 48px)!important}.fcard .drop>label.btn{width:100%}}
+}
+
+/* ===== أيقونات الأدوات ولوحة المدير ===== */
+@media screen{
+.util.pin{background:rgba(255,255,255,.1)!important;color:#fff!important}
+.util.pin.on,.util.on{background:#fff!important;color:#0d3b47!important;box-shadow:none!important}
+.dtile{border-top-width:1px!important;border-inline-start:4px solid var(--dc)!important}
+.stat{border-top-width:1px!important;border-inline-start:4px solid var(--gc,var(--line))!important}
+}
+
+@media screen{
+.asrc{border-top-width:1px!important;border-inline-start:4px solid var(--warn)!important;box-shadow:var(--shadow)}.asrc.ok{border-inline-start-color:var(--ok)!important}.asrc.plan{border-inline-start-color:var(--pri,#0f5a6b)!important}
+.asrcf{position:static!important;order:99;align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+}
+@media screen and (min-width:1100px){main#main{max-width:1280px!important}}
 </style>
 </head>
 <body>
