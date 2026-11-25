@@ -1448,13 +1448,26 @@ nav#nav{border-top:1px solid rgba(255,255,255,.07)}
 .qsec.tsp{border-top:1px dashed var(--line)}
 @media screen{.hint{padding:8px 12px!important;margin:6px 0!important;font-size:.84rem;line-height:1.6}}
 @media (max-width:600px){.tsr{grid-template-columns:1fr!important;gap:4px!important;border-bottom:1px dashed var(--line);padding-bottom:6px}.tsr .inact{justify-content:flex-end}}
+@media screen{
+body.simple section.card.acc>h2{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;margin:0!important}
+body.simple section.card.acc>h2::after{content:"▾";margin-inline-start:auto;color:var(--muted);font-size:1rem;flex:none}
+body.simple section.card.acc.closed>h2::after{content:"◂"}
+body.simple section.card.acc.closed{padding-top:13px!important;padding-bottom:13px!important}
+body.simple section.card.acc.closed>:not(h2){display:none!important}
+body.simple section.card.acc:not(.closed)>h2{margin-bottom:12px!important}
+body.simple .sbody .hint:not(.warn):not(.err){display:none!important}
+body.simple .shero p{display:none}
+.accbar{display:flex;align-items:center;gap:12px;font-size:.8rem;color:var(--muted);padding:0 4px}.accbar span{margin-inline-end:auto;font-weight:700}
+body:not(.simple) .accbar{display:none}
+.simbtn{padding:8px!important}
+}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top"><div class="topin">
     <div><h1>نظام الإسناد واللجان وأعمال الاختبارات</h1><div class="sub" id="topSub">مدرسة بلاط الشهداء الثانوية</div></div>
-    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><div class="topchips"><span class="wkchip" id="wkChip" hidden></span><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn themebtn" id="themeBtn" title="المظهر: تلقائي / فاتح / ليلي" aria-label="تغيير المظهر">◐</button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span></div>
+    <span class="sp1"></span><button type="button" class="topsrch simbtn" data-act="simple" title="العرض المبسّط / الكامل" aria-label="العرض المبسّط"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h6"/></svg></button><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><div class="topchips"><span class="wkchip" id="wkChip" hidden></span><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn themebtn" id="themeBtn" title="المظهر: تلقائي / فاتح / ليلي" aria-label="تغيير المظهر">◐</button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span></div>
   </div></header>
   <nav id="nav" aria-label="الأقسام"></nav>
   <main id="main"></main>

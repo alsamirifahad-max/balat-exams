@@ -1448,13 +1448,26 @@ nav#nav{border-top:1px solid rgba(255,255,255,.07)}
 .qsec.tsp{border-top:1px dashed var(--line)}
 @media screen{.hint{padding:8px 12px!important;margin:6px 0!important;font-size:.84rem;line-height:1.6}}
 @media (max-width:600px){.tsr{grid-template-columns:1fr!important;gap:4px!important;border-bottom:1px dashed var(--line);padding-bottom:6px}.tsr .inact{justify-content:flex-end}}
+@media screen{
+body.simple section.card.acc>h2{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;margin:0!important}
+body.simple section.card.acc>h2::after{content:"▾";margin-inline-start:auto;color:var(--muted);font-size:1rem;flex:none}
+body.simple section.card.acc.closed>h2::after{content:"◂"}
+body.simple section.card.acc.closed{padding-top:13px!important;padding-bottom:13px!important}
+body.simple section.card.acc.closed>:not(h2){display:none!important}
+body.simple section.card.acc:not(.closed)>h2{margin-bottom:12px!important}
+body.simple .sbody .hint:not(.warn):not(.err){display:none!important}
+body.simple .shero p{display:none}
+.accbar{display:flex;align-items:center;gap:12px;font-size:.8rem;color:var(--muted);padding:0 4px}.accbar span{margin-inline-end:auto;font-weight:700}
+body:not(.simple) .accbar{display:none}
+.simbtn{padding:8px!important}
+}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top"><div class="topin">
     <div><h1>نظام الإسناد واللجان وأعمال الاختبارات</h1><div class="sub" id="topSub">مدرسة بلاط الشهداء الثانوية</div></div>
-    <span class="sp1"></span><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><div class="topchips"><span class="wkchip" id="wkChip" hidden></span><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn themebtn" id="themeBtn" title="المظهر: تلقائي / فاتح / ليلي" aria-label="تغيير المظهر">◐</button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span></div>
+    <span class="sp1"></span><button type="button" class="topsrch simbtn" data-act="simple" title="العرض المبسّط / الكامل" aria-label="العرض المبسّط"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h6"/></svg></button><button type="button" class="topsrch" data-act="palette" aria-label="بحث سريع"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث <kbd>Ctrl K</kbd></button><div class="topchips"><span class="wkchip" id="wkChip" hidden></span><button type="button" class="rolechip" id="roleChip" title="دورك على هذا الجهاز — اضغط للتغيير"></button><button type="button" class="setchip" id="setChip" data-tab="assign" title="الإسناد الذي تعمل عليه الآن"></button><button type="button" class="helpbtn themebtn" id="themeBtn" title="المظهر: تلقائي / فاتح / ليلي" aria-label="تغيير المظهر">◐</button><button type="button" class="helpbtn" id="helpBtn" title="جولة تعريفية ومساعدة" aria-label="المساعدة">؟</button><span class="savestate ok" id="saveState">محفوظ على هذا الجهاز</span></div>
   </div></header>
   <nav id="nav" aria-label="الأقسام"></nav>
   <main id="main"></main>
@@ -2719,6 +2732,7 @@ function render() {
   $$('.pthumb').forEach(b => { const pg = b.firstElementChild; if (!pg) return; const k = b.clientWidth / (pg.classList.contains('land') ? 1123 : 794); pg.style.transform = `scale(${k})`; });
   if (TAB === 'home') setTimeout(renderThumbs, 30);
   $$('details.qopt[open] .tsp').forEach(tspFill);
+  try { accApply(); } catch (e) { }
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
 }
@@ -4044,6 +4058,23 @@ function pvNamesBar() {
   box.hidden = false; box.innerHTML = fxPanel(id);
 }
 function pvRefresh() { if (!PV || !PV.src || !PV.src.rebuild || $('#pvModal').hidden) return; const y = $('#pvBody').scrollTop, g = PV.src.rebuild(); if (!g || !g.length) return; openPreview(g, PV.name); $('#pvBody').scrollTop = y; }
+/* ===== العرض المبسّط: كل قسم بطاقة تُفتح بلمسة — نظرة شاملة على عناوين الصفحة دون ازدحام ===== */
+var ACC = {}; function simpleOn() { try { return localStorage.getItem(LS_KEY + '-simple') !== '0'; } catch (e) { return true; } }
+function accKey(c) { const h = c.querySelector(':scope > h2'); return TAB + '|' + (h ? h.textContent.replace(/[\d\s؟?]+/g, '').slice(0, 40) : ''); }
+function accApply() {
+  document.body.classList.toggle('simple', simpleOn()); if (!simpleOn()) return;
+  const cards = $$('#main .sbody > section.card').filter(c => c.querySelector(':scope > h2') && c.offsetParent !== null);
+  let first = true;
+  cards.forEach(c => { const k = accKey(c); c.classList.add('acc'); if (ACC[k] === undefined) ACC[k] = first; first = false; c.classList.toggle('closed', !ACC[k]);
+    const h = c.querySelector(':scope > h2'); if (!h.dataset.accb) { h.dataset.accb = 1; h.setAttribute('role', 'button'); h.tabIndex = 0; } });
+  const n = cards.length, nc = cards.filter(c => c.classList.contains('closed')).length, bar = $('#accBar');
+  if (bar) bar.remove();
+  if (n > 1) { const sb = $('#main .sbody'), t = document.createElement('div'); t.id = 'accBar'; t.className = 'accbar';
+    t.innerHTML = `<span>${n} أقسام</span><button type="button" class="lnk" data-act="accAll" data-v="1">فتح الكل</button><button type="button" class="lnk" data-act="accAll" data-v="0">طيّ الكل</button>`;
+    const anchor = cards[0]; anchor.parentNode.insertBefore(t, anchor); }
+}
+document.addEventListener('click', e => { const h = e.target.closest('body.simple section.card.acc > h2'); if (!h || e.target.closest('button,a,input,select,label')) return; const c = h.parentElement, k = accKey(c); ACC[k] = c.classList.contains('closed'); c.classList.toggle('closed', !ACC[k]); if (ACC[k]) setTimeout(() => c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 30); });
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('section.card.acc > h2')) { e.preventDefault(); e.target.click(); } });
 function pvEditBtn() { const b = $('#pvEdit'); if (b) b.hidden = !(PV && PV_EDIT[PV.fid]); }
 function pvColsBar() {
   const box = $('#pvCols'); if (!box) return; if (!PV || !PVCOLS) { box.hidden = true; return; }
@@ -4976,6 +5007,8 @@ document.addEventListener('click', async e => {
     case 'pvWord': if (PV) wordDoc(PV.groups, PV.name); return;
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
     case 'pvEdit': { if (!PV || !PV_EDIT[PV.fid]) return; const t = PV_EDIT[PV.fid], fo = PV.fo || {}; if (PV.fid === 'planCom' && fo.pc && typeof PLAN_OPEN !== 'undefined') PLAN_OPEN[fo.pc] = true; closePreview(); go(t); return; }
+    case 'accAll': { const v = b.dataset.v === '1'; $$('#main section.card.acc').forEach(c => { ACC[accKey(c)] = v; c.classList.toggle('closed', !v); }); return; }
+    case 'simple': { try { localStorage.setItem(LS_KEY + '-simple', simpleOn() ? '0' : '1'); } catch (e) { } toast(simpleOn() ? 'العرض المبسّط: الأقسام تُفتح بلمسة' : 'العرض الكامل: كل الأقسام مفتوحة'); $$('#main section.card').forEach(c => c.classList.remove('acc', 'closed')); return re(); }
     case 'pvCols': PVCOLS = !PVCOLS; return pvColsBar();
     case 'pvNames': PVNAMES = !PVNAMES; return pvNamesBar();
     case 'pvCol': case 'pvColAll': { if (!PV) return; const k = colKey(PV.name); S.s.colsHide = S.s.colsHide || {}; let h = S.s.colsHide[k] || [];
@@ -6920,7 +6953,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ===================== تنبيه نسخة جديدة من الموقع ===================== */
-var BUILD_ID = '1795540444';
+var BUILD_ID = '1795606581';
 /* التحديث التلقائي: يُطبَّق الإصدار الجديد وحده متى كان آمناً (لا كتابة جارية ولا نافذة مفتوحة) */
 var VER_RELOADING = false;
 function verSafe() { if (VER_RELOADING) return false; const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'button';

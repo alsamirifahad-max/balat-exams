@@ -1134,6 +1134,7 @@ function render() {
   $$('.pthumb').forEach(b => { const pg = b.firstElementChild; if (!pg) return; const k = b.clientWidth / (pg.classList.contains('land') ? 1123 : 794); pg.style.transform = `scale(${k})`; });
   if (TAB === 'home') setTimeout(renderThumbs, 30);
   $$('details.qopt[open] .tsp').forEach(tspFill);
+  try { accApply(); } catch (e) { }
   document.querySelectorAll('.absg .agrp .achip').forEach(e => { if (e.scrollWidth > e.clientWidth + 1) e.classList.add('lng'); });
   { const cd = document.querySelector('.wstrip .sd.cur'); if (cd) { const st = cd.parentElement; st.scrollLeft = cd.offsetLeft - st.clientWidth / 2 + cd.offsetWidth / 2; } }
 }
@@ -2459,6 +2460,23 @@ function pvNamesBar() {
   box.hidden = false; box.innerHTML = fxPanel(id);
 }
 function pvRefresh() { if (!PV || !PV.src || !PV.src.rebuild || $('#pvModal').hidden) return; const y = $('#pvBody').scrollTop, g = PV.src.rebuild(); if (!g || !g.length) return; openPreview(g, PV.name); $('#pvBody').scrollTop = y; }
+/* ===== العرض المبسّط: كل قسم بطاقة تُفتح بلمسة — نظرة شاملة على عناوين الصفحة دون ازدحام ===== */
+var ACC = {}; function simpleOn() { try { return localStorage.getItem(LS_KEY + '-simple') !== '0'; } catch (e) { return true; } }
+function accKey(c) { const h = c.querySelector(':scope > h2'); return TAB + '|' + (h ? h.textContent.replace(/[\d\s؟?]+/g, '').slice(0, 40) : ''); }
+function accApply() {
+  document.body.classList.toggle('simple', simpleOn()); if (!simpleOn()) return;
+  const cards = $$('#main .sbody > section.card').filter(c => c.querySelector(':scope > h2') && c.offsetParent !== null);
+  let first = true;
+  cards.forEach(c => { const k = accKey(c); c.classList.add('acc'); if (ACC[k] === undefined) ACC[k] = first; first = false; c.classList.toggle('closed', !ACC[k]);
+    const h = c.querySelector(':scope > h2'); if (!h.dataset.accb) { h.dataset.accb = 1; h.setAttribute('role', 'button'); h.tabIndex = 0; } });
+  const n = cards.length, nc = cards.filter(c => c.classList.contains('closed')).length, bar = $('#accBar');
+  if (bar) bar.remove();
+  if (n > 1) { const sb = $('#main .sbody'), t = document.createElement('div'); t.id = 'accBar'; t.className = 'accbar';
+    t.innerHTML = `<span>${n} أقسام</span><button type="button" class="lnk" data-act="accAll" data-v="1">فتح الكل</button><button type="button" class="lnk" data-act="accAll" data-v="0">طيّ الكل</button>`;
+    const anchor = cards[0]; anchor.parentNode.insertBefore(t, anchor); }
+}
+document.addEventListener('click', e => { const h = e.target.closest('body.simple section.card.acc > h2'); if (!h || e.target.closest('button,a,input,select,label')) return; const c = h.parentElement, k = accKey(c); ACC[k] = c.classList.contains('closed'); c.classList.toggle('closed', !ACC[k]); if (ACC[k]) setTimeout(() => c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 30); });
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('section.card.acc > h2')) { e.preventDefault(); e.target.click(); } });
 function pvEditBtn() { const b = $('#pvEdit'); if (b) b.hidden = !(PV && PV_EDIT[PV.fid]); }
 function pvColsBar() {
   const box = $('#pvCols'); if (!box) return; if (!PV || !PVCOLS) { box.hidden = true; return; }
@@ -3391,6 +3409,8 @@ document.addEventListener('click', async e => {
     case 'pvWord': if (PV) wordDoc(PV.groups, PV.name); return;
     case 'pvExcel': if (PV) excelFromGroups(PV.groups, PV.name); return;
     case 'pvEdit': { if (!PV || !PV_EDIT[PV.fid]) return; const t = PV_EDIT[PV.fid], fo = PV.fo || {}; if (PV.fid === 'planCom' && fo.pc && typeof PLAN_OPEN !== 'undefined') PLAN_OPEN[fo.pc] = true; closePreview(); go(t); return; }
+    case 'accAll': { const v = b.dataset.v === '1'; $$('#main section.card.acc').forEach(c => { ACC[accKey(c)] = v; c.classList.toggle('closed', !v); }); return; }
+    case 'simple': { try { localStorage.setItem(LS_KEY + '-simple', simpleOn() ? '0' : '1'); } catch (e) { } toast(simpleOn() ? 'العرض المبسّط: الأقسام تُفتح بلمسة' : 'العرض الكامل: كل الأقسام مفتوحة'); $$('#main section.card').forEach(c => c.classList.remove('acc', 'closed')); return re(); }
     case 'pvCols': PVCOLS = !PVCOLS; return pvColsBar();
     case 'pvNames': PVNAMES = !PVNAMES; return pvNamesBar();
     case 'pvCol': case 'pvColAll': { if (!PV) return; const k = colKey(PV.name); S.s.colsHide = S.s.colsHide || {}; let h = S.s.colsHide[k] || [];
